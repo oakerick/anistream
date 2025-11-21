@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OakCine | Neon Experience</title>
+    <title>OakCine | Playlist Player</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -25,19 +25,7 @@
                         'glass-bg': 'rgba(30, 41, 59, 0.7)',
                     },
                     animation: {
-                        'gradient-x': 'gradient-x 15s ease infinite',
-                        'float': 'float 6s ease-in-out infinite',
                         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    },
-                    keyframes: {
-                        'gradient-x': {
-                            '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' },
-                            '50%': { 'background-size': '200% 200%', 'background-position': 'right center' },
-                        },
-                        'float': {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-10px)' },
-                        }
                     }
                 }
             }
@@ -54,11 +42,13 @@
             color: #f1f5f9;
         }
 
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
+        /* Glassmorphism */
         .glass-panel {
             background: rgba(30, 41, 59, 0.4);
             backdrop-filter: blur(12px);
@@ -66,27 +56,22 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        /* Playlist Item Active State */
+        .playlist-item.active {
+            background: rgba(6, 182, 212, 0.15);
+            border-left: 3px solid #06b6d4;
+        }
+        .playlist-item:hover:not(.active) {
+            background: rgba(255,255,255,0.05);
+        }
+
+        /* Inputs e Sliders */
         .neon-input {
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
         }
-        .neon-input:focus {
-            border-color: #a855f7;
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
-            outline: none;
-        }
-
-        .neon-btn-primary {
-            background: linear-gradient(135deg, #a855f7, #7c3aed);
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        .neon-btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
-        }
+        .neon-input:focus { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.3); outline: none; }
 
         input[type=range] { -webkit-appearance: none; background: transparent; }
         input[type=range]::-webkit-slider-thumb {
@@ -96,20 +81,7 @@
         input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255, 255, 255, 0.2); border-radius: 2px; }
 
-        .drag-active {
-            border-color: #a855f7 !important;
-            background: rgba(168, 85, 247, 0.1) !important;
-            transform: scale(1.02);
-        }
-
-        .playlist-item.active {
-            background: rgba(6, 182, 212, 0.15);
-            border-left: 4px solid #06b6d4;
-        }
-        .playlist-item:hover:not(.active) {
-            background: rgba(255,255,255,0.05);
-        }
-
+        /* Animations */
         @keyframes ai-pulse {
             0% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); }
             70% { box-shadow: 0 0 0 10px rgba(6, 182, 212, 0); }
@@ -120,7 +92,7 @@
 </head>
 <body class="flex flex-col items-center min-h-screen pb-20">
 
-    <header class="w-full max-w-7xl p-6 flex justify-between items-center animate-float">
+    <header class="w-full max-w-7xl p-6 flex justify-between items-center">
         <div class="flex items-center gap-3 select-none cursor-pointer" onclick="location.reload()">
             <div class="relative">
                 <span class="material-icons text-5xl text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">movie_filter</span>
@@ -130,7 +102,7 @@
                 <h1 class="text-4xl font-black tracking-tighter text-white drop-shadow-lg">
                     Oak<span class="text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">Cine</span>
                 </h1>
-                <p class="text-[10px] text-gray-400 font-bold tracking-[0.2em] uppercase ml-1">Ultimate Streamer</p>
+                <p class="text-[10px] text-gray-400 font-bold tracking-[0.2em] uppercase ml-1">Player & Playlist</p>
             </div>
         </div>
     </header>
@@ -142,18 +114,12 @@
                 <div class="pl-4 pr-2 flex items-center justify-center">
                     <span class="material-icons text-transparent bg-clip-text bg-gradient-to-br from-neon-purple to-neon-cyan text-2xl animate-pulse-slow">auto_awesome</span>
                 </div>
-                <input type="text" id="aiSearchInput" class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-2 py-3 outline-none text-lg font-light" placeholder="Buscar filme ou série..." autocomplete="off">
+                <input type="text" id="aiSearchInput" class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-2 py-3 outline-none text-lg font-light" placeholder="Buscar (Ex: Interestelar 4K)..." autocomplete="off">
                 <button onclick="performSmartSearch()" class="mr-1 px-6 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition flex items-center gap-2 border border-gray-700">
                     <span class="hidden md:inline text-sm font-bold">BUSCAR</span>
                     <span class="material-icons text-sm">search</span>
                 </button>
             </div>
-        </div>
-        <div class="flex gap-2 mt-3 justify-center md:justify-start overflow-x-auto pb-2 scrollbar-hide">
-            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider self-center mr-2">Filtros:</span>
-            <button onclick="setSearchTag('4K HDR')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-neon-purple/20 border border-white/10 text-xs text-gray-300 whitespace-nowrap">✨ 4K HDR</button>
-            <button onclick="setSearchTag('Dublado')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-neon-cyan/20 border border-white/10 text-xs text-gray-300 whitespace-nowrap">🇧🇷 Dublado</button>
-            <button onclick="setSearchTag('S01E01')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-yellow-500/20 border border-white/10 text-xs text-gray-300 whitespace-nowrap">📺 Séries</button>
         </div>
     </section>
 
@@ -167,8 +133,8 @@
                     <div class="p-6 rounded-full bg-white/5 mb-4 animate-pulse-slow">
                         <span class="material-icons text-6xl text-gray-600">smart_display</span>
                     </div>
-                    <h2 class="text-2xl font-bold text-gray-300">OakCine Player</h2>
-                    <p class="text-gray-500 text-sm mt-2">Arraste um arquivo ou pasta</p>
+                    <h2 class="text-2xl font-bold text-gray-300">Aguardando Mídia</h2>
+                    <p class="text-gray-500 text-sm mt-2">Arraste uma pasta inteira ou um arquivo</p>
                 </div>
 
                 <div id="loadingOverlay" class="absolute inset-0 flex-col items-center justify-center bg-black/90 z-30 hidden">
@@ -192,22 +158,25 @@
                     </div>
                     <div class="flex items-center justify-between select-none">
                         <div class="flex items-center gap-2 lg:gap-4">
-                            <button id="prevBtn" class="text-gray-400 hover:text-white hidden md:block" title="Anterior"><span class="material-icons">skip_previous</span></button>
+                            <button id="prevBtn" class="text-gray-400 hover:text-white hover:scale-110 transition" title="Anterior">
+                                <span class="material-icons">skip_previous</span>
+                            </button>
                             
-                            <button id="playBtn" class="text-gray-200 hover:text-white hover:scale-110 transition-transform"><span class="material-icons text-3xl">play_arrow</span></button>
+                            <button id="playBtn" class="text-gray-200 hover:text-white hover:scale-110 transition-transform">
+                                <span class="material-icons text-3xl">play_arrow</span>
+                            </button>
                             
-                            <button id="nextBtn" class="text-gray-400 hover:text-white hidden md:block" title="Próximo"><span class="material-icons">skip_next</span></button>
+                            <button id="nextBtn" class="text-gray-400 hover:text-white hover:scale-110 transition" title="Próximo">
+                                <span class="material-icons">skip_next</span>
+                            </button>
 
-                            <div class="flex items-center gap-2 group/vol">
+                            <div class="flex items-center gap-2 group/vol ml-2">
                                 <button id="muteBtn" class="text-gray-300 hover:text-white transition"><span class="material-icons">volume_up</span></button>
                                 <input type="range" id="volSlider" min="0" max="1" step="0.05" value="1" class="w-0 group-hover/vol:w-24 transition-all duration-300 overflow-hidden ml-1">
                             </div>
                             <span id="timeDisplay" class="text-xs font-mono text-gray-300 ml-2 tracking-wider">00:00 / 00:00</span>
                         </div>
                         <div class="flex items-center gap-3">
-                            <div id="miniStats" class="hidden md:flex items-center gap-3 text-xs font-mono bg-white/5 px-3 py-1 rounded-full border border-white/10">
-                                <span class="text-green-400 flex items-center gap-1"><i class="material-icons text-[14px]">arrow_downward</i> <span id="dlSpeed">0 KB/s</span></span>
-                            </div>
                             <button id="fsBtn" class="text-gray-300 hover:text-white hover:scale-110 transition-transform"><span class="material-icons text-3xl">fullscreen</span></button>
                         </div>
                     </div>
@@ -215,18 +184,17 @@
             </div>
 
             <div class="mt-6">
-                <div id="mediaInfo" class="glass-panel p-6 rounded-2xl border border-gray-700/50 hidden mb-6">
+                <div id="mediaInfo" class="glass-panel p-5 rounded-2xl border border-gray-700/50 hidden mb-6">
                     <div class="flex items-start justify-between">
                         <div>
                             <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan mb-1">Reproduzindo</h2>
                             <p id="infoFilename" class="text-white font-medium truncate max-w-xl">Nome do Arquivo...</p>
                         </div>
-                        <p id="infoSize" class="text-sm text-gray-400 font-mono bg-black/30 px-3 py-1 rounded-full hidden md:block">0 MB</p>
                     </div>
                     <div id="torrentStatsGrid" class="grid grid-cols-3 gap-4 mt-4 border-t border-gray-700/50 pt-4 hidden">
-                        <div><p class="text-xs text-gray-500 font-bold">Peers</p><p id="infoPeers" class="text-lg font-mono text-neon-cyan">0</p></div>
-                        <div><p class="text-xs text-gray-500 font-bold">Down</p><p id="infoDown" class="text-lg font-mono text-green-400">0 KB/s</p></div>
-                        <div><p class="text-xs text-gray-500 font-bold">Prog</p><p id="infoProgress" class="text-lg font-mono text-neon-purple">0%</p></div>
+                        <div><p class="text-xs text-gray-500 font-bold uppercase">Peers</p><p id="infoPeers" class="text-lg font-mono text-neon-cyan">0</p></div>
+                        <div><p class="text-xs text-gray-500 font-bold uppercase">Velocidade</p><p id="infoDown" class="text-lg font-mono text-green-400">0 KB/s</p></div>
+                        <div><p class="text-xs text-gray-500 font-bold uppercase">Progresso</p><p id="infoProgress" class="text-lg font-mono text-neon-purple">0%</p></div>
                     </div>
                 </div>
 
@@ -245,8 +213,8 @@
                         
                         <div class="h-full flex flex-col items-center justify-center text-center py-1 z-10 relative">
                             <span class="material-icons text-3xl text-neon-cyan mb-2">folder_open</span>
-                            <h3 class="text-sm font-bold text-white">Arquivo ou Pasta</h3>
-                            <p class="text-xs text-gray-400 mt-1">Arraste ou clique para selecionar</p>
+                            <h3 class="text-sm font-bold text-white">Carregar Mídia</h3>
+                            <p class="text-xs text-gray-400 mt-1">Suporta Pastas inteiras (Séries/Playlists)</p>
                             
                             <div class="flex gap-2 mt-3 w-full px-4">
                                 <button onclick="event.stopPropagation(); document.getElementById('fileInput').click()" class="flex-1 bg-white/10 hover:bg-white/20 py-1 rounded text-xs text-white transition border border-white/10">Arquivo</button>
@@ -255,21 +223,16 @@
                         </div>
                     </div>
                 </section>
-                
-                <section id="historySection" class="w-full mt-6 hidden">
-                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 pl-2">Recentes</h3>
-                    <div id="historyList" class="grid grid-cols-1 gap-2"></div>
-                </section>
             </div>
         </div>
 
         <div id="playlistPanel" class="w-full lg:w-80 hidden flex-col gap-4 animate-float" style="animation-delay: 0.2s;">
-            <div class="glass-panel rounded-2xl flex flex-col h-[500px] lg:h-[calc(100vh-140px)] sticky top-6">
+            <div class="glass-panel rounded-2xl flex flex-col h-[600px] sticky top-6">
                 <div class="p-4 border-b border-gray-700/50 flex justify-between items-center bg-black/20 rounded-t-2xl">
                     <h3 class="text-white font-bold flex items-center gap-2">
                         <span class="material-icons text-neon-cyan">queue_music</span> Playlist
                     </h3>
-                    <span id="playlistCount" class="text-xs bg-neon-cyan/20 text-neon-cyan px-2 py-0.5 rounded-full font-mono">0</span>
+                    <span id="playlistCount" class="text-xs bg-neon-cyan/20 text-neon-cyan px-2 py-0.5 rounded-full font-mono">0 itens</span>
                 </div>
                 
                 <div id="playlistContainer" class="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-gray-700">
@@ -280,59 +243,70 @@
     </div>
 
     <script>
-        // ======================== CONFIG & VARS ========================
+        // =========================================================
+        // ESTADO GERAL
+        // =========================================================
         const client = new WebTorrent();
         let currentTorrent = null;
         let playlist = [];
         let currentPlaylistIndex = -1;
         let updateInterval = null;
 
-        // DOM Elements
+        // Elementos DOM
         const video = document.getElementById('nativeVideo');
         const placeholder = document.getElementById('videoPlaceholder');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const mediaInfo = document.getElementById('mediaInfo');
+        
+        // Playlist DOM
         const playlistPanel = document.getElementById('playlistPanel');
         const playlistContainer = document.getElementById('playlistContainer');
         
-        // Controls
-        const playBtn = document.getElementById('playBtn');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const progressContainer = document.getElementById('progressContainer');
-        const playBar = document.getElementById('playBar');
-
         // Inputs
         const fileInput = document.getElementById('fileInput');
         const folderInput = document.getElementById('folderInput');
         const dropZone = document.getElementById('dropZone');
-        const aiSearchInput = document.getElementById('aiSearchInput');
-
-        // ======================== CORE PLAYLIST LOGIC ========================
         
-        function handleFolderSelect(files) {
-            // Filtra apenas videos
-            const videoFiles = Array.from(files).filter(f => f.name.match(/\.(mp4|mkv|webm|ogg|mov|m4v)$/i));
-            
-            if (videoFiles.length === 0) return alert("Nenhum vídeo encontrado nesta pasta.");
+        // Controles
+        const playBtn = document.getElementById('playBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
 
-            // Ordenação Natural (Ep 1, Ep 2, Ep 10...)
-            playlist = videoFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+        // =========================================================
+        // LÓGICA DA PLAYLIST
+        // =========================================================
+
+        // Função principal chamada ao carregar uma PASTA ou múltiplos arquivos
+        function handleFiles(files) {
+            // 1. Filtrar apenas vídeos
+            const videoFiles = Array.from(files).filter(f => f.name.match(/\.(mp4|mkv|webm|ogg|mov|m4v|avi)$/i));
             
+            if (videoFiles.length === 0) return alert("Nenhum arquivo de vídeo compatível encontrado.");
+
+            // 2. Ordenação Inteligente (Ex: Ep 1, Ep 2, Ep 10...)
+            playlist = videoFiles.sort((a, b) => 
+                a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+            );
+            
+            // 3. Limpar player anterior e mostrar painel
             resetPlayer();
-            renderPlaylist();
-            loadPlaylistItem(0); // Toca o primeiro
-        }
-
-        function renderPlaylist() {
             playlistPanel.classList.remove('hidden');
             playlistPanel.classList.add('flex');
-            document.getElementById('playlistCount').innerText = playlist.length;
-            
+            document.getElementById('playlistCount').innerText = `${playlist.length} itens`;
+
+            // 4. Renderizar a lista visualmente
+            renderPlaylistUI();
+
+            // 5. PLAY IMEDIATO no primeiro item (Auto-Start)
+            loadPlaylistItem(0);
+        }
+
+        function renderPlaylistUI() {
             playlistContainer.innerHTML = playlist.map((file, index) => `
                 <div onclick="loadPlaylistItem(${index})" 
+                     id="plist-item-${index}"
                      class="playlist-item p-3 rounded-lg cursor-pointer transition flex items-center gap-3 group ${index === currentPlaylistIndex ? 'active' : ''}">
-                    <div class="text-gray-500 group-hover:text-white text-xs font-mono w-4 text-center">${index + 1}</div>
+                    <div class="text-gray-500 group-hover:text-white text-xs font-mono w-5 text-center">${index + 1}</div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm text-gray-300 group-hover:text-white truncate font-medium ${index === currentPlaylistIndex ? 'text-neon-cyan' : ''}">${file.name}</p>
                         <p class="text-[10px] text-gray-500 truncate">${formatBytes(file.size)}</p>
@@ -348,240 +322,18 @@
             currentPlaylistIndex = index;
             const file = playlist[index];
             
-            // Update UI
-            renderPlaylist();
+            // Atualiza UI da playlist (Destaca o ativo)
+            renderPlaylistUI();
             
-            // Scroll to active item
-            const activeItem = playlistContainer.children[index];
-            if(activeItem) activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Rola a lista até o item ativo
+            const activeEl = document.getElementById(`plist-item-${index}`);
+            if(activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-            // Load Video
+            // Prepara o Vídeo
             const url = URL.createObjectURL(file);
-            setupVideoSource(url, file.name, file.size, false);
-            addToHistory(file.name, 'local_playlist', file.size); // Marca no histórico (simbólico)
-        }
-
-        function playNext() {
-            if (currentPlaylistIndex < playlist.length - 1) loadPlaylistItem(currentPlaylistIndex + 1);
-        }
-        
-        function playPrev() {
-            if (currentPlaylistIndex > 0) loadPlaylistItem(currentPlaylistIndex - 1);
-        }
-
-        // ======================== VIDEO ENGINE ========================
-
-        function setupVideoSource(src, name, size, isTorrent) {
-            video.src = src;
+            
+            // Configura o Player
+            video.src = url;
             video.load();
             
-            setLoading(true, `Carregando: ${name}`);
-            
-            video.oncanplay = () => {
-                setLoading(false);
-                placeholder.style.display = 'none';
-                document.getElementById('centerPlayBtn').style.display = 'none';
-                
-                mediaInfo.classList.remove('hidden');
-                document.getElementById('infoFilename').innerText = name;
-                document.getElementById('infoSize').innerText = formatBytes(size);
-                
-                // Torrent Stats Toggle
-                const grid = document.getElementById('torrentStatsGrid');
-                const mini = document.getElementById('miniStats');
-                if(isTorrent) {
-                    grid.classList.remove('hidden');
-                    mini.classList.remove('hidden');
-                    mini.classList.add('flex');
-                } else {
-                    grid.classList.add('hidden');
-                    mini.classList.add('hidden');
-                    mini.classList.remove('flex');
-                }
-
-                video.play().catch(e => console.log("Autoplay prevented"));
-                video.oncanplay = null;
-            };
-        }
-
-        // Auto-play Next on End
-        video.addEventListener('ended', () => {
-            if (playlist.length > 0 && currentPlaylistIndex < playlist.length - 1) {
-                playNext();
-            } else {
-                playBtn.innerHTML = '<span class="material-icons text-3xl">replay</span>';
-            }
-        });
-
-        // ======================== TORRENT & SINGLE FILE ========================
-
-        function loadMagnetLink(uri) {
-            if (!uri) return;
-            resetPlayer();
-            setLoading(true, "Conectando P2P...");
-            
-            client.add(uri, (torrent) => {
-                currentTorrent = torrent;
-                const file = torrent.files.find(f => f.name.match(/\.(mp4|mkv|webm|ogg|mov)$/i));
-                
-                if(!file) { setLoading(false); return alert("Vídeo não encontrado no torrent."); }
-                
-                // Cria playlist "fake" de 1 item para manter consistência UI se quiser, 
-                // mas aqui mantemos modo torrent separado
-                playlist = []; 
-                playlistPanel.classList.add('hidden');
-                playlistPanel.classList.remove('flex');
-
-                file.renderTo(video, { autoplay: true }, (err) => {
-                    if(err) return alert(err.message);
-                    // Setup UI manual pois renderTo faz bypass do src direto as vezes
-                    placeholder.style.display = 'none';
-                    mediaInfo.classList.remove('hidden');
-                    document.getElementById('infoFilename').innerText = file.name;
-                    document.getElementById('torrentStatsGrid').classList.remove('hidden');
-                    startStatsMonitor();
-                    addToHistory(file.name, uri, file.length);
-                    setLoading(false);
-                });
-            });
-        }
-
-        function loadSingleFile(file) {
-            if(file.name.endsWith('.torrent')) {
-                const reader = new FileReader();
-                reader.onload = e => loadMagnetLink(e.target.result);
-                reader.readAsArrayBuffer(file);
-                return;
-            }
-            // Trata como playlist de 1 arquivo
-            playlist = [file];
-            loadPlaylistItem(0);
-        }
-
-        // ======================== UTILS & EVENTS ========================
-
-        function resetPlayer() {
-            if(currentTorrent) { currentTorrent.destroy(); currentTorrent = null; }
-            if(updateInterval) clearInterval(updateInterval);
-            video.pause();
-            video.src = '';
-            playlist = [];
-            currentPlaylistIndex = -1;
-            playlistPanel.classList.add('hidden');
-            playlistPanel.classList.remove('flex');
-        }
-
-        function setLoading(active, msg) {
-            if(active) {
-                loadingOverlay.classList.remove('hidden');
-                loadingOverlay.classList.add('flex');
-                document.getElementById('loadingText').innerText = msg;
-            } else {
-                loadingOverlay.classList.add('hidden');
-                loadingOverlay.classList.remove('flex');
-            }
-        }
-
-        function startStatsMonitor() {
-            if(updateInterval) clearInterval(updateInterval);
-            updateInterval = setInterval(() => {
-                if(currentTorrent) {
-                    const dl = formatBytes(currentTorrent.downloadSpeed) + '/s';
-                    document.getElementById('infoDown').innerText = dl;
-                    document.getElementById('dlSpeed').innerText = dl;
-                    document.getElementById('infoPeers').innerText = currentTorrent.numPeers;
-                    document.getElementById('infoProgress').innerText = (currentTorrent.progress * 100).toFixed(1) + '%';
-                }
-            }, 1000);
-        }
-
-        // Inputs Listeners
-        document.getElementById('loadMagnetBtn').addEventListener('click', () => loadMagnetLink(document.getElementById('magnetInput').value));
-        fileInput.addEventListener('change', (e) => { if(e.target.files.length) loadSingleFile(e.target.files[0]); });
-        folderInput.addEventListener('change', (e) => { if(e.target.files.length) handleFolderSelect(e.target.files); });
-        
-        // Drag & Drop
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-active'));
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault(); 
-            dropZone.classList.remove('drag-active');
-            
-            // Tenta ler itens (pastas)
-            const items = e.dataTransfer.items;
-            if (items && items.length > 0 && items[0].webkitGetAsEntry && items[0].webkitGetAsEntry().isDirectory) {
-                // Nota: Ler diretório via DragDrop requer scan recursivo complexo não nativo simples.
-                // Para simplificar este exemplo, usamos o input webkitdirectory para pastas
-                // e drag para arquivos. Sugerimos ao usuário usar o botão para pastas.
-                alert("Para pastas, por favor use o botão 'Pasta' para garantir a leitura de todos os arquivos.");
-            } else if (e.dataTransfer.files.length) {
-                loadSingleFile(e.dataTransfer.files[0]);
-            }
-        });
-
-        // Search
-        function performSmartSearch() {
-            let q = aiSearchInput.value.trim();
-            if(!q) return;
-            const url = `https://www.google.com/search?q=${encodeURIComponent(q + ' (1080p OR 4K) (ext:torrent OR magnet) -fake')}`;
-            window.open(url, '_blank');
-        }
-        function setSearchTag(t) { aiSearchInput.value += ' ' + t; }
-        aiSearchInput.addEventListener('keydown', e => { if(e.key === 'Enter') performSmartSearch(); });
-
-        // Player Controls
-        function togglePlay() {
-            if(video.paused) { video.play(); playBtn.innerHTML = '<span class="material-icons text-3xl">pause</span>'; }
-            else { video.pause(); playBtn.innerHTML = '<span class="material-icons text-3xl">play_arrow</span>'; }
-        }
-        playBtn.addEventListener('click', togglePlay);
-        video.addEventListener('click', (e) => { if(e.target === video) togglePlay(); }); // Evita clique duplo
-        
-        prevBtn.addEventListener('click', playPrev);
-        nextBtn.addEventListener('click', playNext);
-
-        // History (Basic LocalStorage)
-        function addToHistory(name, uri, size) {
-            if(uri === 'local_playlist') return; // Não salva arquivos locais individuais da playlist no histórico principal
-            let h = JSON.parse(localStorage.getItem('oak_history') || '[]');
-            h = h.filter(x => x.uri !== uri);
-            h.unshift({name, uri, size});
-            if(h.length > 5) h.pop();
-            localStorage.setItem('oak_history', JSON.stringify(h));
-            renderHistory();
-        }
-        function renderHistory() {
-            const h = JSON.parse(localStorage.getItem('oak_history') || '[]');
-            const list = document.getElementById('historyList');
-            if(h.length === 0) return document.getElementById('historySection').classList.add('hidden');
-            document.getElementById('historySection').classList.remove('hidden');
-            list.innerHTML = h.map(i => `
-                <div class="flex justify-between p-3 glass-panel rounded-lg items-center">
-                    <span class="text-xs text-gray-300 truncate w-2/3">${i.name}</span>
-                    <button onclick="loadMagnetLink('${i.uri}')" class="text-neon-cyan hover:text-white"><span class="material-icons text-sm">play_arrow</span></button>
-                </div>
-            `).join('');
-        }
-        renderHistory(); // Init
-
-        // Time & Progress
-        video.addEventListener('timeupdate', () => {
-            if(isNaN(video.duration)) return;
-            const pct = (video.currentTime / video.duration) * 100;
-            playBar.style.width = `${pct}%`;
-            document.getElementById('timeDisplay').innerText = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-        });
-        progressContainer.addEventListener('click', (e) => {
-            const rect = progressContainer.getBoundingClientRect();
-            if(video.duration) video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
-        });
-        document.getElementById('fsBtn').addEventListener('click', () => {
-            !document.fullscreenElement ? document.getElementById('playerContainer').requestFullscreen() : document.exitFullscreen();
-        });
-
-        // Helpers
-        function formatBytes(b) { if(b==0)return'0 B'; const k=1024, s=['B','KB','MB','GB']; const i=Math.floor(Math.log(b)/Math.log(k)); return parseFloat((b/Math.pow(k,i)).toFixed(2))+' '+s[i]; }
-        function formatTime(s) { const m=Math.floor(s/60), sec=Math.floor(s%60); return `${m}:${sec<10?'0'+sec:sec}`; }
-    </script>
-</body>
-</html>
+            setLoading(true, `Carregando: ${file.name}`);

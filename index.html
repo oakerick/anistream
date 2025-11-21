@@ -1,378 +1,487 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OakCine - AI Powered Player</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- WebTorrent -->
-    <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
-    <!-- Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0d1117;
-            color: #e6edf3;
-        }
-
-        /* Animação do Logo */
-        @keyframes pulse-glow {
-            0%, 100% { text-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e40; }
-            50% { text-shadow: 0 0 20px #22c55e, 0 0 30px #22c55e; }
-        }
-        .logo-glow { animation: pulse-glow 3s infinite ease-in-out; }
-
-        /* Player Custom Controls */
-        .video-container:hover .controls-overlay { opacity: 1; }
-        .controls-overlay {
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
-            transition: opacity 0.3s ease;
-        }
-        
-        /* Slider */
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 12px; width: 12px;
-            border-radius: 50%; background: #22c55e;
-            margin-top: -4px; cursor: pointer;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%; height: 4px;
-            cursor: pointer; background: #4b5563;
-            border-radius: 2px;
-        }
-    </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>OakCine - Unified IA Pipeline (Clean)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#0f172a; color:#d1d5db; }
+.container { max-width:1000px; margin:32px auto; padding:20px; }
+.card { background:#0b1220; border:1px solid #1f2937; padding:18px; border-radius:12px; }
+input, button { font-family:inherit; }
+.controls-overlay { position:absolute; bottom:0; left:0; right:0; height:80px; opacity:0; transition:opacity .2s; pointer-events:none;
+  background:linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0)); }
+.player-wrapper.playing .controls-overlay { opacity:1; pointer-events:auto; }
+.result-card { background:#0f172a; border:1px solid #1f2937; padding:12px; border-radius:10px; }
+</style>
 </head>
-<body class="flex justify-center min-h-screen p-4 md:p-8">
-
-    <div class="w-full max-w-6xl space-y-6">
-
-        <!-- 1. CABEÇALHO E LOGO -->
-        <header class="flex flex-col md:flex-row justify-between items-center bg-gray-900 p-6 rounded-2xl shadow-2xl border border-gray-800">
-            <div class="flex items-center gap-3 mb-4 md:mb-0">
-                <span class="material-icons text-4xl text-green-500">smart_display</span>
-                <div>
-                    <h1 class="text-4xl font-black tracking-tighter text-white logo-glow">
-                        Oak<span class="text-green-500">Cine</span>
-                    </h1>
-                    <p class="text-xs text-gray-500 font-bold tracking-widest uppercase">AI Powered Streaming</p>
-                </div>
-            </div>
-            
-            <!-- Status do WebTorrent -->
-            <div id="torrentStatus" class="hidden items-center gap-4 bg-gray-800 px-4 py-2 rounded-full border border-gray-700 text-sm">
-                <div class="flex items-center gap-1 text-green-400">
-                    <span class="material-icons text-sm">download</span>
-                    <span id="dlSpeed">0 KB/s</span>
-                </div>
-                <div class="flex items-center gap-1 text-blue-400">
-                    <span class="material-icons text-sm">people</span>
-                    <span id="peersCount">0</span>
-                </div>
-            </div>
-        </header>
-
-        <!-- 2. MENU DE NAVEGAÇÃO -->
-        <nav class="bg-gray-900 p-2 rounded-xl border border-gray-800 shadow-lg">
-            <ul class="flex justify-center md:justify-start gap-2 overflow-x-auto">
-                <li><button onclick="showSection('search')" class="px-6 py-2 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 transition">Busca AI</button></li>
-                <li><button onclick="showSection('manual')" class="px-6 py-2 rounded-lg hover:bg-gray-800 text-gray-300 transition">Link Manual</button></li>
-                <li><button onclick="showSection('local')" class="px-6 py-2 rounded-lg hover:bg-gray-800 text-gray-300 transition">Arquivo Local</button></li>
-            </ul>
-        </nav>
-
-        <!-- 3. ÁREA DE CONTEÚDO -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- COLUNA ESQUERDA: PLAYER -->
-            <section class="lg:col-span-2 space-y-4">
-                <div class="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl group video-container">
-                    <video id="videoPlayer" class="w-full h-full object-contain"></video>
-                    
-                    <!-- Overlay de Loading -->
-                    <div id="loadingOverlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 hidden">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mb-3"></div>
-                        <p id="loadingText" class="text-green-400 font-mono text-sm">Carregando...</p>
-                    </div>
-
-                    <!-- Controles Customizados -->
-                    <div class="controls-overlay absolute bottom-0 left-0 right-0 p-4 opacity-0 transition-opacity z-30">
-                        <!-- Barra de Progresso -->
-                        <div class="relative h-1 bg-gray-600 rounded-full cursor-pointer mb-4 group/progress" id="progressBarContainer">
-                            <div id="progressBar" class="absolute top-0 left-0 h-full bg-green-500 rounded-full w-0"></div>
-                        </div>
-                        
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-3">
-                                <button id="playPauseBtn" class="text-white hover:text-green-400 transition"><span class="material-icons text-3xl">play_arrow</span></button>
-                                <button id="muteBtn" class="text-white hover:text-gray-300"><span class="material-icons">volume_up</span></button>
-                                <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="1" class="w-20">
-                                <span id="timeDisplay" class="text-xs text-gray-300 font-mono ml-2">00:00 / 00:00</span>
-                            </div>
-                            <button id="fullscreenBtn" class="text-white hover:text-green-400"><span class="material-icons">fullscreen</span></button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Informações da Mídia -->
-                <div id="mediaInfo" class="bg-gray-900 p-6 rounded-xl border border-gray-800">
-                    <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                        <span class="material-icons text-green-500">info</span> Detalhes da Mídia
-                    </h2>
-                    <p id="mediaTitle" class="text-gray-400 text-sm">Nenhuma mídia carregada.</p>
-                </div>
-            </section>
-
-            <!-- COLUNA DIREITA: PROMPTS E RESULTADOS -->
-            <aside class="lg:col-span-1 bg-gray-900 p-6 rounded-xl border border-gray-800 h-fit">
-                
-                <!-- SEÇÃO 1: BUSCA AI -->
-                <div id="section-search" class="space-y-4">
-                    <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-700 pb-2">Busca Inteligente</h3>
-                    <div class="relative">
-                        <input type="text" id="searchInput" placeholder="Ex: Matrix 1080p, One Piece..." 
-                               class="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-4 pl-10 text-white focus:ring-2 focus:ring-green-500 focus:outline-none transition">
-                        <span class="material-icons absolute left-3 top-3.5 text-gray-500">search</span>
-                    </div>
-                    <button id="searchBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition shadow-lg flex items-center justify-center gap-2">
-                        <span class="material-icons text-sm">auto_awesome</span> Buscar Torrents
-                    </button>
-                    
-                    <!-- Lista de Resultados -->
-                    <div id="resultsList" class="space-y-3 mt-4 max-h-[400px] overflow-y-auto custom-scrollbar hidden">
-                        <!-- Resultados injetados aqui -->
-                    </div>
-                </div>
-
-                <!-- SEÇÃO 2: MANUAL -->
-                <div id="section-manual" class="hidden space-y-4">
-                    <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-700 pb-2">Link Direto</h3>
-                    <textarea id="magnetInput" rows="3" placeholder="Cole aqui seu Magnet Link ou Hash..." 
-                              class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm text-white focus:ring-2 focus:ring-green-500 focus:outline-none"></textarea>
-                    <button id="loadMagnetBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition">
-                        Carregar Link
-                    </button>
-                </div>
-
-                <!-- SEÇÃO 3: LOCAL -->
-                <div id="section-local" class="hidden space-y-4">
-                    <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-700 pb-2">Arquivo Local</h3>
-                    <div id="dropZone" class="border-2 border-dashed border-gray-600 rounded-xl p-8 text-center hover:bg-gray-800 hover:border-green-500 transition cursor-pointer">
-                        <span class="material-icons text-4xl text-gray-500 mb-2">upload_file</span>
-                        <p class="text-sm text-gray-400">Clique ou arraste arquivos</p>
-                        <input type="file" id="fileInput" class="hidden" accept="video/*,.torrent">
-                    </div>
-                </div>
-
-            </aside>
-        </div>
-
+<body>
+<div class="container">
+  <div class="card">
+    <h1 class="text-2xl font-bold mb-4">OakCine — Unified IA Pipeline (A)</h1>
+    <div class="mb-4">
+      <label class="block text-sm text-gray-300">OpenAI API Key (não salva):</label>
+      <input id="openaiKeyInput" type="password" placeholder="Cole sua OpenAI key..." style="width:100%;padding:8px;margin-top:6px;border-radius:6px;background:#071025;border:1px solid #263142;color:#d1d5db" />
+      <div style="margin-top:8px">
+        <button id="activateOpenAI" style="background:#10b981;color:#021; padding:8px 12px;border-radius:8px;border:none">Ativar IA OpenAI (runtime)</button>
+      </div>
     </div>
 
-    <script>
-        // --- CONFIGURAÇÃO ---
-        const API_KEY = ""; // ⚠️ Insira sua chave Gemini aqui para a busca funcionar
-        const GOOGLE_SEARCH_API = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
-        
-        const client = new WebTorrent();
-        let currentTorrent = null;
+    <div class="mb-4">
+      <label class="block text-sm text-gray-300">Busca</label>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input id="searchInput" type="text" value="Interestelar 4K" style="flex:1;padding:10px;border-radius:8px;background:#071025;border:1px solid #263142;color:#d1d5db" />
+        <button id="searchBtn" style="background:#0ea5a0;color:#021;padding:10px 14px;border-radius:8px;border:none">Buscar</button>
+      </div>
+    </div>
 
-        // Elementos DOM
-        const video = document.getElementById('videoPlayer');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const loadingText = document.getElementById('loadingText');
-        const networkStatus = document.getElementById('networkStatus');
-        const resultsList = document.getElementById('resultsList');
-        
-        // --- NAVEGAÇÃO DE ABAS ---
-        window.showSection = (sectionId) => {
-            ['search', 'manual', 'local'].forEach(id => {
-                document.getElementById(`section-${id}`).classList.add('hidden');
-            });
-            document.getElementById(`section-${sectionId}`).classList.remove('hidden');
-        };
+    <div id="searchResultsContainer" class="mb-4" style="display:none">
+      <p id="resultsStatus" style="color:#94a3b8">Resultados...</p>
+      <div id="resultsList" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px"></div>
+      <p id="searchCount" style="color:#94a3b8;margin-top:8px"></p>
+    </div>
 
-        // --- BUSCA COM IA (GEMINI) ---
-        async function searchTorrents() {
-            const query = document.getElementById('searchInput').value.trim();
-            if (!query) return alert("Digite algo para buscar.");
+    <div style="margin-top:12px">
+      <label class="block text-sm text-gray-300">Drop / Arquivo local</label>
+      <div id="fileDropZone" style="margin-top:6px;padding:20px;border-radius:8px;background:#061226;border:1px dashed #223045; text-align:center;cursor:pointer">
+        Arraste um arquivo ou clique para selecionar
+        <input id="fileInput" type="file" accept="video/*,audio/*" style="display:none" />
+      </div>
+    </div>
+  </div>
 
-            resultsList.innerHTML = '<div class="text-center text-gray-500 py-4"><div class="animate-spin inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full"></div> Buscando...</div>';
-            resultsList.classList.remove('hidden');
+  <div id="playerCard" class="card" style="margin-top:14px;display:none">
+    <div class="player-wrapper relative" id="player-wrapper" tabindex="0" style="position:relative">
+      <video id="mediaPlayer" controls style="width:100%;background:#000;border-radius:8px"></video>
+      <div class="controls-overlay"></div>
+    </div>
+    <div id="mediaMetadata" style="margin-top:10px;color:#cbd5e1">...</div>
+    <div id="torrentStatsContainer" style="margin-top:8px;display:none;color:#cbd5e1"></div>
+  </div>
+</div>
 
-            const systemPrompt = `Você é um motor de busca de torrents de vídeo. 
-            Para a consulta "${query}", encontre links magnet REAIS e funcionais.
-            Retorne APENAS um JSON array estrito: [{"title": "Nome", "magnet": "magnet:?xt=...", "size": "Size", "seeds": 123}].
-            Se não encontrar links exatos, gere magnets baseados em hash válidos para demonstração.`;
+<script>
+/* ---- Unified clean JS pipeline (option A) ---- */
 
-            try {
-                const response = await fetch(`${GOOGLE_SEARCH_API}?key=${API_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: systemPrompt }] }],
-                        tools: [{ google_search: {} }]
-                    })
-                });
+const OPENAI_KEY = "sk-xxxxxx..."; // placeholder inserted previously
+const OPENAI_MODEL = "gpt-4.1-mini";
+const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
-                const data = await response.json();
-                let results = [];
-                
-                try {
-                    const text = data.candidates[0].content.parts[0].text;
-                    const jsonMatch = text.match(/\[[\s\S]*\]/);
-                    if(jsonMatch) results = JSON.parse(jsonMatch[0]);
-                } catch(e) { console.error("Erro parse:", e); }
+// Gemini config placeholder (requires API_KEY if used)
+const API_KEY = "";
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
 
-                // Mock de fallback se a API falhar ou não tiver chave
-                if(results.length === 0) {
-                    results = [
-                        { title: "Sintel (4K) - Demo", size: "129 MB", seeds: 50, magnet: "magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel" },
-                        { title: "Big Buck Bunny", size: "276 MB", seeds: 80, magnet: "magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Big+Buck+Bunny" }
-                    ];
-                }
+const RETRY_COUNT = 3;
+let client = null;
+let currentTorrent = null;
+let statsInterval = null;
+let runtimeOpenAIKey = null;
 
-                renderResults(results);
+// DOM
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const resultsList = document.getElementById('resultsList');
+const resultsStatus = document.getElementById('resultsStatus');
+const searchCount = document.getElementById('searchCount');
+const searchResultsContainer = document.getElementById('searchResultsContainer');
+const openaiKeyInput = document.getElementById('openaiKeyInput');
+const activateOpenAI = document.getElementById('activateOpenAI');
+const fileDropZone = document.getElementById('fileDropZone');
+const fileInput = document.getElementById('fileInput');
+const playerCard = document.getElementById('playerCard');
+const mediaPlayer = document.getElementById('mediaPlayer');
+const mediaMetadata = document.getElementById('mediaMetadata');
+const torrentStatsContainer = document.getElementById('torrentStatsContainer');
 
-            } catch (error) {
-                console.error(error);
-                resultsList.innerHTML = '<p class="text-red-400 text-center text-sm">Erro na busca. Verifique a API Key.</p>';
-            }
-        }
+const COMMON_TRACKERS = [
+  "udp://tracker.openbittorrent.com:80/announce",
+  "udp://tracker.opentrackr.org:1337/announce",
+  "udp://tracker.leechers-paradise.org:6969/announce",
+  "udp://tracker.coppersurfer.tk:6969/announce"
+];
 
-        function renderResults(results) {
-            resultsList.innerHTML = '';
-            results.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'bg-gray-800 p-4 rounded-lg border border-gray-700 hover:border-green-500 transition cursor-pointer group';
-                div.innerHTML = `
-                    <h4 class="font-bold text-sm text-white group-hover:text-green-400 mb-1 truncate">${item.title}</h4>
-                    <div class="flex justify-between text-xs text-gray-400">
-                        <span><i class="material-icons text-[10px] align-middle">sd_storage</i> ${item.size}</span>
-                        <span class="text-green-500"><i class="material-icons text-[10px] align-middle">people</i> ${item.seeds}</span>
-                    </div>
-                `;
-                div.onclick = () => loadMagnet(item.magnet);
-                resultsList.appendChild(div);
-            });
-        }
+const MIN_SEEDS_ACCEPT = 1;
+const SUPPORTED_EXT = ['.mp4','.mkv','.webm','.avi','.mov','.ogg','.ogv'];
 
-        // --- PLAYER CORE ---
-        
-        function loadMagnet(magnet) {
-            if(currentTorrent) {
-                currentTorrent.destroy();
-                currentTorrent = null;
-            }
-            
-            showLoading("Conectando aos peers...");
-            networkStatus.classList.remove('hidden');
-            networkStatus.classList.add('flex');
+function showMessage(title, message) {
+  alert(title + "\n" + message);
+}
 
-            client.add(magnet, torrent => {
-                currentTorrent = torrent;
-                showLoading("Baixando metadados...");
-                
-                const file = torrent.files.find(f => f.name.match(/\.(mp4|mkv|webm|ogg)$/i));
-                
-                if(file) {
-                    showLoading(`Carregando: ${file.name}`);
-                    document.getElementById('mediaTitle').innerHTML = `Reproduzindo: <span class="text-green-400">${file.name}</span>`;
-                    
-                    file.renderTo(video, { autoplay: true }, err => {
-                        if(err) console.error(err);
-                        hideLoading();
-                    });
-                } else {
-                    alert("Vídeo não encontrado no torrent.");
-                    hideLoading();
-                }
+/* Fetch with retry for Gemini / structured calls */
+async function fetchWithRetry(url, options, attempt = 1) {
+  try {
+    const res = await fetch(url, options);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (err) {
+    if (attempt < RETRY_COUNT) {
+      await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 500));
+      return fetchWithRetry(url, options, attempt + 1);
+    }
+    throw err;
+  }
+}
 
-                torrent.on('download', () => {
-                    document.getElementById('dlSpeed').innerText = (torrent.downloadSpeed / 1024 / 1024).toFixed(1) + ' MB/s';
-                    document.getElementById('peersCount').innerText = torrent.numPeers;
-                });
-            });
-        }
+/* ---------------- AI functions ----------------- */
+/* enhanceQueryWithAI: use Gemini when available, fallback to simple expansion */
+async function enhanceQueryWithAI(query) {
+  // Conservative local fallback to avoid depending on Gemini
+  // Try Gemini if API_KEY provided, else perform deterministic expansion
+  if (!query || query.trim().length === 0) return query;
+  if (API_KEY) {
+    const payload = {
+      contents:[{parts:[{text:`Transforme em uma consulta de busca de torrents para mídia: "${query}"`}]}],
+      systemInstruction:{parts:[{text:"Gere UMA LINHA curta, sem explicações, com termos de qualidade e ano quando aplicável."}]},
+      config:{responseMimeType:"text/plain"}
+    };
+    try {
+      const res = await fetchWithRetry(GEMINI_API_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+      const text = res?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text.replace(/\n/g,' ').trim();
+    } catch(e){
+      console.warn('Gemini expand failed', e);
+    }
+  }
+  // deterministic expansion fallback
+  const q = query.trim();
+  // add quality heuristics if user didn't provide
+  if (!/\b(1080p|720p|4k|2160p)\b/i.test(q)) {
+    return q + " 1080p";
+  }
+  return q;
+}
 
-        function loadFile(file) {
-            const url = URL.createObjectURL(file);
-            video.src = url;
-            document.getElementById('mediaTitle').innerHTML = `Arquivo Local: <span class="text-blue-400">${file.name}</span>`;
-            video.play();
-        }
+/* metaSearchWithAI: request structured results from Gemini when possible.
+   If not available, return empty array to let pipeline fallback to other strategies.
+*/
+async function metaSearchWithAI(expandedQuery) {
+  if (!API_KEY) return [];
+  const systemPrompt = "Agregue resultados de torrents de mídia e retorne ARRAY JSON com fields: title, magnetLink, hash, size, seeds, description, source, url. Retorne apenas JSON.";
+  const payload = {
+    contents:[{parts:[{text:`Meta-search: ${expandedQuery}`}]}],
+    tools:[{"google_search":{}}],
+    systemInstruction:{parts:[{text:systemPrompt}]},
+    config:{responseMimeType:"application/json", responseSchema:{type:"ARRAY"}}
+  };
+  try {
+    const res = await fetchWithRetry(GEMINI_API_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    const text = res?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+    return JSON.parse(text);
+  } catch(e){
+    console.warn('metaSearchWithAI failed', e);
+    return [];
+  }
+}
 
-        // --- UTILITÁRIOS UI ---
-        function showLoading(msg) {
-            loadingOverlay.classList.remove('hidden');
-            loadingOverlay.classList.add('flex');
-            document.getElementById('loadingText').innerText = msg;
-        }
-        function hideLoading() {
-            loadingOverlay.classList.add('hidden');
-            loadingOverlay.classList.remove('flex');
-        }
+function isValidMagnet(m) {
+  return typeof m === 'string' && m.startsWith('magnet:?xt=urn:btih:') && m.length > 40;
+}
+function looksLikeMedia(titleOrDesc) {
+  if (!titleOrDesc) return false;
+  const q = titleOrDesc.toLowerCase();
+  return /\b(1080p|720p|4k|2160p|bluray|webrip|web-dl|bdrip)\b/.test(q) || /\b(19|20)\d{2}\b/.test(q);
+}
+function reconstructMagnetIfMissing(item) {
+  try {
+    if ((!item.magnetLink || item.magnetLink==='') && item.hash) {
+      const h = item.hash.replace(/[^a-fA-F0-9]/g,'').toUpperCase();
+      const dn = encodeURIComponent(item.title||'torrent');
+      const tr = COMMON_TRACKERS.map(t=>`&tr=${encodeURIComponent(t)}`).join('');
+      item.magnetLink = `magnet:?xt=urn:btih:${h}&dn=${dn}${tr}`;
+    }
+  } catch(e){ console.warn(e); }
+  return item;
+}
 
-        // --- EVENT LISTENERS ---
-        document.getElementById('searchBtn').onclick = searchTorrents;
-        document.getElementById('searchInput').onkeydown = (e) => e.key === 'Enter' && searchTorrents();
-        
-        document.getElementById('loadMagnetBtn').onclick = () => loadMagnet(document.getElementById('magnetInput').value);
-        
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        
-        dropZone.onclick = () => fileInput.click();
-        fileInput.onchange = (e) => e.target.files[0] && loadFile(e.target.files[0]);
-        
-        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('border-green-500', 'bg-gray-800'); };
-        dropZone.ondragleave = () => { dropZone.classList.remove('border-green-500', 'bg-gray-800'); };
-        dropZone.ondrop = (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('border-green-500', 'bg-gray-800');
-            if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
-        };
-
-        // Controles Básicos
-        const playBtn = document.getElementById('playPauseBtn');
-        video.onplay = () => playBtn.innerHTML = '<span class="material-icons text-3xl">pause</span>';
-        video.onpause = () => playPauseBtn.innerHTML = '<span class="material-icons text-3xl">play_arrow</span>';
-        playBtn.onclick = () => video.paused ? video.play() : video.pause();
-        video.onclick = () => video.paused ? video.play() : video.pause();
-
-        const progressBar = document.getElementById('progressBar');
-        video.ontimeupdate = () => {
-            const pct = (video.currentTime / video.duration) * 100;
-            progressBar.style.width = `${pct}%`;
-            document.getElementById('timeDisplay').innerText = 
-                new Date(video.currentTime * 1000).toISOString().substr(11, 8) + " / " + 
-                new Date(video.duration * 1000).toISOString().substr(11, 8);
-        };
-
-        document.getElementById('progressBarContainer').onclick = (e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const pos = (e.clientX - rect.left) / rect.width;
-            video.currentTime = pos * video.duration;
-        };
-
-        document.getElementById('fullscreenBtn').onclick = () => {
-            !document.fullscreenElement ? video.parentNode.requestFullscreen() : document.exitFullscreen();
-        };
-
-        // Atalhos
-        document.addEventListener('keydown', (e) => {
-            if(e.target.tagName === 'INPUT') return;
-            if(e.key === ' ' || e.key === 'k') { e.preventDefault(); video.paused ? video.play() : video.pause(); }
-            if(e.key === 'f') document.getElementById('fullscreenBtn').click();
-            if(e.key === 'ArrowRight') video.currentTime += 5;
-            if(e.key === 'ArrowLeft') video.currentTime -= 5;
+/* validateMagnetLive: quick metadata check using WebTorrent (adds then destroys) */
+async function validateMagnetLive(magnet, timeoutMs=10000) {
+  return new Promise((resolve) => {
+    if (!isValidMagnet(magnet)) return resolve({ok:false, reason:'invalid_magnet'});
+    let resolved=false;
+    try {
+      const t = client.add(magnet, {announce:COMMON_TRACKERS}, (torrent) => {
+        const mediaFiles = torrent.files.filter(f => {
+          const name = f.name || '';
+          return SUPPORTED_EXT.some(ext => name.toLowerCase().endsWith(ext));
         });
+        const seeds = torrent.numPeers || 0;
+        const ok = (mediaFiles.length>0) && (seeds>=MIN_SEEDS_ACCEPT || torrent.done || torrent.numPeers>0);
+        if (!resolved) {
+          resolved=true;
+          setTimeout(()=>{ try{ t.destroy(); }catch(e){} }, 800);
+          resolve({ok, reason: ok ? 'validated' : 'no_media_or_peers'});
+        }
+      });
+      t.on('error', (err) => {
+        if (!resolved) { resolved=true; try{ t.destroy(); }catch(e){}; resolve({ok:false, reason:'torrent_error'}); }
+      });
+      setTimeout(()=>{ if(!resolved){ resolved=true; try{ t.destroy(); }catch(e){}; resolve({ok:false, reason:'timeout'}); } }, timeoutMs);
+    } catch(e){
+      resolve({ok:false, reason:'exception'});
+    }
+  });
+}
 
-    </script>
+/* openaiRerankAndValidate: call OpenAI to score/filter then live-validate top N */
+async function openaiRerankAndValidate(results, query, topValidate=3) {
+  try {
+    const payloadForModel = results.map(r=>({
+      title: r.title, magnetLink: r.magnetLink||null, hash: r.hash||null, size: r.size||null, seeds: r.seeds||0, source: r.source||r.url||null
+    }));
+    const systemPrompt = "Você é um avaliador de torrents. Receba um JSON e retorne um JSON array filtrado e ordenado pelos melhores para reprodução em WebTorrent. Cada item deve ter 'score' (0-100) e 'reason'. Retorne apenas JSON.";
+    const messages = [
+      {role:"system", content:systemPrompt},
+      {role:"user", content:`Query: "${query}"\nItems:\n${JSON.stringify(payloadForModel)}`}
+    ];
+    const key = runtimeOpenAIKey || OPENAI_KEY || "";
+    if (!key) throw new Error('OpenAI key not set');
+    const res = await fetch(OPENAI_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+      body: JSON.stringify({ model: OPENAI_MODEL, messages, temperature:0.0, max_tokens:1200 })
+    });
+    if (!res.ok) throw new Error('OpenAI error ' + res.status);
+    const data = await res.json();
+    let assistantText = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || '';
+    if (!assistantText) throw new Error('empty response from openai');
+    const parsed = JSON.parse(assistantText);
+    const withMagnets = parsed.map(reconstructMagnetIfMissing);
+    // live-validate top items
+    for (let i=0;i<Math.min(topValidate, withMagnets.length);i++){
+      const item = withMagnets[i];
+      const check = await validateMagnetLive(item.magnetLink||'');
+      item._live = check;
+    }
+    return withMagnets;
+  } catch(e){
+    console.warn('openaiRerankAndValidate failed', e);
+    return results;
+  }
+}
+
+/* masterSearch: orchestrates expansion, meta-search, reconstruct, rerank, validate, display */
+
+
+
+/* masterSearch: orchestrates expansion, meta-search, reconstruct, rerank, validate, display */
+async function masterSearch(query) {
+  resultsList.innerHTML = '';
+  searchResultsContainer.style.display = 'none';
+  resultsStatus.textContent = 'Executando busca...';
+  searchBtn.disabled = true;
+
+  try {
+    // 1) expand query (AI or heuristic)
+    const expanded = await enhanceQueryWithAI(query);
+    console.log('masterSearch - expanded:', expanded);
+
+    // 2) try Gemini meta-search if configured
+    let metaResults = [];
+    try {
+      if (API_KEY) {
+        metaResults = await metaSearchWithAI(expanded);
+      }
+    } catch (e) {
+      console.warn('Gemini meta-search failed', e);
+      metaResults = [];
+    }
+
+    // 3) if no results from Gemini, use fallback scrapers
+    if (!metaResults || metaResults.length === 0) {
+      const scraped = await fallbackScrape(expanded);
+      metaResults = (scraped || []);
+    }
+
+    // 4) Normalize / reconstruct magnets when possible
+    metaResults = (metaResults || []).map(reconstructMagnetIfMissing);
+
+    // 5) Quick filter: accept items with magnet or that look like media
+    metaResults = metaResults.filter(item => {
+      const hasMag = isValidMagnet(item.magnetLink || '');
+      const looks = looksLikeMedia(item.title) || looksLikeMedia(item.description);
+      return hasMag || looks;
+    });
+
+    // 6) If OpenAI key present, rerank + live-validate top items
+    let finalResults = metaResults;
+    if ((runtimeOpenAIKey && runtimeOpenAIKey.length>8) || (OPENAI_KEY && OPENAI_KEY.length>8)) {
+      try {
+        finalResults = await openaiRerankAndValidate(metaResults, query, 3);
+      } catch (e) {
+        console.warn('OpenAI rerank failed, falling back to metaResults', e);
+        finalResults = metaResults;
+      }
+    }
+
+    // 7) Final sanitize: ensure magnet string exists and seeds default
+    finalResults = (finalResults || []).map(i => { i.magnetLink = i.magnetLink || ''; i.seeds = i.seeds || 0; return i; });
+
+    // 8) Filter by valid magnet or live validated ok
+    finalResults = finalResults.filter(i => {
+      const valid = isValidMagnet(i.magnetLink);
+      const liveOk = i._live && i._live.ok;
+      return valid || liveOk;
+    });
+
+    // Display
+    displaySearchResults(finalResults || []);
+  } catch (err) {
+    console.error('masterSearch error', err);
+    showMessage('Erro', 'Erro ao executar busca: ' + (err.message || err));
+    displaySearchResults([]);
+  } finally {
+    searchBtn.disabled = false;
+    resultsStatus.textContent = '';
+  }
+}
+
+
+/* --- Enhanced Fallback Torrent Scrapers: 1337x, TPB, TorrentGalaxy, Nyaa --- */
+async function fallbackScrape(query) {
+  const encoded = encodeURIComponent(query);
+  const endpoints = [
+    // 1337x
+    `https://corsproxy.io/?${encodeURIComponent("https://1337x.to/search/" + encoded + "/1/")}`,
+    // TPB
+    `https://corsproxy.io/?${encodeURIComponent("https://thepiratebay.org/search/" + encoded + "/1/99")}`,
+    // TorrentGalaxy
+    `https://corsproxy.io/?${encodeURIComponent("https://torrentgalaxy.to/torrents.php?search=" + encoded)}`,
+    // Nyaa (anime)
+    `https://corsproxy.io/?${encodeURIComponent("https://nyaa.si/?f=0&c=0_0&q=" + encoded)}`
+  ];
+  let results = [];
+  for (let url of endpoints) {
+    try {
+      const r = await fetch(url);
+      const j = await r.json();
+      const html = j.contents || "";
+      const reg = /magnet:\?xt=urn:btih:[a-zA-Z0-9]+[^"'<]+/g;
+      const mags = html.match(reg) || [];
+      mags.forEach(m => {
+        results.push({
+          title: query + " (scraped)",
+          magnetLink: m,
+          size: "N/A",
+          seeds: 1,
+          description: "Scraped fallback result",
+          source: url
+        });
+      });
+    } catch(e){ console.warn("scrape fail", e); }
+  }
+  return results;
+}
+
+
+/* displaySearchResults - single clean implementation */
+function displaySearchResults(results) {
+  resultsList.innerHTML = '';
+  searchResultsContainer.style.display = results.length>0 ? 'block':'none';
+  searchCount.textContent = `Mostrando ${results.length} resultados`;
+  resultsStatus.textContent = results.length>0 ? 'Clique em STREAM para reproduzir' : 'Nenhum resultado válido';
+  results.forEach(item=>{
+    const div = document.createElement('div');
+    div.className = 'result-card';
+    const hash = item.hash || (item.magnetLink ? item.magnetLink.replace(/^.*btih:([a-fA-F0-9]+).*/,'$1') : 'N/A');
+    div.innerHTML = `
+      <h4 style="font-weight:600;color:#e6f9f1">${item.title||'Sem título'}</h4>
+      <div style="font-size:13px;color:#94a3b8;margin:6px 0">${item.size||'N/A'} • Seeds: ${item.seeds||0}</div>
+      <p style="color:#9aa7b6;font-size:13px">${item.description||''}</p>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button style="flex:1;padding:8px;border-radius:6px;border:none;background:#334155;color:#fff" onclick="(function(t){navigator.clipboard?.writeText(t)||alert('copiar');})(\`${item.magnetLink||''}\`)">Copiar</button>
+        <button style="flex:1;padding:8px;border-radius:6px;border:none;background:#059669;color:#041" onclick="startTorrent(\`${item.magnetLink||''}\`)">STREAM</button>
+      </div>
+    `;
+    resultsList.appendChild(div);
+  });
+}
+
+/* Torrent functions */
+function destroyCurrentTorrent() {
+  if (currentTorrent) {
+    try { currentTorrent.destroy(); } catch(e){}
+    currentTorrent = null;
+  }
+  if (statsInterval) { clearInterval(statsInterval); statsInterval=null; }
+  torrentStatsContainer.style.display = 'none';
+  mediaPlayer.pause();
+  mediaPlayer.src = '';
+  playerCard.style.display = 'none';
+}
+
+function renderTorrentFile(file, torrent) {
+  playerCard.style.display = 'block';
+  mediaMetadata.innerText = `Nome: ${torrent.name} • Arquivo: ${file.name}`;
+  file.renderTo(mediaPlayer, { autoplay:true }, (err) => {
+    if (err) { console.error('render error', err); showMessage('Erro','Não foi possível renderizar'); destroyCurrentTorrent(); return; }
+    mediaPlayer.play().catch(()=>{});
+  });
+}
+
+/* startTorrent: adds magnet and chooses file */
+window.startTorrent = (magnetLink) => {
+  if (!magnetLink) { showMessage('Erro','Magnet vazio'); return; }
+  destroyCurrentTorrent();
+  try {
+    const t = client.add(magnetLink, (torrent) => {
+      currentTorrent = torrent;
+      const mediaFiles = torrent.files.filter(f=>SUPPORTED_EXT.some(ext=>f.name.toLowerCase().endsWith(ext)));
+      if (mediaFiles.length===0) {
+        showMessage('Erro','Nenhum arquivo de mídia suportado encontrado');
+        destroyCurrentTorrent();
+        return;
+      }
+      // choose largest file by length for playback
+      mediaFiles.sort((a,b)=>b.length - a.length);
+      renderTorrentFile(mediaFiles[0], torrent);
+      // stats display
+      torrentStatsContainer.style.display = 'block';
+      statsInterval = setInterval(()=> {
+        torrentStatsContainer.innerText = `Peers: ${torrent.numPeers} • Progress: ${(torrent.progress*100).toFixed(1)}% • DL: ${formatSpeed(torrent.downloadSpeed)}`;
+      }, 1000);
+    });
+    t.on('error', (err)=> { console.error('torrent err', err); showMessage('Torrent error', err.message||String(err)); destroyCurrentTorrent(); });
+  } catch(e){ console.error(e); showMessage('Erro','Falha ao iniciar torrent'); }
+};
+
+function formatSpeed(bps) {
+  if (!bps) return '0 B/s';
+  const k=1024; const sizes=['B/s','KB/s','MB/s','GB/s'];
+  const i=Math.floor(Math.log(bps)/Math.log(k));
+  return (bps/Math.pow(k,i)).toFixed(2) + ' ' + sizes[i];
+}
+
+/* ---- UI & Event listeners ---- */
+searchBtn.addEventListener('click', ()=> {
+  const q = searchInput.value.trim();
+  if (q.length<3) { showMessage('Atenção','Digite 3+ caracteres'); return; }
+  masterSearch(q);
+});
+activateOpenAI.addEventListener('click', ()=> {
+  runtimeOpenAIKey = openaiKeyInput.value.trim();
+  if (runtimeOpenAIKey && runtimeOpenAIKey.length>8) showMessage('OK','Chave carregada em runtime');
+  else showMessage('Aviso','Chave inválida ou vazia');
+});
+fileDropZone.addEventListener('click', ()=> fileInput.click());
+fileInput.addEventListener('change', (e)=> {
+  const f = e.target.files[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  destroyCurrentTorrent();
+  playerCard.style.display = 'block';
+  mediaPlayer.src = url;
+  mediaPlayer.play().catch(()=>{});
+  mediaMetadata.innerText = `Arquivo local: ${f.name} • ${(f.size/1024/1024).toFixed(2)} MB`;
+});
+
+/* init */
+window.addEventListener('load', ()=> {
+  client = new WebTorrent();
+});
+
+</script>
 </body>
 </html>

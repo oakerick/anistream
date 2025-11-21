@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AniStream Player | Completo + Superflix</title>
+    <title>AniStream Player | Catálogo e Superflix Integrados</title>
     
     <!-- Fontes e Ícones -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
@@ -19,8 +19,8 @@
         :root {
             --primary: #e50914;         /* Vermelho Netflix */
             --superflix: #9c27b0;       /* Roxo para a API */
-            --bg-dark: #141414;
-            --bg-panel: #181818;
+            --bg-dark: #141414;         /* Fundo Principal */
+            --bg-medium: #222;          /* Fundo de Painéis/Inputs */
             --border: #404040; 
             --text: #ffffff;
             --text-secondary: #b3b3b3;
@@ -52,27 +52,35 @@
         .video-wrapper.youtube-mode #nativePlayer { z-index: 0; }
         .video-wrapper.youtube-mode #ytPlayer { z-index: 6; }
 
-        /* CONTROLES */
+        /* CONTROLES (Mantidos) */
         .custom-controls { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%); padding: 0 20px 15px 20px; opacity: 0; transition: opacity 0.3s; z-index: 10; }
         .video-wrapper:hover .custom-controls, .video-wrapper.paused .custom-controls { opacity: 1; }
-        .progress-bar { height: 4px; background: rgba(255,255,255,0.3); margin-bottom: 10px; cursor: pointer; position: relative; border-radius: 2px; transition: height 0.1s; }
+        .progress-bar { height: 4px; background: rgba(255,255,255,0.3); margin-bottom: 10px; cursor: pointer; position: relative; border-radius: 2px; }
         .progress-fill { height: 100%; background: var(--primary); width: 0%; border-radius: 2px; position: relative; }
         .controls-row { display: flex; justify-content: space-between; align-items: center; }
         .btn { background: none; border: none; color: #fff; cursor: pointer; padding: 5px; display: flex; }
         .btn:hover { transform: scale(1.1); }
         .material-icons { font-size: 1.8rem; }
+        #volSlider { height: 5px; cursor: pointer; }
 
         /* INPUTS E CONTEÚDO */
         .content-panel { width: 100%; max-width: var(--player-max-width); }
         .input-group { display: none; flex-direction: column; gap: 15px; padding: 20px 0; }
         .input-group.active { display: flex; }
-        .search-box { display: flex; gap: 10px; }
-        .search-box input { flex: 1; background: #333; border: 1px solid #444; color: white; padding: 12px 15px; font-size: 1rem; border-radius: 4px; }
+        
+        /* BARRA DE PESQUISA UNIFICADA */
+        .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
+        .search-box input { flex: 1; background: var(--bg-medium); border: 1px solid #444; color: white; padding: 12px 15px; font-size: 1rem; border-radius: 4px; }
         .search-box button, .action-btn { background: var(--primary); color: white; border: none; padding: 0 25px; font-weight: 700; font-size: 1rem; cursor: pointer; border-radius: 4px; text-transform: uppercase; }
         .search-box button:hover { background: #f40612; }
 
         /* GRID CATÁLOGO */
-        .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 20px; }
+        .catalog-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+            gap: 15px; 
+            margin-top: 20px;
+        }
         .catalog-card { background: #222; border-radius: 4px; overflow: hidden; cursor: pointer; transition: transform 0.3s; position: relative; aspect-ratio: 2/3; }
         .catalog-card:hover { transform: scale(1.05); z-index: 5; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid var(--primary); }
         .card-img { width: 100%; height: 100%; object-fit: cover; }
@@ -80,15 +88,15 @@
         .card-title { font-size: 0.85rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
         
         /* BOTÃO SUPERFLIX */
-        .superflix-btn { background: var(--superflix); color: white; width: 100%; padding: 15px; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .superflix-btn { background: var(--superflix); color: white; width: 100%; padding: 15px; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .superflix-btn:hover { background: #7b1fa2; }
+        .superflix-btn:disabled { background: #555; cursor: not-allowed; }
 
-        /* LOADING */
+        /* LOADING & MODAL (Mantidos) */
         #torrentStatus { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 15; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        /* MODAL */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; justify-content: center; align-items: center; }
         .modal-box { background: var(--bg-dark); padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; text-align: center; border: 1px solid var(--border); }
     </style>
@@ -100,7 +108,7 @@
         <div class="nav-menu">
             <button class="nav-item active" onclick="switchTab('catalog', this)">Início</button>
             <button class="nav-item" onclick="switchTab('url', this)">Link/Magnet</button>
-            <button class="nav-item" onclick="switchTab('addon', this)">Addons & APIs</button>
+            <button class="nav-item" onclick="switchTab('addon', this)">Configuração Proxy</button>
         </div>
         <div style="width: 32px; height: 32px; background: #333; border-radius: 4px;"></div>
     </header>
@@ -146,13 +154,27 @@
         <!-- SEÇÃO DE CONTEÚDO (INPUTS/CATÁLOGO) -->
         <div class="content-panel">
             
-            <!-- TAB 1: CATÁLOGO GERAL (Local/Destaques) -->
+            <!-- TAB 1: CATÁLOGO GERAL (Início) -->
             <div id="tab-catalog" class="input-group active">
+                <!-- BARRA DE PESQUISA UNIFICADA -->
                 <div class="search-box">
-                    <input type="text" id="catalogSearch" placeholder="Filtrar catálogo local...">
+                    <input type="text" id="mainSearchInput" placeholder="Pesquisar títulos de Animes ou Vídeos (Local/API)...">
+                    <button onclick="handleMainSearch()">Buscar</button>
                 </div>
-                <h3 style="margin-top: 10px; color: var(--text-secondary); font-size: 0.9rem;">Destaques</h3>
+
+                <h3 style="margin-top: 10px; color: var(--text-secondary); font-size: 0.9rem;">Destaques Locais (Demo)</h3>
                 <div class="catalog-grid" id="catalogGrid"></div>
+                
+                <!-- BOTÃO PARA CARREGAR SUPERFLIX -->
+                <button class="superflix-btn" onclick="loadSuperflixCatalog()" id="loadSuperflixBtn">
+                    <span class="material-icons">movie_filter</span> Carregar Animes Populares (Superflix API)
+                </button>
+                
+                <!-- RESULTADOS DA SUPERFLIX APARECERÃO AQUI -->
+                <div id="superflixSection" style="margin-top: 30px; display: none;">
+                    <h3 style="color:var(--text); margin-bottom:15px; font-weight:700;">Catálogo Superflix (Animes TMDB)</h3>
+                    <div class="catalog-grid" id="superflixGrid"></div>
+                </div>
             </div>
 
             <!-- TAB 2: LINK/MAGNET & LOCAL FILES -->
@@ -163,33 +185,25 @@
                     <button onclick="loadFromInput()">Reproduzir</button>
                 </div>
                 
-                <div class="file-drop-zone" onclick="document.getElementById('fileInput').click()">
+                <div class="file-drop-zone" style="border: 2px dashed #444; padding: 20px; text-align: center; border-radius: 8px; cursor: pointer;" onclick="document.getElementById('fileInput').click()">
                     <span class="material-icons" style="font-size: 3rem; display: block; margin-bottom: 10px;">cloud_upload</span> 
                     Ou clique para carregar Arquivo Local (.mp4, .torrent)
                     <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(this.files)">
                 </div>
             </div>
 
-            <!-- TAB 3: ADDONS (SUPERFLIX E PROXY) -->
+            <!-- TAB 3: CONFIGURAÇÃO PROXY -->
             <div id="tab-addon" class="input-group">
-                <h3 style="margin: 0;">Configuração de APIs</h3>
+                <h3 style="margin: 0;">Configuração de Proxy e API</h3>
                 
-                <!-- CONFIGURAÇÃO PROXY -->
                 <div style="background: var(--bg-medium); padding: 15px; border-radius: 4px;">
                     <p style="margin: 0 0 10px 0; color: var(--text-secondary); font-size: 0.9rem;">URL do Proxy Vercel (Obrigatório para evitar CORS):</p>
                     <div class="search-box">
                         <input type="text" id="addonUrl" placeholder="Ex: https://seu-proxy.vercel.app">
                         <button onclick="saveAddonUrl()">Salvar</button>
                     </div>
+                    <p style="color:var(--text-secondary); font-size: 0.8rem; margin-top: 10px;">Esta URL é usada para buscar o catálogo Superflix (aba Início) e Streams do Addon Stremio.</p>
                 </div>
-
-                <!-- SUPERFLIX API BUTTON -->
-                <button class="superflix-btn" onclick="loadSuperflixCatalog()">
-                    <span class="material-icons">movie_filter</span> Carregar Catálogo Superflix (Animes Populares)
-                </button>
-                
-                <!-- RESULTADOS DA BUSCA API -->
-                <div id="addonResults" style="margin-top: 15px;"></div>
             </div>
         </div>
     </div>
@@ -223,9 +237,8 @@
         const playBtn = document.getElementById('playBtn');
         const muteBtn = document.getElementById('muteBtn');
         const progressBar = document.getElementById('progressBar');
-        const progressFill = document.getElementById('progressFill');
-        const timeDisplay = document.getElementById('timeDisplay');
         const volumeSlider = document.getElementById('volSlider');
+        const mainSearchInput = document.getElementById('mainSearchInput');
 
         // Catálogo Local de Demonstração
         function getLocalCatalog() {
@@ -248,14 +261,9 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
             btn.classList.add('active');
-            
-            // Se for a aba de addon, mostra resultados
-            if (tabId === 'addon') {
-                document.getElementById('addonResults').innerHTML = '';
-            }
         };
-
-        // --- PLAYER CORE ---
+        
+        // --- PLAYER CORE & CONTROLES ---
         
         function updateTimeDisplay() {
             const formatTime = (seconds) => {
@@ -264,10 +272,10 @@
             };
             const current = formatTime(nativeVideo.currentTime);
             const duration = formatTime(nativeVideo.duration);
-            timeDisplay.innerText = `${current} / ${duration}`;
+            document.getElementById('timeDisplay').innerText = `${current} / ${duration}`;
             
             const pct = (nativeVideo.currentTime / nativeVideo.duration) * 100;
-            progressFill.style.width = pct + '%';
+            document.getElementById('progressFill').style.width = pct + '%';
         }
 
         function loadMedia(source, title, type) {
@@ -282,13 +290,11 @@
             if (type === 'youtube') {
                 wrapper.classList.add('youtube-mode');
                 nativeVideo.pause();
-                // Oculta vídeo nativo para mostrar o iframe do YouTube
                 nativeVideo.style.zIndex = 0; 
                 ytIframe.style.zIndex = 6;
                 ytIframe.src = `https://www.youtube.com/embed/${source}?autoplay=1&rel=0`;
             } 
             else if (type === 'magnet' || type === 'file') {
-                // Configura player nativo para uso
                 nativeVideo.style.zIndex = 5; 
                 ytIframe.style.zIndex = 0;
                 
@@ -315,12 +321,10 @@
                 });
             } 
             else {
-                // URL Direta / Blob (Arquivo Local)
                 nativeVideo.style.zIndex = 5; 
                 ytIframe.style.zIndex = 0;
                 nativeVideo.src = source;
                 nativeVideo.play().then(() => updatePlayIcon(true)).catch(() => {
-                    // Tenta forçar mudo se autoplay for bloqueado
                     nativeVideo.muted = true;
                     nativeVideo.play();
                     updatePlayIcon(true);
@@ -328,17 +332,13 @@
             }
         }
 
-        // --- FUNÇÕES DE INTERFACE ---
-
         function setupPlayerEvents() {
             nativeVideo.addEventListener('play', () => { updatePlayIcon(true); wrapper.classList.remove('paused'); });
             nativeVideo.addEventListener('pause', () => { updatePlayIcon(false); wrapper.classList.add('paused'); });
             nativeVideo.addEventListener('timeupdate', updateTimeDisplay);
             nativeVideo.addEventListener('loadedmetadata', updateTimeDisplay);
 
-            playBtn.onclick = togglePlay;
-            muteBtn.onclick = toggleMute;
-            volumeSlider.oninput = (e) => setVolume(e.target.value);
+            volumeSlider.oninput = (e) => setVolume(parseFloat(e.target.value));
             
             progressBar.addEventListener('click', (e) => {
                 const rect = progressBar.getBoundingClientRect();
@@ -357,32 +357,46 @@
                     case 'l': e.preventDefault(); seekRelative(10); break;
                     case 'm': e.preventDefault(); toggleMute(); break;
                     case 'f': e.preventDefault(); toggleFullscreen(); break;
-                    case 'arrowup': e.preventDefault(); setVolume(Math.min(1, nativeVideo.volume + 0.05)); break;
-                    case 'arrowdown': e.preventDefault(); setVolume(Math.max(0, nativeVideo.volume - 0.05)); break;
+                    case 'arrowup': e.preventDefault(); const newVolUp = Math.min(1, nativeVideo.volume + 0.05); setVolume(newVolUp); break;
+                    case 'arrowdown': e.preventDefault(); const newVolDown = Math.max(0, nativeVideo.volume - 0.05); setVolume(newVolDown); break;
                     case 'arrowleft': e.preventDefault(); seekRelative(-5); break;
                     case 'arrowright': e.preventDefault(); seekRelative(5); break;
+                    default: if (e.key >= '0' && e.key <= '9') { e.preventDefault(); const time = (nativeVideo.duration / 10) * parseInt(e.key); seekTo(time); } break;
                 }
             });
         }
         
-        // --- FUNÇÕES DE CONTROLE ---
         window.togglePlay = () => nativeVideo.paused ? nativeVideo.play() : nativeVideo.pause();
         
-        window.toggleMute = () => {
-            nativeVideo.muted = !nativeVideo.muted;
-            muteBtn.innerHTML = nativeVideo.muted ? '<span class="material-icons">volume_off</span>' : '<span class="material-icons">volume_up</span>';
-        };
-
+        window.seekTo = (time) => nativeVideo.currentTime = time;
+        window.seekRelative = (val) => nativeVideo.currentTime += val;
+        
         window.setVolume = (vol) => {
             nativeVideo.volume = vol;
             volumeSlider.value = vol;
             nativeVideo.muted = (vol === 0);
             muteBtn.innerHTML = nativeVideo.muted ? '<span class="material-icons">volume_off</span>' : '<span class="material-icons">volume_up</span>';
         };
-        
-        window.seekTo = (time) => nativeVideo.currentTime = time;
-        window.seekRelative = (val) => nativeVideo.currentTime += val;
-        
+
+        window.toggleMute = () => {
+            const newMuteState = !nativeVideo.muted;
+            if (newMuteState) {
+                // Mudo
+                nativeVideo.muted = true;
+                muteBtn.innerHTML = '<span class="material-icons">volume_off</span>';
+                volumeSlider.value = 0;
+            } else {
+                // Desmudo (retorna ao último volume, ou 1 se estiver zerado)
+                nativeVideo.muted = false;
+                const currentVol = parseFloat(volumeSlider.value);
+                if (currentVol === 0) {
+                    volumeSlider.value = 1;
+                    nativeVideo.volume = 1;
+                }
+                muteBtn.innerHTML = '<span class="material-icons">volume_up</span>';
+            }
+        };
+
         window.toggleFullscreen = () => {
             if(!document.fullscreenElement) document.getElementById('videoContainer').requestFullscreen();
             else document.exitFullscreen();
@@ -417,13 +431,24 @@
             if(!files.length) return;
             const file = files[0];
             if(file.name.endsWith('.torrent')) {
-                loadMedia(file, file.name.replace('.torrent',''), 'magnet'); // WebTorrent aceita File objects
+                loadMedia(file, file.name.replace('.torrent',''), 'magnet'); 
             } else if (file.type.startsWith('video/')) {
                 loadMedia(URL.createObjectURL(file), file.name, 'url');
             } else {
                 showAlert("Formato Inválido", "Selecione um arquivo .torrent ou de vídeo.");
             }
         }
+
+        window.handleMainSearch = () => {
+            const query = mainSearchInput.value.trim().toLowerCase();
+            if (!query) return; 
+
+            // Implementar lógica de busca/filtro aqui, por enquanto, apenas loga
+            console.log(`Pesquisa principal acionada: ${query}`);
+
+            // Futura lógica: Filtrar catálogo local E (se carregado) o catálogo Superflix.
+            showAlert("Pesquisa", `Busca por "${query}" ainda não implementada. Você pode filtrar manualmente os catálogos abaixo.`);
+        };
         
         // --- FUNÇÕES DE CATALOGO/RENDERIZAÇÃO ---
         
@@ -459,10 +484,17 @@
             showAlert("Sucesso", "URL do Proxy Vercel salva!");
         };
 
-        // Função de integração Superflix
+        // Função de integração Superflix (agora chamada da aba Início)
         window.loadSuperflixCatalog = async () => {
-            if(!addonBaseUrl) return showAlert("Configuração", "Configure a URL do seu Proxy Vercel primeiro.");
+            if(!addonBaseUrl) {
+                document.getElementById('loadSuperflixBtn').disabled = false;
+                return showAlert("Configuração Necessária", "Vá para 'Configuração Proxy' e configure a URL do seu Proxy Vercel.");
+            }
             
+            const btn = document.getElementById('loadSuperflixBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width: 20px; height: 20px; margin: 0;"></span> Carregando...';
+
             statusEl.style.display = 'flex';
             statusText.innerText = "Buscando Animes...";
             statusDetail.innerText = "Consultando Superflix via Proxy...";
@@ -474,26 +506,27 @@
                 
                 const data = await response.json();
                 
-                // Adaptação dos dados da Superflix
                 const items = Array.isArray(data) ? data : (data.results || data.list || []);
                 
                 if(items.length === 0) throw new Error("Nenhum anime encontrado na resposta da API.");
 
-                document.getElementById('addonResults').innerHTML = `<h4 style="color:var(--text); margin-bottom:15px; font-weight:700;">Animes Populares (${items.length} resultados)</h4><div class="catalog-grid" id="superflixGrid"></div>`;
+                // Renderiza na nova seção dedicada
+                document.getElementById('superflixSection').style.display = 'block';
+                document.querySelector('#superflixSection h3').innerText = `Catálogo Superflix (Animes TMDB - ${items.length} resultados)`;
                 
                 renderCatalog(items.map(item => ({
                     title: item.title || item.name || "Sem Título",
-                    // Adapta o caminho do poster para o formato TMDB (w300)
                     img: item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : (item.image || ''),
                     id: item.id // Guarda o ID do TMDB
                 })), 'superflixGrid', (item) => searchStreams(item.id, item.title));
 
                 statusEl.style.display = 'none';
-                switchTab('addon', document.querySelector('.nav-item:nth-child(3)')); // Força a visualização da aba
-                window.scrollTo({top:0, behavior:'smooth'});
+                btn.style.display = 'none'; // Esconde o botão após carregar
 
             } catch (e) {
                 statusEl.style.display = 'none';
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-icons">movie_filter</span> Tentar Carregar Novamente (Superflix API)';
                 showAlert("Erro API", "Falha ao carregar catálogo: " + e.message);
             }
         };
@@ -504,8 +537,7 @@
             statusText.innerText = `Buscando streams para: ${title}`;
             statusDetail.innerText = "Consultando Addon Stremio via Proxy...";
             
-            // Assumimos que o addon Stremio está configurado na rota /streams/
-            const type = String(id).startsWith('tt') ? 'movie' : 'movie'; // Usar 'movie' ou 'series'
+            const type = 'movie'; // Assumindo 'movie' para o TMDB ID no addon Stremio
             const url = `${addonBaseUrl}/streams/${type}/${id}.json`; 
             
             try {
@@ -513,9 +545,8 @@
                 const data = await res.json();
                 statusEl.style.display = 'none';
                 
-                if(!data.streams || !data.streams.length) return showAlert("Info", `Nenhum stream encontrado para ${title} no addon.`);
+                if(!data.streams || !data.streams.length) return showAlert("Info", `Nenhum stream encontrado para ${title}.`);
                 
-                // Filtra e prepara as opções (aqui pegamos apenas o primeiro por simplicidade)
                 const stream = data.streams.find(s => s.url || s.infoHash);
                 
                 if (stream) {

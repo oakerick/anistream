@@ -285,7 +285,7 @@
         }
 
         /* =================================================================
-           # DETALHES DO METADADOS (NOVO)
+           # DETALHES DO METADADOS
            ================================================================= */
         .metadata-box {
             background-color: var(--bg-dark);
@@ -344,8 +344,16 @@
         }
 
         #loadingIndicator {
+            /* Usaremos o JS para definir o texto dinamicamente, mas mantemos o estilo */
             background-color: rgba(0, 230, 118, 0.1);
             color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #loadingText {
+            margin-left: 10px;
         }
 
         /* Loader Spinner */
@@ -357,7 +365,6 @@
             height: 20px;
             animation: spin 1s linear infinite;
             display: inline-block;
-            margin-right: 10px;
             vertical-align: middle;
         }
 
@@ -426,10 +433,10 @@
             
             <div id="loadingIndicator">
                 <div class="loader"></div> 
-                Buscando metadados... Conectando aos peers...
+                <span id="loadingText">Buscando metadados... Conectando aos peers...</span>
             </div>
 
-            <!-- NOVO: DETALHES DO TORRENT -->
+            <!-- DETALHES DO TORRENT -->
             <div id="metadata-details" class="metadata-box" style="display: none;">
                 <h4>Detalhes do Conteúdo</h4>
                 <p>Nome: <span id="metadata-name"></span></p>
@@ -437,7 +444,7 @@
                 <p>Arquivos Encontrados (Vídeo Principal em <span>Negrito</span>):</p>
                 <ul id="metadata-files"></ul>
             </div>
-            <!-- FIM NOVO -->
+            <!-- FIM DETALHES -->
 
             <div id="statusMessage"></div>
         </div>
@@ -450,6 +457,9 @@
         // =================================================================
         let client;
         let currentTorrent = null;
+        let metadataTimeoutId = null; // ID do timeout para metadados
+
+        const METADATA_TIMEOUT_MS = 30000; // 30 segundos
 
         const nativeVideo = document.getElementById('nativeVideo');
         const playPauseBtn = document.getElementById('playPauseBtn');
@@ -465,11 +475,12 @@
         const magnetLinkInput = document.getElementById('magnetLinkInput');
         const loadBtn = document.getElementById('loadBtn');
         const loadingIndicator = document.getElementById('loadingIndicator');
+        const loadingText = document.getElementById('loadingText'); 
         const statusMessage = document.getElementById('statusMessage');
         const controls = document.getElementById('controls');
         const torrentStatus = document.getElementById('torrent-status'); 
         
-        // NOVO: Elementos de metadados
+        // Elementos de metadados
         const metadataDetails = document.getElementById('metadata-details');
         const metadataName = document.getElementById('metadata-name');
         const metadataSize = document.getElementById('metadata-size');
@@ -531,17 +542,23 @@
         }
 
         /**
-         * Limpa todos os displays de status e metadados.
+         * Limpa todos os displays de status, metadados e o timeout.
          */
         function clearStatusDisplays() {
             loadingIndicator.style.display = 'none';
             statusMessage.style.display = 'none';
             metadataDetails.style.display = 'none';
             torrentStatus.innerHTML = '';
+            
+            // CORREÇÃO: Limpa o timeout de metadados se estiver ativo
+            if (metadataTimeoutId) {
+                clearTimeout(metadataTimeoutId);
+                metadataTimeoutId = null;
+            }
         }
 
         // =================================================================
-        // # FUNÇÕES DO PLAYER
+        // # FUNÇÕES DO PLAYER (Movidas para o escopo global)
         // =================================================================
 
         /**
@@ -597,21 +614,6 @@
         }
 
         /**
-         * Alterna o estado de mudo.
-         */
-        function toggleMute() {
-            if (nativeVideo.volume > 0) {
-                nativeVideo.volume = 0;
-                volumeSlider.value = 0;
-            } else {
-                const savedVolume = parseFloat(volumeSlider.dataset.lastVolume) || 0.5;
-                nativeVideo.volume = savedVolume;
-                volumeSlider.value = savedVolume;
-            }
-            setVolume(nativeVideo.volume);
-        }
-        
-        /**
          * Alterna o modo de tela cheia.
          */
         function toggleFullscreen() {
@@ -624,7 +626,7 @@
                 document.exitFullscreen();
             }
         }
-        
+
         // =================================================================
         // # FUNÇÕES DE TORRENT (WEB TORRENT)
         // =================================================================
@@ -642,6 +644,18 @@
             }
             return client;
         }
+        
+        /**
+         * Função para atualizar o texto do loading com base no número de peers.
+         */
+        function updateLoadingPeers() {
+            if (currentTorrent) {
+                const numPeers = currentTorrent.numPeers;
+                loadingText.textContent = `Buscando metadados... Conectado a ${numPeers} peer(s).`;
+            } else {
+                loadingText.textContent = 'Buscando metadados... Conectando aos peers...';
+            }
+        }
 
         /**
          * Função para renderizar o vídeo principal após a obtenção dos metadados.
@@ -649,6 +663,12 @@
          * @param {object} torrent - O objeto WebTorrent.
          */
         function renderVideo(file, torrent) {
+            // Limpa o timeout de metadados, pois os metadados foram encontrados
+            if (metadataTimeoutId) {
+                clearTimeout(metadataTimeoutId);
+                metadataTimeoutId = null;
+            }
+            
             file.renderTo(nativeVideo, {
                 autoplay: true 
             }, (err, elem) => {
@@ -684,82 +704,107 @@
             
             if (currentTorrent) {
                 currentTorrent.destroy(() => console.log('Torrent anterior destruído.'));
+                currentTorrent = null;
             }
             
-            // Prepara a UI para carregamento
+            // 1. Prepara a UI para carregamento
             clearStatusDisplays();
             loadingIndicator.style.display = 'flex';
             nativeVideo.removeAttribute('src');
             nativeVideo.load();
             nativeVideo.pause();
             
-            // 3. Adiciona o novo magnet link
+            // 2. Adiciona o novo magnet link
             client = getWebTorrentClient();
-            currentTorrent = client.add(magnetLink, (torrent) => {
-                
-                // O WebTorrent emite 'ready' quando os metadados são totalmente baixados
-                torrent.on('ready', () => {
-                    
-                    const totalSize = formatBytes(torrent.length);
-                    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mkv'];
-                    // Tenta encontrar o maior arquivo de vídeo
-                    let videoFile = torrent.files
-                        .filter(f => videoExtensions.some(ext => f.name.toLowerCase().endsWith(ext)))
-                        .sort((a, b) => b.length - a.length)[0];
-
-                    // Se não encontrar um vídeo, pega o primeiro arquivo grande para mostrar
-                    if (!videoFile && torrent.files.length > 0) {
-                        videoFile = torrent.files[0];
-                    }
-
-                    // Preenche os detalhes na área de metadados
-                    metadataName.textContent = torrent.name || 'Nome Desconhecido';
-                    metadataSize.textContent = totalSize;
-                    
-                    metadataFiles.innerHTML = ''; // Limpa lista
-                    torrent.files.forEach(file => {
-                        const li = document.createElement('li');
-                        const fileSize = formatBytes(file.length);
-                        
-                        if (file === videoFile) {
-                            li.innerHTML = `<strong>${file.name}</strong> (${fileSize}) - <em>(Vídeo principal detectado)</em>`;
-                        } else {
-                            li.textContent = `${file.name} (${fileSize})`;
-                        }
-                        metadataFiles.appendChild(li);
-                    });
-
-                    metadataDetails.style.display = 'block'; // Mostra os detalhes
-                    loadingIndicator.style.display = 'none';
-
-                    if (videoFile) {
-                        // Inicia o streaming após mostrar os metadados
-                        renderVideo(videoFile, torrent);
-                    } else {
-                        showStatus("Nenhum arquivo de vídeo suportado encontrado. Arquivos listados acima.", true);
-                        torrent.destroy();
-                        currentTorrent = null;
-                        controls.classList.remove('active');
-                    }
-                });
-                
-                // Configura a atualização de status/peers
-                torrent.on('wire', () => updateTorrentStatus()); 
-                torrent.on('download', () => updateTorrentStatus()); 
-                setTimeout(updateTorrentStatus, 1000); // Atualização inicial
-                
-            });
             
-            // Lida com erro de conexão inicial ou link inválido
-            client.once('error', (err) => {
-                // Se o erro ocorrer antes do torrent ser adicionado/pronto
+            // CORREÇÃO: Certifica-se de que currentTorrent é definido corretamente
+            currentTorrent = client.add(magnetLink);
+            
+            // 3. Define o timeout para a busca de metadados
+            metadataTimeoutId = setTimeout(() => {
+                if (currentTorrent && !currentTorrent.ready) {
+                    console.warn('Timeout de metadados atingido.');
+                    currentTorrent.destroy();
+                    currentTorrent = null;
+                    clearStatusDisplays();
+                    showStatus("Tempo limite excedido para encontrar peers e metadados. O link pode estar inativo. Tente outro.", true);
+                }
+            }, METADATA_TIMEOUT_MS);
+            
+            // 4. Configura Listeners de Status e Metadados
+            
+            // Atualiza o loading text e status sempre que um peer é conectado ou desconectado
+            currentTorrent.on('wire', updateLoadingPeers);
+            currentTorrent.on('noPeers', () => {
+                loadingText.textContent = "Aguardando seeds/peers... Ninguém encontrado ainda.";
+                updateTorrentStatus();
+            });
+            currentTorrent.on('error', (err) => {
+                console.error('Torrent Error:', err);
                 clearStatusDisplays();
-                showStatus(`Erro ao processar o link: ${err.message}. Tente novamente.`, true);
+                showStatus(`Erro no Torrent: ${err.message}`, true);
+                // currentTorrent já é destruído e limpo em clearStatusDisplays (via timeout), 
+                // mas garantimos aqui que não haja duplicidade de erro
                 if (currentTorrent) currentTorrent.destroy();
                 currentTorrent = null;
-                // Reconfigura o cliente (limpa listeners de erro)
-                getWebTorrentClient(); 
             });
+
+            // Evento principal: Metadados prontos
+            currentTorrent.on('ready', () => {
+                
+                // Limpa o timeout, pois a fase de metadados foi bem-sucedida
+                if (metadataTimeoutId) {
+                    clearTimeout(metadataTimeoutId);
+                    metadataTimeoutId = null;
+                }
+
+                const torrent = currentTorrent;
+                const totalSize = formatBytes(torrent.length);
+                const videoExtensions = ['.mp4', '.webm', '.ogg', '.mkv'];
+                
+                let videoFile = torrent.files
+                    .filter(f => videoExtensions.some(ext => f.name.toLowerCase().endsWith(ext)))
+                    .sort((a, b) => b.length - a.length)[0];
+
+                if (!videoFile && torrent.files.length > 0) {
+                    videoFile = torrent.files[0];
+                }
+
+                // Preenche os detalhes na área de metadados
+                metadataName.textContent = torrent.name || 'Nome Desconhecido';
+                metadataSize.textContent = totalSize;
+                
+                metadataFiles.innerHTML = ''; 
+                torrent.files.forEach(file => {
+                    const li = document.createElement('li');
+                    const fileSize = formatBytes(file.length);
+                    
+                    if (file === videoFile) {
+                        li.innerHTML = `<strong>${file.name}</strong> (${fileSize}) - <em>(Vídeo principal detectado)</em>`;
+                    } else {
+                        li.textContent = `${file.name} (${fileSize})`;
+                    }
+                    metadataFiles.appendChild(li);
+                });
+
+                metadataDetails.style.display = 'block'; 
+                loadingIndicator.style.display = 'none';
+
+                if (videoFile) {
+                    // Inicia o streaming após mostrar os metadados
+                    renderVideo(videoFile, torrent);
+                } else {
+                    showStatus("Nenhum arquivo de vídeo suportado encontrado. Arquivos listados acima.", true);
+                    torrent.destroy();
+                    currentTorrent = null;
+                    controls.classList.remove('active');
+                }
+            });
+            
+            // Evento para atualizar velocidades e peers em tempo real
+            currentTorrent.on('download', () => updateTorrentStatus()); 
+            // Atualização inicial
+            updateLoadingPeers(); 
         }
         
         /**
@@ -792,25 +837,41 @@
 
 
         // =================================================================
-        // # INICIALIZAÇÃO E EVENT LISTENERS
+        // # INICIALIZAÇÃO E EVENT LISTENERS DO PLAYER
         // =================================================================
         
         window.onload = function() {
             client = getWebTorrentClient();
             
-            // 1. Configuração Inicial do Vídeo
+            // Funções de controle do player (apenas para referência, usando as globais agora)
+            // function togglePlay() { nativeVideo.paused ? nativeVideo.play() : nativeVideo.pause(); }
+            // function toggleMute() { ... setVolume(nativeVideo.volume); }
+            // function setVolume(newVolume) { nativeVideo.volume = newVolume; muteIcon.textContent = newVolume === 0 ? 'volume_off' : (newVolume < 0.5 ? 'volume_down' : 'volume_up'); }
+            // function toggleFullscreen() { ... }
+            // function seekRelative(seconds) { nativeVideo.currentTime += seconds; }
+
+            // Configuração Inicial do Vídeo
             nativeVideo.volume = 1.0;
             
-            // 2. Eventos de UI do Player
+            // Eventos de UI do Player
             playPauseBtn.addEventListener('click', togglePlay);
-            muteBtn.addEventListener('click', toggleMute);
+            muteBtn.addEventListener('click', () => { 
+                // Lógica de toggleMute simplificada e movida para o listener
+                if (nativeVideo.volume > 0) {
+                    volumeSlider.dataset.lastVolume = nativeVideo.volume;
+                    setVolume(0); 
+                    volumeSlider.value = 0;
+                } else { 
+                    const savedVolume = parseFloat(volumeSlider.dataset.lastVolume) || 0.5;
+                    setVolume(savedVolume); 
+                    volumeSlider.value = savedVolume;
+                } 
+            });
 
             volumeSlider.addEventListener('input', (e) => {
                 const newVolume = parseFloat(e.target.value);
                 setVolume(newVolume);
-                if (newVolume > 0) {
-                    volumeSlider.dataset.lastVolume = newVolume; 
-                }
+                if (newVolume > 0) { volumeSlider.dataset.lastVolume = newVolume; }
             });
             
             fullscreenBtn.addEventListener('click', toggleFullscreen);
@@ -825,7 +886,7 @@
                 }
             });
 
-            // 3. Eventos de Mídia (Video nativo)
+            // Eventos de Mídia (Video nativo)
             nativeVideo.addEventListener('timeupdate', updateTimeDisplay);
             nativeVideo.addEventListener('loadedmetadata', updateTimeDisplay);
             nativeVideo.addEventListener('durationchange', updateTimeDisplay);
@@ -833,18 +894,14 @@
             nativeVideo.addEventListener('pause', () => playPauseIcon.textContent = 'play_arrow');
             nativeVideo.addEventListener('volumechange', () => setVolume(nativeVideo.volume));
             
-            // 4. Eventos de Tela Cheia
+            // Eventos de Tela Cheia
             document.addEventListener('fullscreenchange', () => {
                 const isFullscreen = document.fullscreenElement === videoWrapper;
                 fullscreenBtn.querySelector('.material-icons').textContent = isFullscreen ? 'fullscreen_exit' : 'fullscreen';
-                if (isFullscreen) {
-                    controls.classList.add('active');
-                } else {
-                    controls.classList.remove('active');
-                }
+                if (isFullscreen) { controls.classList.add('active'); } else { controls.classList.remove('active'); }
             });
 
-            // 5. Eventos de Carregamento (Input)
+            // Eventos de Carregamento (Input)
             loadBtn.addEventListener('click', loadMagnetLink);
             magnetLinkInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
@@ -852,7 +909,7 @@
                 }
             });
             
-            // 6. Atalhos de teclado
+            // Atalhos de teclado
             document.addEventListener('keydown', (e) => {
                 const isInputFocused = document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA';
                 if (isInputFocused) return;
@@ -860,7 +917,18 @@
                     case ' ': case 'k': e.preventDefault(); togglePlay(); break;
                     case 'j': e.preventDefault(); seekRelative(-10); break;
                     case 'l': e.preventDefault(); seekRelative(10); break;
-                    case 'm': e.preventDefault(); toggleMute(); break;
+                    case 'm': e.preventDefault(); 
+                        // Lógica de mudo no atalho (para usar toggleMute, ela precisaria ser recriada ou usada a lógica inline)
+                        if (nativeVideo.volume > 0) {
+                            volumeSlider.dataset.lastVolume = nativeVideo.volume;
+                            setVolume(0); 
+                            volumeSlider.value = 0;
+                        } else { 
+                            const savedVolume = parseFloat(volumeSlider.dataset.lastVolume) || 0.5;
+                            setVolume(savedVolume); 
+                            volumeSlider.value = savedVolume;
+                        }
+                        break;
                     case 'f': e.preventDefault(); toggleFullscreen(); break;
                     case 'ArrowUp': e.preventDefault(); const newVolUp = Math.min(1, nativeVideo.volume + 0.05); setVolume(newVolUp); volumeSlider.value = newVolUp; break;
                     case 'ArrowDown': e.preventDefault(); const newVolDown = Math.max(0, nativeVideo.volume - 0.05); setVolume(newVolDown); volumeSlider.value = newVolDown; break;

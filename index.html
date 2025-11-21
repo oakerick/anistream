@@ -55,7 +55,7 @@
         /* CONTROLES (Mantidos) */
         .custom-controls { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%); padding: 0 20px 15px 20px; opacity: 0; transition: opacity 0.3s; z-index: 10; }
         .video-wrapper:hover .custom-controls, .video-wrapper.paused .custom-controls { opacity: 1; }
-        .progress-bar { height: 4px; background: rgba(255,255,255,0.3); margin-bottom: 10px; cursor: pointer; position: relative; border-radius: 2px; }
+        .progress-bar { height: 4px; background: rgba(255,255,255,0.3); margin-bottom: 10px; cursor: pointer; position: relative; }
         .progress-fill { height: 100%; background: var(--primary); width: 0%; border-radius: 2px; position: relative; }
         .controls-row { display: flex; justify-content: space-between; align-items: center; }
         .btn { background: none; border: none; color: #fff; cursor: pointer; padding: 5px; display: flex; }
@@ -68,7 +68,7 @@
         .input-group { display: none; flex-direction: column; gap: 15px; padding: 20px 0; }
         .input-group.active { display: flex; }
         
-        /* BARRA DE PESQUISA UNIFICADA */
+        /* BARRA DE PESQUISA LINK/MAGNET */
         .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
         .search-box input { flex: 1; background: var(--bg-medium); border: 1px solid #444; color: white; padding: 12px 15px; font-size: 1rem; border-radius: 4px; }
         .search-box button, .action-btn { background: var(--primary); color: white; border: none; padding: 0 25px; font-weight: 700; font-size: 1rem; cursor: pointer; border-radius: 4px; text-transform: uppercase; }
@@ -156,18 +156,13 @@
             
             <!-- TAB 1: CATÁLOGO GERAL (Início) -->
             <div id="tab-catalog" class="input-group active">
-                <!-- BARRA DE PESQUISA UNIFICADA -->
-                <div class="search-box">
-                    <input type="text" id="mainSearchInput" placeholder="Pesquisar títulos de Animes ou Vídeos (Local/API)...">
-                    <button onclick="handleMainSearch()">Buscar</button>
-                </div>
-
-                <h3 style="margin-top: 10px; color: var(--text-secondary); font-size: 0.9rem;">Destaques Locais (Demo)</h3>
+                
+                <h3 style="margin: 0 0 15px 0; color: var(--text-secondary); font-size: 1rem;">Destaques Locais (Demo)</h3>
                 <div class="catalog-grid" id="catalogGrid"></div>
                 
-                <!-- BOTÃO PARA CARREGAR SUPERFLIX -->
-                <button class="superflix-btn" onclick="loadSuperflixCatalog()" id="loadSuperflixBtn">
-                    <span class="material-icons">movie_filter</span> Carregar Animes Populares (Superflix API)
+                <!-- BOTÃO PARA CARREGAR SUPERFLIX (Desabilitado até o Proxy ser configurado) -->
+                <button class="superflix-btn" onclick="loadSuperflixCatalog()" id="loadSuperflixBtn" disabled>
+                    <span class="material-icons">lock</span> Configure o Proxy para carregar Animes Populares
                 </button>
                 
                 <!-- RESULTADOS DA SUPERFLIX APARECERÃO AQUI -->
@@ -238,7 +233,6 @@
         const muteBtn = document.getElementById('muteBtn');
         const progressBar = document.getElementById('progressBar');
         const volumeSlider = document.getElementById('volSlider');
-        const mainSearchInput = document.getElementById('mainSearchInput');
 
         // Catálogo Local de Demonstração
         function getLocalCatalog() {
@@ -253,6 +247,7 @@
             if (addonBaseUrl) document.getElementById('addonUrl').value = addonBaseUrl;
             renderCatalog(getLocalCatalog(), 'catalogGrid');
             setupPlayerEvents();
+            checkProxyUrlAndEnableButton(); // NOVO: Verifica e configura o botão ao carregar
         };
 
         // --- NAVEGAÇÃO ---
@@ -438,17 +433,6 @@
                 showAlert("Formato Inválido", "Selecione um arquivo .torrent ou de vídeo.");
             }
         }
-
-        window.handleMainSearch = () => {
-            const query = mainSearchInput.value.trim().toLowerCase();
-            if (!query) return; 
-
-            // Implementar lógica de busca/filtro aqui, por enquanto, apenas loga
-            console.log(`Pesquisa principal acionada: ${query}`);
-
-            // Futura lógica: Filtrar catálogo local E (se carregado) o catálogo Superflix.
-            showAlert("Pesquisa", `Busca por "${query}" ainda não implementada. Você pode filtrar manualmente os catálogos abaixo.`);
-        };
         
         // --- FUNÇÕES DE CATALOGO/RENDERIZAÇÃO ---
         
@@ -475,34 +459,56 @@
         }
 
         // --- FUNÇÕES DE ADDON/API ---
+        
+        function checkProxyUrlAndEnableButton() {
+            const btn = document.getElementById('loadSuperflixBtn');
+            // Verifica se a URL salva é um endereço HTTP válido (não apenas vazio)
+            if (addonBaseUrl && addonBaseUrl.startsWith('http')) {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-icons">movie_filter</span> Carregar Animes Populares (Superflix API)';
+            } else {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-icons">lock</span> Configure o Proxy para carregar Animes Populares';
+            }
+        }
+
 
         window.saveAddonUrl = () => {
             const url = document.getElementById('addonUrl').value.trim().replace(/\/$/, '');
             if(!url.startsWith('http')) return showAlert("Erro", "URL inválida. Use o formato https://...");
+            
             localStorage.setItem('addonUrl', url);
             addonBaseUrl = url;
-            showAlert("Sucesso", "URL do Proxy Vercel salva!");
+            checkProxyUrlAndEnableButton(); // NOVO: Atualiza o botão após salvar
+            showAlert("Sucesso", "URL do Proxy Vercel salva! Agora você pode carregar o catálogo na aba 'Início'.");
         };
 
         // Função de integração Superflix (agora chamada da aba Início)
         window.loadSuperflixCatalog = async () => {
-            if(!addonBaseUrl) {
-                document.getElementById('loadSuperflixBtn').disabled = false;
-                return showAlert("Configuração Necessária", "Vá para 'Configuração Proxy' e configure a URL do seu Proxy Vercel.");
+            if(!addonBaseUrl || !addonBaseUrl.startsWith('http')) {
+                return showAlert("Configuração Necessária", "A URL do Proxy Vercel não está configurada ou é inválida. Por favor, vá para a aba 'Configuração Proxy'.");
             }
             
             const btn = document.getElementById('loadSuperflixBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner" style="width: 20px; height: 20px; margin: 0;"></span> Carregando...';
-
+            // Mantém o botão escondido se já foi carregado. Se estiver visível, desabilita e mostra loading.
+            if(btn.style.display !== 'none') {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner" style="width: 20px; height: 20px; margin: 0;"></span> Carregando...';
+            }
+            
             statusEl.style.display = 'flex';
             statusText.innerText = "Buscando Animes...";
-            statusDetail.innerText = "Consultando Superflix via Proxy...";
+            statusDetail.innerText = `Consultando Proxy em: ${addonBaseUrl}/superflix`;
 
             try {
-                // Chama a nova rota /superflix do proxy
+                // Adicionado console.log para ajudar a depurar a URL exata
+                console.log(`Tentando buscar catálogo em: ${addonBaseUrl}/superflix`);
                 const response = await fetch(`${addonBaseUrl}/superflix`);
-                if(!response.ok) throw new Error("Erro ao conectar ao Proxy ou na API Superflix.");
+                
+                if(!response.ok) {
+                    console.error("HTTP Error:", response.status, response.statusText);
+                    throw new Error(`Erro HTTP ${response.status} ao conectar ao Proxy.`);
+                }
                 
                 const data = await response.json();
                 
@@ -521,18 +527,29 @@
                 })), 'superflixGrid', (item) => searchStreams(item.id, item.title));
 
                 statusEl.style.display = 'none';
-                btn.style.display = 'none'; // Esconde o botão após carregar
+                btn.style.display = 'none'; // Esconde o botão após carregar com sucesso
+                window.scrollTo({top:0, behavior:'smooth'});
 
             } catch (e) {
+                console.error("Erro no carregamento do catálogo:", e);
                 statusEl.style.display = 'none';
-                btn.disabled = false;
-                btn.innerHTML = '<span class="material-icons">movie_filter</span> Tentar Carregar Novamente (Superflix API)';
-                showAlert("Erro API", "Falha ao carregar catálogo: " + e.message);
+                
+                // Em caso de erro, re-habilita o botão para nova tentativa
+                if(btn.style.display !== 'none') {
+                   btn.disabled = false;
+                   btn.innerHTML = '<span class="material-icons">refresh</span> Tentar Carregar Novamente (Superflix API)';
+                }
+
+                showAlert("Erro API", "Falha ao carregar catálogo. Verifique se a URL do Proxy Vercel está correta e funcionando na aba 'Configuração Proxy'. Detalhes: " + e.message);
             }
         };
 
         // Função para buscar streams (Magnets/URLs) usando o ID do TMDB
         async function searchStreams(id, title) {
+            if(!addonBaseUrl || !addonBaseUrl.startsWith('http')) {
+                return showAlert("Configuração Necessária", "A URL do Proxy Vercel não está configurada ou é inválida. Por favor, vá para a aba 'Configuração Proxy'.");
+            }
+
             statusEl.style.display = 'flex';
             statusText.innerText = `Buscando streams para: ${title}`;
             statusDetail.innerText = "Consultando Addon Stremio via Proxy...";
@@ -560,7 +577,7 @@
 
             } catch(e) {
                 statusEl.style.display = 'none';
-                showAlert("Erro Stream", "Falha ao buscar streams no addon.");
+                showAlert("Erro Stream", "Falha ao buscar streams no addon: " + e.message);
             }
         }
     </script>

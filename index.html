@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
+    <!-- Biblioteca WebTorrent -->
     <script src="https://cdn.jsdelivr.net/webtorrent/latest/webtorrent.min.js"></script>
     
     <style>
@@ -20,71 +21,63 @@
             --blue-accent: #00b0ff;     /* Azul Vibrante para Foco Secundário */
             --bg-dark: #121212;         /* Fundo escuro principal */
             --bg-medium: #282828;       /* Fundo de cards/controles */
-            --bg-light: #3a3a3a;        /* Borda/Hover de controles */
+            --bg-light: #3a3a3a;        /* Borda/Hover leve */
             --text-light: #e0e0e0;      /* Texto principal */
-            --text-muted: #b0b0b0;      /* Texto secundário/ícones desativados */
-            --hover-color: rgba(255, 255, 255, 0.1);
+            --text-muted: #9e9e9e;      /* Texto secundário/cinza */
         }
 
         /* =================================================================
-           # RESET E BASE
+           # ESTILOS GERAIS
            ================================================================= */
-        * {
+        body, html {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Roboto', sans-serif;
-        }
-
-        body {
             background-color: var(--bg-dark);
             color: var(--text-light);
+            font-family: 'Roboto', sans-serif;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player-container {
+            position: relative;
+            width: 90vw;
+            max-width: 1000px;
+            aspect-ratio: 16 / 9;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        .video-container {
+            width: 100%;
+            height: 100%;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Alinha o conteúdo ao topo */
-            min-height: 100vh;
-            padding: 20px;
+            align-items: center;
         }
 
-        /* =================================================================
-           # CONTAINER PRINCIPAL
-           ================================================================= */
-        .player-container {
+        .video-container video {
             width: 100%;
-            max-width: 900px;
-            background-color: var(--bg-medium);
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            overflow: hidden;
-            transition: all 0.3s ease;
+            height: 100%;
+            object-fit: contain; /* Garante que o vídeo se ajuste sem cortar */
+            display: block;
         }
 
-        /* =================================================================
-           # ÁREA DO VÍDEO E PLAYER
-           ================================================================= */
-        .video-wrapper {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 16 / 9; /* Padrão 16:9 */
-            background-color: #000;
-            overflow: hidden;
-        }
-
-        .video-wrapper.fullscreen {
+        .player-container.fullscreen {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 9999;
-            aspect-ratio: auto;
-        }
-
-        #nativeVideo {
             width: 100%;
             height: 100%;
-            display: block;
-            object-fit: contain; /* Garante que o vídeo se encaixe */
+            max-width: none;
+            z-index: 9999;
+            border-radius: 0;
         }
 
         /* =================================================================
@@ -96,58 +89,30 @@
             left: 0;
             right: 0;
             background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0));
-            padding: 10px 15px;
+            padding: 15px 15px 10px 15px;
+            opacity: 0;
             transition: opacity 0.3s ease;
+            cursor: default;
+            z-index: 10;
+        }
+
+        .player-container:hover .controls,
+        .player-container.show-controls .controls {
             opacity: 1;
+        }
+
+        .controls-row {
             display: flex;
-            flex-direction: column;
-            pointer-events: none; /* Permite cliques através */
-        }
-
-        .video-wrapper:hover .controls,
-        .controls.active {
-            opacity: 1;
-            pointer-events: auto; /* Reativa cliques */
-        }
-
-        /* Barra de Progresso (Seekbar) */
-        .progress-bar-container {
-            height: 8px;
-            background: var(--bg-medium);
-            border-radius: 4px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            position: relative;
-            pointer-events: auto;
-        }
-
-        .progress-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            background-color: var(--primary);
-            border-radius: 4px;
-            transition: width 0.1s linear;
-        }
-
-        .progress-bar-container:hover .progress-bar {
-            height: 100%;
-        }
-
-        /* Controles Inferiores (Botões e Tempo) */
-        .controls-bottom {
-            display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
         }
 
-        .controls-left, .controls-right {
+        .left-controls, .right-controls {
             display: flex;
             align-items: center;
         }
-        
-        /* Botões de Controle */
+
+        /* Botões */
         .control-btn {
             background: none;
             border: none;
@@ -155,6 +120,7 @@
             cursor: pointer;
             padding: 8px;
             border-radius: 50%;
+            margin: 0 4px;
             transition: background-color 0.2s;
             display: flex;
             align-items: center;
@@ -162,31 +128,43 @@
         }
 
         .control-btn:hover {
-            background-color: var(--hover-color);
+            background-color: var(--bg-light);
         }
 
         .material-icons {
             font-size: 24px;
-            user-select: none;
+            color: var(--text-light);
         }
 
-        .volume-control {
+        /* Tempo */
+        .time-display {
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0 15px;
+            color: var(--text-light);
+            min-width: 100px;
+            text-align: center;
+        }
+
+        /* Volume Slider */
+        .volume-controls {
             display: flex;
             align-items: center;
-            margin: 0 10px;
+            margin-right: 15px;
         }
 
-        .volume-control input[type="range"] {
+        input[type=range] {
             -webkit-appearance: none;
-            height: 4px;
-            background: var(--text-muted);
-            border-radius: 2px;
-            cursor: pointer;
             width: 80px;
+            height: 4px;
+            background: var(--bg-light);
+            border-radius: 2px;
+            outline: none;
+            transition: opacity 0.2s;
             margin: 0 5px;
         }
 
-        .volume-control input[type="range"]::-webkit-slider-thumb {
+        input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
             width: 12px;
@@ -196,417 +174,352 @@
             cursor: pointer;
         }
 
-        /* Display de Tempo */
-        .time-display {
-            font-size: 14px;
-            margin: 0 15px;
-            min-width: 90px;
-            text-align: center;
-            color: var(--text-light);
-        }
-        
-        /* Status do WebTorrent */
-        #torrent-status {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-left: 20px;
-            display: flex;
-            gap: 15px;
-            min-width: 150px;
-            justify-content: flex-start;
-        }
-        
-        #torrent-status .status-item {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        #torrent-status .material-icons {
-            font-size: 16px;
-            opacity: 0.8;
-        }
-
-
-        /* =================================================================
-           # ÁREA DE ENTRADA DO MAGNET LINK
-           ================================================================= */
-        .input-area {
-            padding: 20px;
-            border-top: 1px solid var(--bg-dark);
-        }
-
-        .input-area h2 {
-            margin-bottom: 15px;
-            font-size: 1.5em;
-            color: var(--primary);
-        }
-
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .input-group input[type="text"] {
-            flex-grow: 1;
-            padding: 10px 15px;
-            border: 2px solid var(--bg-light);
-            border-radius: 8px;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            font-size: 1em;
-            transition: border-color 0.3s;
-        }
-
-        .input-group input[type="text"]:focus {
-            outline: none;
-            border-color: var(--blue-accent);
-        }
-
-        .input-group button {
-            background-color: var(--blue-accent);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
+        /* Barra de Progresso */
+        .progress-bar-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
             cursor: pointer;
-            font-size: 1em;
-            font-weight: 700;
-            transition: background-color 0.3s, transform 0.1s;
+            transition: height 0.2s;
         }
 
-        .input-group button:hover {
-            background-color: #0091ea;
+        .progress-bar-container:hover {
+            height: 10px;
         }
 
-        .input-group button:active {
-            transform: scale(0.98);
+        .progress-bar {
+            position: relative;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
         }
 
-        /* =================================================================
-           # DETALHES DO METADADOS
-           ================================================================= */
-        .metadata-box {
-            background-color: var(--bg-dark);
-            border: 1px solid var(--bg-light);
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-            max-height: 200px; /* Limita a altura para listas grandes */
-            overflow-y: auto; /* Adiciona scroll se necessário */
-        }
-        .metadata-box h4 {
-            color: var(--primary);
-            margin-bottom: 10px;
-            font-size: 1.1em;
-            border-bottom: 1px dashed var(--bg-light);
-            padding-bottom: 5px;
-        }
-        .metadata-box p {
-            margin: 5px 0;
-            font-size: 0.9em;
-            color: var(--text-muted);
-        }
-        .metadata-box span {
-            color: var(--text-light);
-            font-weight: 500;
-            word-break: break-all; /* Garante que nomes longos não quebrem o layout */
-        }
-        .metadata-box ul {
-            list-style: none;
-            padding-left: 0;
-            margin-top: 5px;
-        }
-        .metadata-box li {
-            font-size: 0.85em;
-            color: var(--text-muted);
-            line-height: 1.4;
-            word-break: break-all;
+        .progress-current {
+            position: absolute;
+            height: 100%;
+            width: 0%;
+            background-color: var(--primary);
+            border-radius: 3px;
         }
 
-
-        /* =================================================================
-           # MENSAGENS DE FEEDBACK
-           ================================================================= */
-        #statusMessage, #loadingIndicator {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 500;
-            display: none;
+        .progress-buffered {
+            position: absolute;
+            height: 100%;
+            width: 0%;
+            background-color: var(--blue-accent);
+            opacity: 0.5;
+            border-radius: 3px;
         }
 
-        #statusMessage {
-            background-color: rgba(255, 61, 0, 0.1);
-            color: var(--secondary);
-        }
-
-        #loadingIndicator {
-            /* Usaremos o JS para definir o texto dinamicamente, mas mantemos o estilo */
-            background-color: rgba(0, 230, 118, 0.1);
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .progress-thumb {
+            position: absolute;
+            top: 50%;
+            right: 0;
+            transform: translate(50%, -50%);
+            width: 12px;
+            height: 12px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
         }
         
-        #loadingText {
-            margin-left: 10px;
+        .progress-bar-container:hover .progress-thumb {
+            opacity: 1;
         }
 
-        /* Loader Spinner */
-        .loader {
-            border: 4px solid var(--bg-light);
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
+        /* =================================================================
+           # ESTILOS DE MENSAGENS E TORRENT INPUT
+           ================================================================= */
+        .torrent-input-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .torrent-input-area h2 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        #magnet-uri-input {
+            width: 300px;
+            padding: 10px;
+            border: 1px solid var(--bg-light);
+            border-radius: 4px;
+            background-color: var(--bg-medium);
+            color: var(--text-light);
+            margin-bottom: 10px;
+        }
+
+        #load-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--secondary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #load-button:hover {
+            background-color: #ff5722;
+        }
+
+        #status-message {
+            margin-top: 15px;
+            font-size: 14px;
+            color: var(--blue-accent);
         }
     </style>
 </head>
 <body>
 
-    <div class="player-container">
+    <div id="player-container" class="player-container">
         
-        <div id="videoWrapper" class="video-wrapper">
-            <!-- Elemento de vídeo nativo, será preenchido pelo WebTorrent -->
-            <video id="nativeVideo" poster="https://placehold.co/900x506/1e1e1e/8a8a8a?text=Cole+um+Magnet+Link+e+Clique+em+Carregar"></video>
-
-            <!-- Controles Personalizados -->
-            <div id="controls" class="controls">
-                
-                <!-- Barra de Progresso -->
-                <div id="progressBarContainer" class="progress-bar-container">
-                    <div id="progressBar" class="progress-bar"></div>
-                </div>
-
-                <!-- Controles Inferiores -->
-                <div class="controls-bottom">
-                    
-                    <div class="controls-left">
-                        <button id="playPauseBtn" class="control-btn" aria-label="Reproduzir/Pausar">
-                            <i class="material-icons">play_arrow</i>
-                        </button>
-
-                        <div class="volume-control">
-                            <button id="muteBtn" class="control-btn" aria-label="Mudo">
-                                <i class="material-icons">volume_up</i>
-                            </button>
-                            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1" aria-label="Volume">
-                        </div>
-
-                        <span id="timeDisplay" class="time-display">0:00 / 0:00</span>
-                        
-                        <!-- Status do Torrent (Peers, Velocidade) -->
-                        <div id="torrent-status">
-                            <!-- Preenchido pelo JS -->
-                        </div>
-                    </div>
-                    
-                    <div class="controls-right">
-                        <button id="fullscreenBtn" class="control-btn" aria-label="Tela Cheia">
-                            <i class="material-icons">fullscreen</i>
-                        </button>
-                    </div>
-
-                </div>
+        <div id="video-container" class="video-container">
+            <!-- O elemento <video> será injetado aqui pelo WebTorrent -->
+            <div id="torrent-input-area" class="torrent-input-area">
+                <h2>Carregar Magnet Link</h2>
+                <input type="text" id="magnet-uri-input" placeholder="Cole seu Magnet URI aqui...">
+                <button id="load-button">Carregar Vídeo</button>
+                <p id="status-message">Aguardando URI...</p>
+                <p style="font-size: 12px; color: var(--text-muted);">
+                    Atalhos: Espaço/K (Play/Pause), J/L (Seek +/- 10s), Setas (Volume/Seek +/- 5s), M (Mute), F (Fullscreen).
+                </p>
             </div>
         </div>
 
-        <!-- Área de Entrada do Magnet Link -->
-        <div class="input-area">
-            <h2>Carregar Conteúdo via Magnet Link</h2>
-            <div class="input-group">
-                <input type="text" id="magnetLinkInput" placeholder="Cole o Magnet Link aqui..." value="" aria-label="Campo de entrada do Magnet Link">
-                <button id="loadBtn">Carregar</button>
-            </div>
-            
-            <div id="loadingIndicator">
-                <div class="loader"></div> 
-                <span id="loadingText">Buscando metadados... Conectando aos peers...</span>
+        <div id="controls" class="controls">
+            <!-- Barra de Progresso -->
+            <div id="progress-bar-container" class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar">
+                    <div id="progress-buffered" class="progress-buffered"></div>
+                    <div id="progress-current" class="progress-current"></div>
+                    <div id="progress-thumb" class="progress-thumb"></div>
+                </div>
             </div>
 
-            <!-- DETALHES DO TORRENT -->
-            <div id="metadata-details" class="metadata-box" style="display: none;">
-                <h4>Detalhes do Conteúdo</h4>
-                <p>Nome: <span id="metadata-name"></span></p>
-                <p>Tamanho Total: <span id="metadata-size"></span></p>
-                <p>Arquivos Encontrados (Vídeo Principal em <span>Negrito</span>):</p>
-                <ul id="metadata-files"></ul>
-            </div>
-            <!-- FIM DETALHES -->
+            <div class="controls-row">
+                <div class="left-controls">
+                    <button id="play-pause-btn" class="control-btn" title="Play/Pause (Space/K)">
+                        <i id="play-pause-icon" class="material-icons">play_arrow</i>
+                    </button>
 
-            <div id="statusMessage"></div>
+                    <div class="volume-controls">
+                        <button id="mute-btn" class="control-btn" title="Mute/Unmute (M)">
+                            <i id="mute-icon" class="material-icons">volume_up</i>
+                        </button>
+                        <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1">
+                    </div>
+
+                    <span id="time-display" class="time-display">0:00 / 0:00</span>
+                </div>
+
+                <div class="right-controls">
+                    <button id="fullscreen-btn" class="control-btn" title="Tela Cheia (F)">
+                        <i id="fullscreen-icon" class="material-icons">fullscreen</i>
+                    </button>
+                </div>
+            </div>
         </div>
-
     </div>
 
-    <script type="text/javascript">
+    <script type="module">
         // =================================================================
         // # VARIÁVEIS GLOBAIS
         // =================================================================
-        let client;
-        let currentTorrent = null;
-        let metadataTimeoutId = null; // ID do timeout para metadados
-
-        const METADATA_TIMEOUT_MS = 30000; // 30 segundos
-
-        const nativeVideo = document.getElementById('nativeVideo');
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        const playPauseIcon = playPauseBtn.querySelector('.material-icons');
-        const muteBtn = document.getElementById('muteBtn');
-        const muteIcon = muteBtn.querySelector('.material-icons');
-        const volumeSlider = document.getElementById('volumeSlider');
-        const timeDisplay = document.getElementById('timeDisplay');
-        const fullscreenBtn = document.getElementById('fullscreenBtn');
-        const videoWrapper = document.getElementById('videoWrapper');
-        const progressBarContainer = document.getElementById('progressBarContainer');
-        const progressBar = document.getElementById('progressBar');
-        const magnetLinkInput = document.getElementById('magnetLinkInput');
-        const loadBtn = document.getElementById('loadBtn');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const loadingText = document.getElementById('loadingText'); 
-        const statusMessage = document.getElementById('statusMessage');
-        const controls = document.getElementById('controls');
-        const torrentStatus = document.getElementById('torrent-status'); 
+        const client = new WebTorrent();
         
-        // Elementos de metadados
-        const metadataDetails = document.getElementById('metadata-details');
-        const metadataName = document.getElementById('metadata-name');
-        const metadataSize = document.getElementById('metadata-size');
-        const metadataFiles = document.getElementById('metadata-files');
+        // Referência global para o elemento de vídeo nativo após o WebTorrent injetá-lo.
+        // Isso resolve o problema de escopo nos listeners globais como os de teclado.
+        let videoElement = null; 
+
+        // =================================================================
+        // # REFERÊNCIAS DE ELEMENTOS HTML
+        // =================================================================
+        const playerContainer = document.getElementById('player-container');
+        const videoContainer = document.getElementById('video-container');
+        const controls = document.getElementById('controls');
+        const playPauseButton = document.getElementById('play-pause-btn');
+        const playPauseIcon = document.getElementById('play-pause-icon');
+        const muteButton = document.getElementById('mute-btn');
+        const muteIcon = document.getElementById('mute-icon');
+        const volumeSlider = document.getElementById('volume-slider');
+        const timeDisplay = document.getElementById('time-display');
+        const progressBarContainer = document.getElementById('progress-bar-container');
+        const progressCurrent = document.getElementById('progress-current');
+        const progressBuffered = document.getElementById('progress-buffered');
+        const progressThumb = document.getElementById('progress-thumb');
+        const fullscreenButton = document.getElementById('fullscreen-btn');
+        const fullscreenIcon = document.getElementById('fullscreen-icon');
+        
+        const magnetUriInput = document.getElementById('magnet-uri-input');
+        const loadButton = document.getElementById('load-button');
+        const statusMessage = document.getElementById('status-message');
+        const torrentInputArea = document.getElementById('torrent-input-area');
 
 
         // =================================================================
-        // # FUNÇÕES DE UTILIDADE
+        // # FUNÇÕES DE UTILIADADE
         // =================================================================
 
         /**
-         * Formata segundos para o formato MM:SS ou HH:MM:SS
-         * @param {number} time - Tempo em segundos.
+         * Formata o tempo de segundos para MM:SS.
+         * @param {number} seconds - O tempo em segundos.
          * @returns {string} Tempo formatado.
          */
-        function formatTime(time) {
-            const h = Math.floor(time / 3600);
-            const m = Math.floor((time % 3600) / 60);
-            const s = Math.floor(time % 60);
-            const pad = (num) => String(num).padStart(2, '0');
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds === Infinity) return '0:00';
+            const s = Math.floor(seconds);
+            const m = Math.floor(s / 60);
+            const h = Math.floor(m / 60);
+            const displayM = m % 60;
+            const displayS = s % 60;
             
+            let timeString = `${displayM}:${String(displayS).padStart(2, '0')}`;
             if (h > 0) {
-                return `${h}:${pad(m)}:${pad(s)}`;
-            } else {
-                return `${pad(m)}:${pad(s)}`;
+                timeString = `${h}:${String(displayM).padStart(2, '0')}:${String(displayS).padStart(2, '0')}`;
             }
+            return timeString;
         }
-
+        
         /**
-         * Formata bytes para o formato B/KB/MB/GB
-         * @param {number} bytes - Tamanho ou taxa em bytes.
-         * @returns {string} String formatada.
+         * Atualiza o progresso visual da barra de progresso.
          */
-        function formatBytes(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        /**
-         * Exibe uma mensagem de status temporária.
-         * @param {string} message - A mensagem a ser exibida.
-         * @param {boolean} isError - Se a mensagem é um erro (usa cor secundária).
-         */
-        function showStatus(message, isError = false) {
-            statusMessage.textContent = message;
-            statusMessage.style.display = 'block';
-            statusMessage.style.color = isError ? 'var(--secondary)' : 'var(--primary)';
-            statusMessage.style.backgroundColor = isError ? 'rgba(255, 61, 0, 0.1)' : 'rgba(0, 230, 118, 0.1)';
-            loadingIndicator.style.display = 'none';
-
-            // Oculta a mensagem após 5 segundos
-            setTimeout(() => {
-                statusMessage.style.display = 'none';
-                statusMessage.textContent = '';
-            }, 5000);
-        }
-
-        /**
-         * Limpa todos os displays de status, metadados e o timeout.
-         */
-        function clearStatusDisplays() {
-            loadingIndicator.style.display = 'none';
-            statusMessage.style.display = 'none';
-            metadataDetails.style.display = 'none';
-            torrentStatus.innerHTML = '';
+        function updateProgress() {
+            if (!videoElement) return;
+            const currentTime = videoElement.currentTime;
+            const duration = videoElement.duration;
             
-            // CORREÇÃO: Limpa o timeout de metadados se estiver ativo
-            if (metadataTimeoutId) {
-                clearTimeout(metadataTimeoutId);
-                metadataTimeoutId = null;
+            if (isNaN(duration) || duration <= 0) {
+                progressCurrent.style.width = '0%';
+                progressThumb.style.left = '0%';
+                timeDisplay.textContent = `${formatTime(currentTime)} / 0:00`;
+                return;
             }
+
+            const percentage = (currentTime / duration) * 100;
+            progressCurrent.style.width = `${percentage}%`;
+            progressThumb.style.left = `${percentage}%`;
+            timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        }
+
+        /**
+         * Atualiza a barra de buffer (buffered).
+         */
+        function updateBuffer() {
+            if (!videoElement || videoElement.buffered.length === 0) {
+                progressBuffered.style.width = '0%';
+                return;
+            }
+
+            const duration = videoElement.duration;
+            const bufferedEnd = videoElement.buffered.end(videoElement.buffered.length - 1);
+            
+            if (isNaN(duration) || duration <= 0) return;
+
+            const percentage = (bufferedEnd / duration) * 100;
+            progressBuffered.style.width = `${percentage}%`;
         }
 
         // =================================================================
-        // # FUNÇÕES DO PLAYER (Movidas para o escopo global)
+        // # FUNÇÕES DE CONTROLE DO PLAYER
         // =================================================================
 
         /**
-         * Alterna entre reproduzir e pausar o vídeo.
+         * Alterna o estado de Play/Pause.
          */
         function togglePlay() {
-            if (nativeVideo.paused) {
-                nativeVideo.play();
-                playPauseIcon.textContent = 'pause';
+            if (!videoElement) return;
+            if (videoElement.paused) {
+                videoElement.play().catch(e => console.error("Erro ao tentar dar play:", e));
             } else {
-                nativeVideo.pause();
-                playPauseIcon.textContent = 'play_arrow';
+                videoElement.pause();
             }
+            updatePlayPauseIcon();
         }
 
         /**
-         * Atualiza a exibição de tempo e a barra de progresso.
+         * Alterna o estado de Mute.
          */
-        function updateTimeDisplay() {
-            const currentTime = nativeVideo.currentTime;
-            const duration = nativeVideo.duration || 0;
-
-            if (isFinite(duration) && duration > 0) {
-                timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
-                progressBar.style.width = `${(currentTime / duration) * 100}%`;
-            } else {
-                timeDisplay.textContent = `${formatTime(currentTime)} / --:--`;
-                progressBar.style.width = '0%';
+        function toggleMute() {
+            if (!videoElement) return;
+            videoElement.muted = !videoElement.muted;
+            updateMuteIcon();
+            // Garante que o slider reflita o volume se o mute for desativado
+            if (!videoElement.muted) {
+                volumeSlider.value = videoElement.volume;
             }
+        }
+        
+        /**
+         * Ajusta o volume do vídeo.
+         * @param {number} volume - Valor do volume entre 0 e 1.
+         */
+        function setVolume(volume) {
+            if (!videoElement) return;
+            videoElement.volume = volume;
+            videoElement.muted = volume === 0;
+            updateMuteIcon();
         }
 
         /**
-         * Busca um novo tempo relativo.
-         * @param {number} seconds - Número de segundos para avançar ou retroceder.
+         * Ajusta a posição de reprodução em relação ao tempo atual.
+         * @param {number} seconds - Segundos para avançar (positivo) ou retroceder (negativo).
          */
         function seekRelative(seconds) {
-            nativeVideo.currentTime += seconds;
+            if (!videoElement) return;
+            videoElement.currentTime = Math.max(0, Math.min(videoElement.duration, videoElement.currentTime + seconds));
         }
 
         /**
-         * Define o volume e atualiza o ícone de mudo.
-         * @param {number} newVolume - O novo volume (0.0 a 1.0).
+         * Alterna o modo de tela cheia.
          */
-        function setVolume(newVolume) {
-            nativeVideo.volume = newVolume;
-            if (newVolume === 0) {
+        function toggleFullscreen() {
+            if (!videoElement) return;
+
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else if (playerContainer.requestFullscreen) {
+                playerContainer.requestFullscreen();
+            } else if (playerContainer.webkitRequestFullscreen) { /* Safari */
+                playerContainer.webkitRequestFullscreen();
+            } else if (playerContainer.msRequestFullscreen) { /* IE11 */
+                playerContainer.msRequestFullscreen();
+            }
+        }
+
+        // =================================================================
+        // # FUNÇÕES DE ATUALIZAÇÃO DE ICONES
+        // =================================================================
+
+        /**
+         * Atualiza o ícone de Play/Pause.
+         */
+        function updatePlayPauseIcon() {
+            if (!videoElement) return;
+            playPauseIcon.textContent = videoElement.paused ? 'play_arrow' : 'pause';
+        }
+
+        /**
+         * Atualiza o ícone de Mute.
+         */
+        function updateMuteIcon() {
+            if (!videoElement) return;
+            if (videoElement.muted || videoElement.volume === 0) {
                 muteIcon.textContent = 'volume_off';
-            } else if (newVolume < 0.5) {
+            } else if (videoElement.volume < 0.5) {
                 muteIcon.textContent = 'volume_down';
             } else {
                 muteIcon.textContent = 'volume_up';
@@ -614,327 +527,262 @@
         }
 
         /**
-         * Alterna o modo de tela cheia.
+         * Atualiza o ícone de Tela Cheia.
          */
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                videoWrapper.requestFullscreen().catch(err => {
-                    console.error(`Erro ao tentar entrar em tela cheia: ${err.message}`);
-                    showStatus("O navegador bloqueou o modo de tela cheia.", true);
-                });
-            } else {
-                document.exitFullscreen();
-            }
+        function updateFullscreenIcon() {
+            fullscreenIcon.textContent = document.fullscreenElement ? 'fullscreen_exit' : 'fullscreen';
         }
 
         // =================================================================
-        // # FUNÇÕES DE TORRENT (WEB TORRENT)
+        // # CONFIGURAÇÃO DE EVENTOS DO PLAYER
         // =================================================================
 
         /**
-         * Cria o cliente WebTorrent se ainda não existir.
+         * Configura todos os listeners de eventos no elemento de vídeo nativo.
+         * @param {HTMLVideoElement} nativeVideo - O elemento de vídeo injetado pelo WebTorrent.
          */
-        function getWebTorrentClient() {
-            if (!client) {
-                client = new WebTorrent();
-                client.on('error', (err) => {
-                    console.error('WebTorrent Client Error:', err);
-                    showStatus(`Erro no cliente WebTorrent: ${err.message}`, true);
-                });
-            }
-            return client;
-        }
-        
-        /**
-         * Função para atualizar o texto do loading com base no número de peers.
-         */
-        function updateLoadingPeers() {
-            if (currentTorrent) {
-                const numPeers = currentTorrent.numPeers;
-                loadingText.textContent = `Buscando metadados... Conectado a ${numPeers} peer(s).`;
-            } else {
-                loadingText.textContent = 'Buscando metadados... Conectando aos peers...';
-            }
-        }
+        function setupPlayerEvents(nativeVideo) {
+            // Torna o vídeo globalmente acessível
+            videoElement = nativeVideo;
 
-        /**
-         * Função para renderizar o vídeo principal após a obtenção dos metadados.
-         * @param {object} file - O arquivo de vídeo principal.
-         * @param {object} torrent - O objeto WebTorrent.
-         */
-        function renderVideo(file, torrent) {
-            // Limpa o timeout de metadados, pois os metadados foram encontrados
-            if (metadataTimeoutId) {
-                clearTimeout(metadataTimeoutId);
-                metadataTimeoutId = null;
-            }
+            // Eventos de Play/Pause
+            playPauseButton.addEventListener('click', togglePlay);
+            nativeVideo.addEventListener('click', togglePlay);
             
-            file.renderTo(nativeVideo, {
-                autoplay: true 
-            }, (err, elem) => {
-                if (err) {
-                    console.error('Erro ao renderizar arquivo:', err);
-                    clearStatusDisplays();
-                    showStatus(`Erro ao reproduzir o vídeo: ${err.message}`, true);
-                    torrent.destroy();
-                    currentTorrent = null;
-                    return;
-                }
-
-                console.log('Vídeo carregado e pronto para reprodução.');
-                clearStatusDisplays();
-                // Apenas mostra uma breve notificação de sucesso
-                showStatus(`Streaming iniciado para "${file.name}".`, false); 
-                controls.classList.add('active'); 
-                playPauseIcon.textContent = 'pause';
-            });
-        }
-
-
-        /**
-         * Inicia o carregamento de um magnet link e a busca por metadados.
-         */
-        function loadMagnetLink() {
-            const magnetLink = magnetLinkInput.value.trim();
-            
-            if (!magnetLink) {
-                showStatus("Por favor, insira um Magnet Link válido.", true);
-                return;
-            }
-            
-            if (currentTorrent) {
-                currentTorrent.destroy(() => console.log('Torrent anterior destruído.'));
-                currentTorrent = null;
-            }
-            
-            // 1. Prepara a UI para carregamento
-            clearStatusDisplays();
-            loadingIndicator.style.display = 'flex';
-            nativeVideo.removeAttribute('src');
-            nativeVideo.load();
-            nativeVideo.pause();
-            
-            // 2. Adiciona o novo magnet link
-            client = getWebTorrentClient();
-            
-            // CORREÇÃO: Certifica-se de que currentTorrent é definido corretamente
-            currentTorrent = client.add(magnetLink);
-            
-            // 3. Define o timeout para a busca de metadados
-            metadataTimeoutId = setTimeout(() => {
-                if (currentTorrent && !currentTorrent.ready) {
-                    console.warn('Timeout de metadados atingido.');
-                    currentTorrent.destroy();
-                    currentTorrent = null;
-                    clearStatusDisplays();
-                    showStatus("Tempo limite excedido para encontrar peers e metadados. O link pode estar inativo. Tente outro.", true);
-                }
-            }, METADATA_TIMEOUT_MS);
-            
-            // 4. Configura Listeners de Status e Metadados
-            
-            // Atualiza o loading text e status sempre que um peer é conectado ou desconectado
-            currentTorrent.on('wire', updateLoadingPeers);
-            currentTorrent.on('noPeers', () => {
-                loadingText.textContent = "Aguardando seeds/peers... Ninguém encontrado ainda.";
-                updateTorrentStatus();
-            });
-            currentTorrent.on('error', (err) => {
-                console.error('Torrent Error:', err);
-                clearStatusDisplays();
-                showStatus(`Erro no Torrent: ${err.message}`, true);
-                // currentTorrent já é destruído e limpo em clearStatusDisplays (via timeout), 
-                // mas garantimos aqui que não haja duplicidade de erro
-                if (currentTorrent) currentTorrent.destroy();
-                currentTorrent = null;
+            // Eventos de Tempo e Progresso
+            nativeVideo.addEventListener('play', updatePlayPauseIcon);
+            nativeVideo.addEventListener('pause', updatePlayPauseIcon);
+            nativeVideo.addEventListener('timeupdate', updateProgress);
+            nativeVideo.addEventListener('progress', updateBuffer); // Para eventos de buffer
+            nativeVideo.addEventListener('loadedmetadata', () => {
+                // Configura o volume inicial e o estado do mute
+                setVolume(volumeSlider.value); 
+                updateProgress();
+                updateBuffer();
             });
 
-            // Evento principal: Metadados prontos
-            currentTorrent.on('ready', () => {
-                
-                // Limpa o timeout, pois a fase de metadados foi bem-sucedida
-                if (metadataTimeoutId) {
-                    clearTimeout(metadataTimeoutId);
-                    metadataTimeoutId = null;
-                }
-
-                const torrent = currentTorrent;
-                const totalSize = formatBytes(torrent.length);
-                const videoExtensions = ['.mp4', '.webm', '.ogg', '.mkv'];
-                
-                let videoFile = torrent.files
-                    .filter(f => videoExtensions.some(ext => f.name.toLowerCase().endsWith(ext)))
-                    .sort((a, b) => b.length - a.length)[0];
-
-                if (!videoFile && torrent.files.length > 0) {
-                    videoFile = torrent.files[0];
-                }
-
-                // Preenche os detalhes na área de metadados
-                metadataName.textContent = torrent.name || 'Nome Desconhecido';
-                metadataSize.textContent = totalSize;
-                
-                metadataFiles.innerHTML = ''; 
-                torrent.files.forEach(file => {
-                    const li = document.createElement('li');
-                    const fileSize = formatBytes(file.length);
-                    
-                    if (file === videoFile) {
-                        li.innerHTML = `<strong>${file.name}</strong> (${fileSize}) - <em>(Vídeo principal detectado)</em>`;
-                    } else {
-                        li.textContent = `${file.name} (${fileSize})`;
-                    }
-                    metadataFiles.appendChild(li);
-                });
-
-                metadataDetails.style.display = 'block'; 
-                loadingIndicator.style.display = 'none';
-
-                if (videoFile) {
-                    // Inicia o streaming após mostrar os metadados
-                    renderVideo(videoFile, torrent);
-                } else {
-                    showStatus("Nenhum arquivo de vídeo suportado encontrado. Arquivos listados acima.", true);
-                    torrent.destroy();
-                    currentTorrent = null;
-                    controls.classList.remove('active');
-                }
-            });
-            
-            // Evento para atualizar velocidades e peers em tempo real
-            currentTorrent.on('download', () => updateTorrentStatus()); 
-            // Atualização inicial
-            updateLoadingPeers(); 
-        }
-        
-        /**
-         * Atualiza a exibição de download, upload e peers (Seeds).
-         */
-        function updateTorrentStatus() {
-            if (!currentTorrent) return;
-
-            const downloadSpeed = formatBytes(currentTorrent.downloadSpeed) + '/s';
-            const uploadSpeed = formatBytes(currentTorrent.uploadSpeed) + '/s';
-            const numPeers = currentTorrent.numPeers;
-            
-            const statusHTML = `
-                <div class="status-item" title="Semeadores e Baixadores Conectados">
-                    <i class="material-icons">people</i>
-                    <span>${numPeers} Peers</span>
-                </div>
-                <div class="status-item" title="Taxa de Download">
-                    <i class="material-icons">download</i>
-                    <span>${downloadSpeed}</span>
-                </div>
-                <div class="status-item" title="Taxa de Upload">
-                    <i class="material-icons">upload</i>
-                    <span>${uploadSpeed}</span>
-                </div>
-            `;
-            
-            torrentStatus.innerHTML = statusHTML;
-        }
-
-
-        // =================================================================
-        // # INICIALIZAÇÃO E EVENT LISTENERS DO PLAYER
-        // =================================================================
-        
-        window.onload = function() {
-            client = getWebTorrentClient();
-            
-            // Funções de controle do player (apenas para referência, usando as globais agora)
-            // function togglePlay() { nativeVideo.paused ? nativeVideo.play() : nativeVideo.pause(); }
-            // function toggleMute() { ... setVolume(nativeVideo.volume); }
-            // function setVolume(newVolume) { nativeVideo.volume = newVolume; muteIcon.textContent = newVolume === 0 ? 'volume_off' : (newVolume < 0.5 ? 'volume_down' : 'volume_up'); }
-            // function toggleFullscreen() { ... }
-            // function seekRelative(seconds) { nativeVideo.currentTime += seconds; }
-
-            // Configuração Inicial do Vídeo
-            nativeVideo.volume = 1.0;
-            
-            // Eventos de UI do Player
-            playPauseBtn.addEventListener('click', togglePlay);
-            muteBtn.addEventListener('click', () => { 
-                // Lógica de toggleMute simplificada e movida para o listener
-                if (nativeVideo.volume > 0) {
-                    volumeSlider.dataset.lastVolume = nativeVideo.volume;
-                    setVolume(0); 
-                    volumeSlider.value = 0;
-                } else { 
-                    const savedVolume = parseFloat(volumeSlider.dataset.lastVolume) || 0.5;
-                    setVolume(savedVolume); 
-                    volumeSlider.value = savedVolume;
-                } 
-            });
-
+            // Eventos de Volume
+            muteButton.addEventListener('click', toggleMute);
             volumeSlider.addEventListener('input', (e) => {
-                const newVolume = parseFloat(e.target.value);
-                setVolume(newVolume);
-                if (newVolume > 0) { volumeSlider.dataset.lastVolume = newVolume; }
+                const vol = parseFloat(e.target.value);
+                setVolume(vol);
             });
-            
-            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            nativeVideo.addEventListener('volumechange', updateMuteIcon);
 
-            progressBarContainer.addEventListener('click', (e) => {
-                if (nativeVideo.duration && isFinite(nativeVideo.duration)) {
-                    const rect = progressBarContainer.getBoundingClientRect();
-                    const clickX = e.clientX - rect.left;
-                    const newTime = (clickX / rect.width) * nativeVideo.duration;
-                    nativeVideo.currentTime = newTime;
-                    updateTimeDisplay();
-                }
-            });
-
-            // Eventos de Mídia (Video nativo)
-            nativeVideo.addEventListener('timeupdate', updateTimeDisplay);
-            nativeVideo.addEventListener('loadedmetadata', updateTimeDisplay);
-            nativeVideo.addEventListener('durationchange', updateTimeDisplay);
-            nativeVideo.addEventListener('play', () => playPauseIcon.textContent = 'pause');
-            nativeVideo.addEventListener('pause', () => playPauseIcon.textContent = 'play_arrow');
-            nativeVideo.addEventListener('volumechange', () => setVolume(nativeVideo.volume));
-            
             // Eventos de Tela Cheia
-            document.addEventListener('fullscreenchange', () => {
-                const isFullscreen = document.fullscreenElement === videoWrapper;
-                fullscreenBtn.querySelector('.material-icons').textContent = isFullscreen ? 'fullscreen_exit' : 'fullscreen';
-                if (isFullscreen) { controls.classList.add('active'); } else { controls.classList.remove('active'); }
-            });
+            fullscreenButton.addEventListener('click', toggleFullscreen);
+            document.addEventListener('fullscreenchange', updateFullscreenIcon);
 
-            // Eventos de Carregamento (Input)
-            loadBtn.addEventListener('click', loadMagnetLink);
-            magnetLinkInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    loadMagnetLink();
-                }
+            // Eventos da Barra de Progresso
+            progressBarContainer.addEventListener('click', (e) => {
+                const duration = videoElement.duration;
+                if (isNaN(duration) || duration <= 0) return;
+                
+                const rect = progressBarContainer.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const width = rect.width;
+                const percentage = clickX / width;
+                
+                videoElement.currentTime = duration * percentage;
             });
             
-            // Atalhos de teclado
+            // Mouse para mostrar/esconder controles (se não estiver em pausa)
+            let controlsTimeout;
+            playerContainer.addEventListener('mousemove', () => {
+                playerContainer.classList.add('show-controls');
+                clearTimeout(controlsTimeout);
+                if (!videoElement.paused) {
+                    controlsTimeout = setTimeout(() => {
+                        playerContainer.classList.remove('show-controls');
+                    }, 3000);
+                }
+            });
+            playerContainer.addEventListener('mouseleave', () => {
+                if (!videoElement.paused) {
+                    playerContainer.classList.remove('show-controls');
+                }
+            });
+            playerContainer.addEventListener('mouseenter', () => {
+                 playerContainer.classList.add('show-controls');
+            });
+            
+            // Mantém os controles visíveis se o vídeo estiver pausado
+            nativeVideo.addEventListener('pause', () => {
+                playerContainer.classList.add('show-controls');
+            });
+        }
+        
+        // =================================================================
+        // # LÓGICA DO WEBTORRENT
+        // =================================================================
+
+        /**
+         * Carrega o torrent a partir do magnet link e configura o player.
+         * @param {string} magnetURI - O Magnet URI do torrent.
+         */
+        function loadTorrent(magnetURI) {
+            // Remove o input de URI da tela
+            torrentInputArea.style.display = 'none'; 
+            statusMessage.textContent = 'Conectando aos peers...';
+
+            client.add(magnetURI, (torrent) => {
+                
+                // Filtra apenas arquivos de vídeo (ou o maior arquivo)
+                let largestFile = null;
+                torrent.files.forEach(file => {
+                    // Simplesmente assume que o maior arquivo é o vídeo
+                    if (!largestFile || file.length > largestFile.length) {
+                        largestFile = file;
+                    }
+                });
+
+                if (largestFile) {
+                    statusMessage.textContent = `Carregando: ${largestFile.name}...`;
+
+                    // Remove qualquer elemento anterior no container
+                    while (videoContainer.firstChild) {
+                        videoContainer.removeChild(videoContainer.firstChild);
+                    }
+
+                    // Renderiza o arquivo no container de vídeo
+                    largestFile.renderTo(videoContainer, {
+                        controls: false, // Usaremos nossos próprios controles
+                        autoplay: true
+                    }, (err, elem) => {
+                        if (err) {
+                            console.error('Erro ao renderizar vídeo:', err);
+                            statusMessage.textContent = 'Erro ao renderizar o vídeo.';
+                            torrentInputArea.style.display = 'block';
+                            return;
+                        }
+                        console.log('Vídeo renderizado com sucesso.');
+                        setupPlayerEvents(elem); // Configura todos os eventos no novo elemento
+                        controls.style.visibility = 'visible';
+                        
+                        // Oculta a área de input após o carregamento, mas a mantém no DOM
+                        torrentInputArea.style.display = 'none'; 
+                    });
+                } else {
+                    statusMessage.textContent = 'Nenhum arquivo de vídeo encontrado no torrent.';
+                    torrentInputArea.style.display = 'block';
+                }
+                
+                // Eventos de progresso do torrent
+                torrent.on('download', () => {
+                    const progress = Math.round(torrent.progress * 100);
+                    const speed = formatSpeed(torrent.downloadSpeed);
+                    statusMessage.textContent = `Baixando... ${progress}% (${speed}/s)`;
+                });
+
+                torrent.on('done', () => {
+                    statusMessage.textContent = 'Download completo! Reproduzindo...';
+                });
+
+            }).on('error', (err) => {
+                console.error('Erro no WebTorrent:', err);
+                statusMessage.textContent = `Erro ao carregar o torrent: ${err.message}.`;
+                torrentInputArea.style.display = 'block';
+            });
+        }
+        
+        /**
+         * Formata a velocidade de download em KB/s, MB/s, etc.
+         * @param {number} bytes - Velocidade em bytes por segundo.
+         * @returns {string} Velocidade formatada.
+         */
+        function formatSpeed(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // =================================================================
+        // # INICIALIZAÇÃO E EVENTOS GLOBAIS
+        // =================================================================
+
+        window.onload = function () {
+            // Oculta os controles até que o vídeo seja carregado
+            controls.style.visibility = 'hidden'; 
+            
+            // Evento para o botão de carregar
+            loadButton.addEventListener('click', () => {
+                const magnetURI = magnetUriInput.value.trim();
+                if (magnetURI) {
+                    loadTorrent(magnetURI);
+                } else {
+                    statusMessage.textContent = 'Por favor, insira um Magnet URI válido.';
+                }
+            });
+
+            // Atalhos de teclado (corrigidos para usar a variável global videoElement)
             document.addEventListener('keydown', (e) => {
+                if (!videoElement) return; // Só executa se o vídeo estiver carregado
+                
                 const isInputFocused = document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA';
                 if (isInputFocused) return;
+                
                 switch (e.key) {
-                    case ' ': case 'k': e.preventDefault(); togglePlay(); break;
-                    case 'j': e.preventDefault(); seekRelative(-10); break;
-                    case 'l': e.preventDefault(); seekRelative(10); break;
-                    case 'm': e.preventDefault(); 
-                        // Lógica de mudo no atalho (para usar toggleMute, ela precisaria ser recriada ou usada a lógica inline)
-                        if (nativeVideo.volume > 0) {
-                            volumeSlider.dataset.lastVolume = nativeVideo.volume;
-                            setVolume(0); 
-                            volumeSlider.value = 0;
-                        } else { 
-                            const savedVolume = parseFloat(volumeSlider.dataset.lastVolume) || 0.5;
-                            setVolume(savedVolume); 
-                            volumeSlider.value = savedVolume;
-                        }
+                    case ' ': 
+                    case 'k': 
+                        e.preventDefault(); 
+                        togglePlay(); 
                         break;
-                    case 'f': e.preventDefault(); toggleFullscreen(); break;
-                    case 'ArrowUp': e.preventDefault(); const newVolUp = Math.min(1, nativeVideo.volume + 0.05); setVolume(newVolUp); volumeSlider.value = newVolUp; break;
-                    case 'ArrowDown': e.preventDefault(); const newVolDown = Math.max(0, nativeVideo.volume - 0.05); setVolume(newVolDown); volumeSlider.value = newVolDown; break;
-                    case 'ArrowLeft': e.preventDefault(); seekRelative(-5); break;
-                    case 'ArrowRight': e.preventDefault(); seekRelative(5); break;
-                    default: if (e.key >= '0' && e.key <= '9') { e.preventDefault(); const time = (nativeVideo.duration / 10) * parseInt(e.key); nativeVideo.currentTime = time; } break;
+                    
+                    case 'j': 
+                        e.preventDefault(); 
+                        seekRelative(-10); 
+                        break;
+                    
+                    case 'l': 
+                        e.preventDefault(); 
+                        seekRelative(10); 
+                        break;
+                    
+                    case 'm': 
+                        e.preventDefault(); 
+                        toggleMute(); 
+                        break;
+                    
+                    case 'f': 
+                        e.preventDefault(); 
+                        toggleFullscreen(); 
+                        break;
+                    
+                    case 'ArrowUp': 
+                        e.preventDefault(); 
+                        // O volume é manipulado pelo slider, mas o setVolume garante a atualização do ícone
+                        const newVolUp = Math.min(1, videoElement.volume + 0.05); 
+                        setVolume(newVolUp); 
+                        volumeSlider.value = newVolUp; 
+                        break;
+                    
+                    case 'ArrowDown': 
+                        e.preventDefault(); 
+                        const newVolDown = Math.max(0, videoElement.volume - 0.05); 
+                        setVolume(newVolDown); 
+                        volumeSlider.value = newVolDown; 
+                        break;
+                    
+                    case 'ArrowLeft': 
+                        e.preventDefault(); 
+                        seekRelative(-5); 
+                        break;
+                    
+                    case 'ArrowRight': 
+                        e.preventDefault(); 
+                        seekRelative(5); 
+                        break;
+                    
+                    default: 
+                        // Pula para porcentagem do vídeo (0-9)
+                        if (e.key >= '0' && e.key <= '9') { 
+                            e.preventDefault(); 
+                            const percentage = parseInt(e.key) / 10;
+                            videoElement.currentTime = videoElement.duration * percentage;
+                        } 
+                        break;
                 }
             });
         }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OakCine - Seu Player de Mídia Completo</title>
+    <title>OakCine - Player com Busca Web de Torrents V4 (Rich Data)</title>
     <!-- Incluindo Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Incluindo WebTorrent CDN (Necessário para links Magnet) -->
@@ -15,288 +15,287 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #151e2a; /* Cinza-Azulado Muito Escuro */
+            background-color: #111827; /* Darker Blue-Gray for depth */
             color: #d1d5db; /* Texto principal cinza claro */
         }
-        /* Definição da animação do logo - Agora com glow Esmeralda */
+        
+        /* Animação de Brilho do Logo */
         @keyframes pulse-glow {
             0%, 100% {
-                text-shadow: 0 0 5px #10b981, 0 0 10px #10b981, 0 0 15px #10b98140;
-                opacity: 0.8;
+                text-shadow: 0 0 8px #10b98166, 0 0 16px #10b98133;
+                opacity: 0.9;
             }
             50% {
-                text-shadow: 0 0 10px #10b981, 0 0 20px #10b981, 0 0 30px #10b981;
+                text-shadow: 0 0 15px #34d399, 0 0 30px #10b981;
                 opacity: 1;
             }
         }
         .logo-animated {
-            animation: pulse-glow 3s infinite ease-in-out;
-            color: #34d399; /* Cor de texto mais clara para o logo */
+            animation: pulse-glow 4s infinite ease-in-out;
+            color: #34d399; /* Emerald vibrante */
         }
+        
         /* Estilos da Zona de Drop */
         .drop-zone {
             transition: all 0.3s ease;
-            border: 2px dashed #4b5563;
+            border: 3px dashed #4b5563;
         }
         .drop-zone.drag-over {
-            border-color: #10b981; /* Esmeralda de destaque */
+            border-color: #34d399; /* Emerald de destaque */
             background-color: #1f2937;
-        }
-
-        /* Estilos da Barra de Controles Customizada */
-        .controls-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 100px; 
-            z-index: 10;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-            pointer-events: none; 
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.0) 100%);
-        }
-        .player-wrapper:hover .controls-overlay {
-            opacity: 1;
-            pointer-events: auto; 
-        }
-        .controls-bar {
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            pointer-events: auto; 
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-        }
-        .control-button {
-            background: none;
-            border: none;
-            color: #fff;
-            padding: 5px;
-            cursor: pointer;
-            outline: none;
-            transition: color 0.2s;
-            display: flex;
-            align-items: center;
-        }
-        .control-button:hover {
-            color: #34d399; /* Esmeralda de destaque */
-        }
-        .material-icons {
-            font-size: 28px;
-        }
-        .time-display {
-            font-size: 0.9rem;
-            color: #d1d5db;
-            white-space: nowrap; 
-        }
-        /* Barra de Progresso Customizada */
-        .progress-bar-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 12px;
-            cursor: pointer;
-            background: transparent;
-        }
-        .progress-track {
-            position: relative;
-            width: 100%;
-            height: 4px;
-            background: #4b5563;
-            transition: height 0.1s;
-        }
-        .player-wrapper:hover .progress-track {
-            height: 8px;
-        }
-        .progress-fill {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            background: #10b981; /* Esmeralda de destaque */
-            width: 0%;
-        }
-        .progress-thumb {
-            position: absolute;
-            top: 50%;
-            right: 0;
-            transform: translate(50%, -50%);
-            width: 15px;
-            height: 15px;
-            background: #34d399; /* Esmeralda de destaque */
-            border-radius: 50%;
-            opacity: 0; 
-            transition: opacity 0.1s, transform 0.1s;
-        }
-        .progress-bar-container:hover .progress-thumb {
-            opacity: 1;
-        }
-        /* Volume Slider */
-        .volume-slider {
-            -webkit-appearance: none;
-            width: 80px;
-            height: 6px;
-            background: #4b5563;
-            border-radius: 3px;
-            outline: none;
-            cursor: pointer;
-        }
-        .volume-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #34d399; /* Esmeralda de destaque */
-            cursor: pointer;
+            transform: scale(1.02);
         }
         
+        /* Estilos de Player */
+        .controls-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 100px; z-index: 10;
+            opacity: 0; transition: opacity 0.3s ease-in-out; pointer-events: none; 
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.0) 100%);
+        }
+        .player-wrapper:hover .controls-overlay,
+        .player-wrapper.playing .controls-overlay,
+        .player-wrapper:focus-within .controls-overlay { opacity: 1; pointer-events: auto; }
+        .controls-bar {
+            padding: 10px 20px; display: flex; align-items: center; gap: 15px; pointer-events: auto; 
+            position: absolute; bottom: 0; width: 100%;
+        }
+        .control-button {
+            background: none; border: none; color: #fff; padding: 5px; cursor: pointer; outline: none;
+            transition: color 0.2s; display: flex; align-items: center;
+        }
+        .control-button:hover { color: #34d399; }
+        .material-icons { font-size: 28px; }
+        .time-display { font-size: 0.9rem; color: #d1d5db; white-space: nowrap; }
+        .progress-bar-container {
+            position: absolute; top: 0; left: 0; right: 0; height: 12px; cursor: pointer; background: transparent;
+        }
+        .progress-track {
+            position: relative; width: 100%; height: 4px; background: #4b5563; transition: height 0.1s;
+        }
+        .player-wrapper:hover .progress-track, .player-wrapper.seeking .progress-track { height: 8px; }
+        .progress-fill {
+            position: absolute; top: 0; left: 0; height: 100%; background: #10b981; width: 0%;
+        }
+        .progress-thumb {
+            position: absolute; top: 50%; right: 0; transform: translate(50%, -50%); width: 15px;
+            height: 15px; background: #34d399; border-radius: 50%; opacity: 0; 
+            transition: opacity 0.1s, transform 0.1s;
+        }
+        .progress-bar-container:hover .progress-thumb { opacity: 1; }
+        .volume-slider {
+            -webkit-appearance: none; width: 80px; height: 6px; background: #4b5563;
+            border-radius: 3px; outline: none; cursor: pointer;
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 12px; height: 12px;
+            border-radius: 50%; background: #34d399; cursor: pointer;
+        }
+        
+        /* Novo Estilo para os Cartões de Resultado Aprimorados */
+        .result-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            background-color: #1f2937; /* Gray-800 */
+            border: 1px solid #374151; /* Gray-700 */
+        }
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            border-color: #10b981; /* Emerald-500 */
+        }
+        .magnet-input {
+            background-color: #374151; /* Gray-700 */
+            color: #d1d5db;
+        }
+        .magnet-input:hover {
+            background-color: #4b5563; /* Gray-600 */
+        }
+        .stats-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .seeds-badge {
+            background-color: rgba(52, 211, 153, 0.2); /* Emerald-400 com transparência */
+            color: #34d399;
+        }
+        .size-badge {
+            background-color: rgba(99, 102, 241, 0.2); /* Indigo-400 com transparência */
+            color: #6366f1;
+        }
     </style>
 </head>
-<body class="flex items-start justify-center min-h-screen py-10">
+<body class="flex items-center justify-center min-h-screen py-10">
 
-    <div id="app-container" class="w-full max-w-4xl mx-4 lg:mx-auto bg-gray-900 shadow-2xl rounded-xl overflow-hidden p-6 space-y-6">
-
-        <!-- 1. LOGO OAKCINE ANIMADA (Acima do Player) -->
-        <header class="text-center mb-6">
-            <h1 class="logo-animated text-5xl font-extrabold">
+    <div id="app-container" class="w-full max-w-4xl mx-4 lg:mx-auto shadow-2xl rounded-xl overflow-hidden space-y-8">
+        
+        <!-- 1. LOGO E HEADER -->
+        <header class="text-center pt-4">
+            <h1 class="logo-animated text-6xl font-extrabold tracking-tight">
                 OakCine
             </h1>
-            <p class="text-sm text-gray-500 mt-1">Seu Player Multimídia</p>
+            <p class="text-base text-gray-500 mt-2">Streaming P2P e Player de Mídia de Alto Desempenho.</p>
         </header>
 
-        <!-- 2. PLAYER DE MÍDIA (Com Controles Customizados) -->
-        <div class="player-wrapper relative w-full aspect-video bg-black rounded-lg shadow-2xl group" id="player-wrapper">
-            <!-- O atributo 'controls' foi removido para usarmos os customizados -->
-            <video id="mediaPlayer" class="w-full h-full rounded-lg object-contain" poster="https://placehold.co/1280x720/1f2937/d1d5db?text=Nenhuma+M%C3%ADdia+Carregada" tabindex="-1">
-                Seu navegador não suporta a tag de vídeo.
-            </video>
+        <!-- CONTAINER PRINCIPAL (INPUTS ou PLAYER) -->
+        <div id="main-content-area" class="bg-gray-900 rounded-xl p-8 transition-all duration-500 ease-in-out">
 
-            <div class="controls-overlay">
-                
-                <!-- Barra de Progresso -->
-                <div class="progress-bar-container" id="progress-container">
-                    <div class="progress-track">
-                        <div class="progress-fill" id="progress-played">
-                            <div class="progress-thumb"></div>
+            <!-- 2. VISÃO DE ENTRADA UNIFICADA (Visível por padrão) -->
+            <div id="unified-input-view">
+                <h2 class="text-2xl font-bold text-white mb-6 text-center">Inicie sua Reprodução</h2>
+
+                <!-- Input de Busca de Torrent Web -->
+                <div class="p-6 bg-gray-800 rounded-xl shadow-xl space-y-4 mb-6 border border-2 border-gray-700">
+                    <h3 class="text-xl font-semibold text-emerald-400 flex items-center">
+                        <span class="material-icons mr-2 text-3xl">search</span>
+                        Buscar Torrent na Web (Com Informações Detalhadas)
+                    </h3>
+                    <div class="flex space-x-3">
+                        <input type="text" id="searchInput" placeholder="Digite o nome do filme, série ou anime..." 
+                               class="flex-grow p-4 rounded-xl bg-gray-700 text-white border-2 border-gray-600 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400 text-lg" 
+                               value="Interestelar 4K">
+                        <button id="searchTorrentBtn" class="bg-emerald-600 text-white px-6 py-4 rounded-xl font-bold hover:bg-emerald-700 transition duration-300 flex-shrink-0 shadow-lg transform hover:scale-105 flex items-center justify-center" aria-label="Buscar Torrent">
+                            <span class="material-icons" id="searchIcon">search</span>
+                        </button>
+                    </div>
+
+                    <!-- Área de Resultados da Busca APRIMORADA -->
+                    <div id="searchResultsContainer" class="mt-4 hidden">
+                        <p class="text-gray-400 text-sm mb-3" id="resultsStatus">Resultados da busca...</p>
+                        <div id="resultsList" class="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Resultados serão inseridos aqui -->
+                        </div>
+                        <p class="text-gray-500 text-sm mt-4 text-center" id="searchCount"></p>
+                    </div>
+                </div>
+
+                <!-- Separador Elegante -->
+                <div class="flex items-center my-6">
+                    <div class="flex-grow border-t border-gray-700"></div>
+                    <span class="flex-shrink mx-4 text-gray-500 text-sm font-medium">OU</span>
+                    <div class="flex-grow border-t border-gray-700"></div>
+                </div>
+
+                <!-- Carregar Arquivo Local/Drop Zone -->
+                <div class="p-6 bg-gray-800 rounded-xl shadow-xl border-2 border-gray-700">
+                    <h3 class="text-xl font-semibold text-emerald-400 flex items-center mb-4">
+                        <span class="material-icons mr-2 text-3xl">upload_file</span>
+                        Arquivo de Mídia Local
+                    </h3>
+                    <div id="fileDropZone" class="drop-zone flex flex-col items-center justify-center p-10 bg-gray-700 rounded-xl cursor-pointer hover:bg-gray-700/80 transition duration-300 border-2 border-dashed">
+                        <span class="material-icons text-7xl text-emerald-500 mb-2">video_library</span>
+                        <p class="text-gray-300 font-bold text-center text-lg">Arraste e Solte Mídia Aqui</p>
+                        <p class="text-gray-400 text-sm mt-1">Ou clique para **Selecionar Arquivo** (Vídeo ou Áudio)</p>
+                        <input type="file" id="fileInput" accept="video/*,audio/*" class="hidden">
+                    </div>
+                </div>
+
+            </div>
+        
+            <!-- 3. PLAYER DE MÍDIA (Oculto por padrão) -->
+            <div id="player-view" class="hidden">
+                <div class="player-wrapper relative w-full aspect-video bg-black rounded-xl shadow-2xl group" id="player-wrapper" tabindex="0">
+                    <video id="mediaPlayer" class="w-full h-full rounded-xl object-contain" poster="https://placehold.co/1280x720/1f2937/d1d5db?text=Aguardando+M%C3%ADdia..." tabindex="-1">
+                        Seu navegador não suporta a tag de vídeo.
+                    </video>
+
+                    <div class="controls-overlay">
+                        
+                        <!-- Barra de Progresso -->
+                        <div class="progress-bar-container" id="progress-container">
+                            <div class="progress-track">
+                                <div class="progress-fill" id="progress-played">
+                                    <div class="progress-thumb"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Barra de Controles Inferior -->
+                        <div class="controls-bar">
+                            <!-- Botão VOLTAR AO MENU -->
+                            <button class="control-button text-sm bg-gray-700 p-2 rounded-lg hover:bg-gray-600" id="back-to-menu-button" aria-label="Voltar à Seleção de Mídia">
+                                <span class="material-icons">arrow_back</span>
+                            </button>
+
+                            <!-- Play/Pause -->
+                            <button class="control-button" id="play-pause-button" aria-label="Play/Pause">
+                                <span class="material-icons">play_arrow</span>
+                            </button>
+
+                            <!-- VOLTAR 10s -->
+                            <button class="control-button" id="rewind-button" aria-label="Voltar 10 segundos">
+                                <span class="material-icons">replay_10</span>
+                            </button>
+                            
+                            <!-- AVANÇAR 10s -->
+                            <button class="control-button" id="forward-button" aria-label="Avançar 10 segundos">
+                                <span class="material-icons">forward_10</span>
+                            </button>
+
+                            <!-- Tempo Atual/Duração -->
+                            <div class="time-display" id="time-display">0:00 / 0:00</div>
+
+                            <div class="flex-grow"></div> 
+                            
+                            <!-- Volume -->
+                            <div class="flex items-center gap-1">
+                                <button class="control-button" id="mute-button" aria-label="Mudo">
+                                    <span class="material-icons" id="volume-icon">volume_up</span>
+                                </button>
+                                <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1" class="volume-slider" aria-label="Controle de Volume">
+                            </div>
+                            
+                            <!-- Tela Cheia -->
+                            <button class="control-button" id="fullscreen-button" aria-label="Tela Cheia">
+                                <span class="material-icons">fullscreen</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Feedback de Ação Rápida (Ex: Ícone de Pular 10s) -->
+                    <div id="action-feedback" class="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-150 pointer-events-none">
+                        <span class="material-icons text-7xl text-white bg-black bg-opacity-50 rounded-full p-4"></span>
+                    </div>
+                </div>
+
+                <!-- INFORMAÇÕES DA MÍDIA (Abaixo do Player) -->
+                <div id="mediaInfoContainer" class="bg-gray-800 p-5 rounded-xl shadow-inner mt-6 border border-gray-700">
+                    <h2 class="text-xl font-bold text-emerald-400 mb-3 border-b border-gray-700 pb-2">Detalhes da Mídia</h2>
+                    <div id="mediaMetadata" class="text-gray-400 space-y-2 text-sm">
+                        <p>Iniciando o carregamento...</p>
+                    </div>
+                    
+                    <!-- Container para as Estatísticas de Torrent -->
+                    <div id="torrentStatsContainer" class="hidden mt-4 pt-4 border-t border-gray-700">
+                        <h3 class="text-lg font-bold text-emerald-400 mb-2">Estatísticas P2P</h3>
+                        <div class="grid grid-cols-3 gap-4 text-sm text-gray-300">
+                            <div>
+                                <p class="text-gray-500">Seeds/Peers:</p>
+                                <p id="stats-peers" class="font-semibold text-white">0</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Download:</p>
+                                <p id="stats-download" class="font-semibold text-white">0 B/s</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Upload:</p>
+                                <p id="stats-upload" class="font-semibold text-white">0 B/s</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Barra de Controles Inferior (Prompts do Player) -->
-                <div class="controls-bar">
-                    <!-- Play/Pause -->
-                    <button class="control-button" id="play-pause-button" aria-label="Play/Pause">
-                        <span class="material-icons">play_arrow</span>
-                    </button>
-
-                    <!-- VOLTAR 10s -->
-                    <button class="control-button" id="rewind-button" aria-label="Voltar 10 segundos">
-                        <span class="material-icons">replay_10</span>
-                    </button>
-                    
-                    <!-- AVANÇAR 10s -->
-                    <button class="control-button" id="forward-button" aria-label="Avançar 10 segundos">
-                        <span class="material-icons">forward_10</span>
-                    </button>
-
-                    <!-- PRÓXIMO EPISÓDIO (Simulado) -->
-                    <button class="control-button text-sm" id="next-episode-button" aria-label="Próximo Episódio">
-                        <span class="material-icons">skip_next</span>
-                    </button>
-
-                    <!-- PRÓXIMO ITEM PLAYLIST (Simulado) -->
-                    <button class="control-button text-sm" id="next-track-button" aria-label="Próximo Item na Playlist">
-                        <span class="material-icons">queue_play_next</span>
-                    </button>
-
-                    <!-- Tempo Atual/Duração -->
-                    <div class="time-display" id="time-display">0:00 / 0:00</div>
-
-                    <div class="flex-grow"></div> <!-- Espaçador -->
-                    
-                    <!-- Volume -->
-                    <div class="flex items-center gap-1">
-                        <button class="control-button" id="mute-button" aria-label="Mudo">
-                            <span class="material-icons" id="volume-icon">volume_up</span>
-                        </button>
-                        <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1" class="volume-slider" aria-label="Controle de Volume">
-                    </div>
-                    
-                    <!-- Tela Cheia -->
-                    <button class="control-button" id="fullscreen-button" aria-label="Tela Cheia">
-                        <span class="material-icons">fullscreen</span>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Feedback de Ação Rápida (Ex: Ícone de Pular 10s) -->
-            <div id="action-feedback" class="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-150 pointer-events-none">
-                <span class="material-icons text-7xl text-white bg-black bg-opacity-50 rounded-full p-4"></span>
             </div>
         </div>
-
-        <!-- 3. INFORMAÇÕES DA MÍDIA (Abaixo do Player) -->
-        <div id="mediaInfoContainer" class="bg-gray-800 p-5 rounded-xl shadow-inner mt-6 border border-gray-700">
-            <h2 class="text-xl font-bold text-emerald-400 mb-3 border-b border-gray-700 pb-2">Informações da Mídia Carregada</h2>
-            <div id="mediaMetadata" class="text-gray-400 space-y-2 text-sm">
-                <p>Nenhum arquivo carregado. Use os prompts abaixo para iniciar a reprodução.</p>
-            </div>
-            
-            <!-- NOVO: Container para as Estatísticas de Torrent -->
-            <div id="torrentStatsContainer" class="hidden mt-4 pt-4 border-t border-gray-700">
-                <h3 class="text-lg font-bold text-emerald-400 mb-2">Estatísticas de Torrent</h3>
-                <div class="grid grid-cols-3 gap-4 text-sm text-gray-300">
-                    <div>
-                        <p class="text-gray-500">Seeds/Peers:</p>
-                        <p id="stats-peers" class="font-semibold text-white">0</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-500">Download:</p>
-                        <p id="stats-download" class="font-semibold text-white">0 B/s</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-500">Upload:</p>
-                        <p id="stats-upload" class="font-semibold text-white">0 B/s</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 4. PROMPTS / CONTROLES DE CARREGAMENTO -->
-        <div class="space-y-5 pt-5 border-t border-gray-800">
-            <h2 class="text-2xl font-bold text-white">Carregar Conteúdo</h2>
-
-            <!-- A. Prompt: Selecionar Arquivo/Arrastar e Soltar -->
-            <div id="fileDropZone" class="drop-zone flex flex-col items-center justify-center p-8 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition duration-300">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-emerald-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p class="text-gray-300 font-medium text-center">Clique para **Selecionar Arquivo** ou Arraste e Solte Mídia (Vídeo/Áudio)</p>
-                <input type="file" id="fileInput" accept="video/*,audio/*" class="hidden">
-            </div>
-            
-            <!-- B. Prompt: Magnet Link -->
-            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-                <input type="text" id="magnetLinkInput" placeholder="Insira o link Magnet (começa com 'magnet:?xt=urn:btih:...') aqui" class="flex-grow p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400" value="magnet:?xt=urn:btih:6a9759d0247b7c5332d7904899ad177114e0409f&dn=sintel">
-                <button id="loadMagnetBtn" class="bg-emerald-600 text-white p-3 rounded-lg font-semibold hover:bg-emerald-700 transition duration-300 shadow-lg flex-shrink-0">
-                    Carregar Magnet
-                </button>
-            </div>
-        </div>
-        
     </div>
 
     <!-- Modal de Mensagem (Substitui alert()) -->
-    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50">
-        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl max-w-sm w-full border-t-4 border-emerald-500">
+    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl max-w-sm w-full border-t-4 border-emerald-500 transform scale-95 transition-transform duration-300">
             <h3 id="modalTitle" class="text-xl font-bold text-white mb-3">Mensagem</h3>
             <p id="modalMessage" class="text-gray-300 mb-4"></p>
-            <button onclick="document.getElementById('messageModal').classList.add('hidden'); document.getElementById('messageModal').classList.remove('flex');" class="w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition duration-300">
+            <button onclick="document.getElementById('messageModal').classList.add('hidden'); document.getElementById('messageModal').classList.remove('flex');" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-bold hover:bg-emerald-700 transition duration-300">
                 OK
             </button>
         </div>
@@ -317,25 +316,44 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // Configuração da API para Busca (Gemini API)
+        const API_KEY = ""; 
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+        const RETRY_COUNT = 3; 
 
         let db, auth;
         let client; // Cliente WebTorrent
         let currentTorrent = null;
         let statsInterval = null;
 
-        const mediaPlayer = document.getElementById('mediaPlayer');
-        const mediaMetadata = document.getElementById('mediaMetadata');
+        // Elementos de View Principais
+        const mainContentArea = document.getElementById('main-content-area');
+        const unifiedInputView = document.getElementById('unified-input-view');
+        const playerView = document.getElementById('player-view');
+        
+        // Elementos de Busca
+        const searchInput = document.getElementById('searchInput');
+        const searchTorrentBtn = document.getElementById('searchTorrentBtn');
+        const searchIcon = document.getElementById('searchIcon');
+        const searchResultsContainer = document.getElementById('searchResultsContainer');
+        const resultsList = document.getElementById('resultsList');
+        const resultsStatus = document.getElementById('resultsStatus');
+        const searchCount = document.getElementById('searchCount');
+        
+        // Elementos de Drop
         const fileInput = document.getElementById('fileInput');
         const fileDropZone = document.getElementById('fileDropZone');
-        const magnetLinkInput = document.getElementById('magnetLinkInput');
-        const loadMagnetBtn = document.getElementById('loadMagnetBtn');
-        
+
+        // Elementos do Player
+        const mediaPlayer = document.getElementById('mediaPlayer');
+        const mediaMetadata = document.getElementById('mediaMetadata');
+        const backToMenuButton = document.getElementById('back-to-menu-button');
+
         // Controles Customizados (e.g. play/pause buttons)
         const playPauseButton = document.getElementById('play-pause-button');
         const rewindButton = document.getElementById('rewind-button');
         const forwardButton = document.getElementById('forward-button');
-        const nextEpisodeButton = document.getElementById('next-episode-button');
-        const nextTrackButton = document.getElementById('next-track-button');
         const muteButton = document.getElementById('mute-button');
         const volumeSlider = document.getElementById('volume-slider');
         const volumeIcon = document.getElementById('volume-icon');
@@ -356,12 +374,43 @@
         let isSeeking = false;
         let originalVolume = 1;
 
+        /**
+         * Alterna entre a visualização de input unificada e o player.
+         * @param {string} view O nome da view a ser exibida ('input' ou 'player').
+         */
+        function toggleView(view) {
+            if (view === 'player') {
+                unifiedInputView.classList.add('hidden');
+                playerView.classList.remove('hidden');
+                // Ajusta o padding do container principal para acomodar o player (opcional, mas bom para estética)
+                mainContentArea.classList.add('p-0'); 
+                mainContentArea.classList.remove('p-8');
+                playerWrapper.focus(); 
+            } else { // 'input'
+                mediaPlayer.pause();
+                destroyCurrentTorrent();
+                unifiedInputView.classList.remove('hidden');
+                playerView.classList.add('hidden');
+                mainContentArea.classList.remove('p-0');
+                mainContentArea.classList.add('p-8');
+                // Limpa os resultados da busca ao voltar
+                searchResultsContainer.classList.add('hidden');
+                resultsList.innerHTML = '';
+            }
+        }
+        
         // Função para mostrar o modal de mensagem (substituto do alert)
         function showMessage(title, message) {
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalMessage').textContent = message;
-            document.getElementById('messageModal').classList.remove('hidden');
-            document.getElementById('messageModal').classList.add('flex');
+            const modal = document.getElementById('messageModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            // Animação de entrada
+            setTimeout(() => {
+                 modal.querySelector('div').classList.remove('scale-95');
+                 modal.querySelector('div').classList.add('scale-100');
+            }, 50);
         }
 
         /**
@@ -393,6 +442,54 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
         
+        /**
+         * Verifica se um nome de arquivo tem uma extensão de mídia suportada.
+         */
+        function isSupportedMedia(fileName) {
+            return fileName.match(/\.(mp4|mkv|ogg|webm|mp3|wav|avi)$/i);
+        }
+
+        /**
+         * Função utilitária para copiar texto para a área de transferência
+         */
+        function copyToClipboard(text, element) {
+            try {
+                // Tenta usar a API moderna, mas com fallback para execCommand
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        showCopyFeedback(element);
+                    });
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showCopyFeedback(element);
+                }
+            } catch (err) {
+                console.error('Falha ao copiar:', err);
+                showMessage("Erro", "Não foi possível copiar o link. Tente selecionar o texto manualmente.");
+            }
+        }
+        
+        /**
+         * Feedback visual para a cópia.
+         */
+        function showCopyFeedback(element) {
+            const originalText = element.textContent;
+            element.textContent = 'Copiado!';
+            element.classList.remove('bg-gray-600', 'hover:bg-gray-500'); // Cor original do botão de copiar
+            element.classList.add('bg-green-600', 'hover:bg-green-700');
+
+            setTimeout(() => {
+                element.textContent = originalText;
+                element.classList.remove('bg-green-600', 'hover:bg-green-700');
+                element.classList.add('bg-gray-600', 'hover:bg-gray-500');
+            }, 1500);
+        }
+
         // =================================================================
         // # INICIALIZAÇÃO E AUTENTICAÇÃO DO FIREBASE (MANDATÓRIO)
         // =================================================================
@@ -420,7 +517,223 @@
         }
         
         // =================================================================
-        // # FUNÇÕES DE TORRENT
+        // # FUNÇÕES DE BUSCA DE TORRENT (API CALL)
+        // =================================================================
+
+        /**
+         * Tenta realizar uma chamada de API com retries (backoff exponencial).
+         * @param {object} payload - O corpo da requisição da API.
+         * @param {number} attempt - Tentativa atual.
+         */
+        async function fetchWithRetry(payload, attempt = 1) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                if (attempt < RETRY_COUNT) {
+                    const delay = Math.pow(2, attempt) * 1000;
+                    // console.log(`Tentativa ${attempt} falhou. Retrying in ${delay / 1000}s...`); // Não logar retries
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithRetry(payload, attempt + 1);
+                } else {
+                    throw new Error(`Falha na API após ${RETRY_COUNT} tentativas: ${error.message}`);
+                }
+            }
+        }
+        
+        /**
+         * Busca links magnet de torrents usando a API do Google Search e formata em JSON.
+         * @param {string} query - O termo de busca do usuário.
+         */
+        async function searchTorrents(query) {
+            resultsList.innerHTML = '';
+            searchCount.textContent = '';
+            resultsStatus.textContent = "Buscando links magnet de VÍDEOS com informações detalhadas...";
+            searchIcon.textContent = "hourglass_full"; // Ícone de carregamento
+            searchTorrentBtn.disabled = true;
+            
+            // --- INSTRUÇÃO DE SISTEMA APRIMORADA PARA ESTRUTURAÇÃO JSON E BUSCA DE DADOS RICOS ---
+            const systemPrompt = `Você é um motor de busca especializado em encontrar e enriquecer informações de links magnet de torrents para filmes, séries e animes.
+                                  Use a ferramenta de busca para encontrar links magnet VÁLIDOS e, em seguida, encontre o tamanho do arquivo, o número de seeders (seeds) e uma breve descrição do conteúdo para CADA link.
+                                  Retorne SOMENTE o array JSON formatado, sem qualquer outro texto explicativo. Se não encontrar um link magnet válido, retorne um array vazio: [].
+                                  Priorize torrents com alta contagem de seeders e em alta qualidade (HD, 4K).`;
+
+            // Definição do Schema JSON para o Structured Output
+            const responseSchema = {
+                type: "ARRAY",
+                items: {
+                    type: "OBJECT",
+                    properties: {
+                        "title": { "type": "STRING", "description": "Título completo do torrent, incluindo qualidade (ex: 4K, 1080p, Dual Audio)." },
+                        "magnetLink": { "type": "STRING", "description": "O link magnet completo e válido, começando com 'magnet:?xt=urn:btih:'." },
+                        "size": { "type": "STRING", "description": "Tamanho estimado do arquivo ou do pacote do torrent (ex: 5.5 GB, 800 MB)." },
+                        "seeds": { "type": "INTEGER", "description": "Número estimado de seeders (fontes) do torrent. Use 0 se não encontrar." },
+                        "description": { "type": "STRING", "description": "Uma sinopse curta e em português do filme, série ou anime." }
+                    },
+                    required: ["title", "magnetLink", "size", "seeds", "description"]
+                }
+            };
+
+            const payload = {
+                contents: [{ parts: [{ text: `Encontre links magnet e informações detalhadas para a mídia: "${query}"` }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: responseSchema
+                }
+            };
+            
+            let parsedResults = [];
+
+            try {
+                const result = await fetchWithRetry(payload);
+                
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (jsonText) {
+                    // Tenta fazer o parse do JSON
+                    parsedResults = JSON.parse(jsonText);
+                    // Filtra para garantir que magnetLink é válido
+                    parsedResults = parsedResults.filter(item => 
+                        item.magnetLink && item.magnetLink.startsWith('magnet:?xt=urn:btih:')
+                    );
+                }
+                
+                displaySearchResults(parsedResults);
+
+            } catch (error) {
+                console.error("Erro na busca de torrents (JSON Structured Output):", error);
+                showMessage("Erro na Busca", "Não foi possível processar o resultado da busca. O servidor retornou um formato inválido ou ocorreu um erro de rede.");
+                displaySearchResults([]);
+            } finally {
+                searchIcon.textContent = "search";
+                searchTorrentBtn.disabled = false;
+            }
+        }
+
+        /**
+         * Função para extrair informações do link magnet (btih, dn, tr).
+         */
+        function parseMagnetLink(magnetLink) {
+            const params = {};
+            // Remove 'magnet:?' e divide pelos '&'
+            const parts = magnetLink.substring(8).split('&');
+
+            parts.forEach(part => {
+                const [key, value] = part.split('=');
+                if (key && value) {
+                    // Decodifica o valor
+                    params[key] = decodeURIComponent(value.replace(/\+/g, ' '));
+                }
+            });
+
+            const info = {
+                hash: params.xt ? params.xt.replace('urn:btih:', '').toUpperCase() : 'N/A',
+                displayName: params.dn || 'Nome não especificado',
+            };
+
+            return info;
+        }
+
+        /**
+         * Exibe os resultados da busca com dados ricos na lista.
+         * @param {Array<object>} results - Lista de objetos de resultado (do Gemini JSON).
+         */
+        function displaySearchResults(results) {
+            resultsList.innerHTML = ''; // Limpa resultados anteriores
+            searchResultsContainer.classList.remove('hidden');
+
+            const totalCount = results.length;
+
+            searchCount.textContent = `Mostrando ${totalCount} links magnet com dados ricos encontrados.`;
+            
+            if (totalCount === 0) {
+                resultsStatus.textContent = `Nenhum link magnet de VÍDEO válido e com dados ricos encontrado para: "${searchInput.value}"`;
+                return;
+            }
+
+            resultsStatus.textContent = `Resultados de VÍDEO para "${searchInput.value}": Clique no botão STREAM para iniciar a reprodução.`;
+
+            results.forEach(item => {
+                const magnetInfo = parseMagnetLink(item.magnetLink);
+                const magnetLinkDisplay = magnetInfo.hash;
+
+                const cardHTML = `
+                    <div class="result-card p-5 rounded-xl shadow-lg flex flex-col space-y-3">
+                        
+                        <!-- Título principal -->
+                        <h3 class="text-xl font-bold text-white mb-2 truncate">${item.title}</h3>
+
+                        <!-- Badges de Estatísticas -->
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            <span class="stats-badge size-badge">
+                                <span class="material-icons text-sm mr-1">sd_card</span>
+                                ${item.size || 'N/A'}
+                            </span>
+                            <span class="stats-badge seeds-badge">
+                                <span class="material-icons text-sm mr-1">person</span>
+                                Seeds: ${item.seeds > 0 ? item.seeds.toLocaleString('pt-BR') : '0 (Baixo Risco)'}
+                            </span>
+                        </div>
+                        
+                        <!-- Descrição (Sinopse) -->
+                        <p class="text-sm text-gray-400 italic">
+                            ${item.description || 'Nenhuma descrição detalhada fornecida pelo buscador.'}
+                        </p>
+
+                        <!-- Informações Técnicas (Hash) -->
+                        <div class="pt-2">
+                            <p class="text-xs text-gray-500 truncate">
+                                Hash (btih): 
+                                <code class="text-xs font-mono bg-gray-900 text-yellow-400 rounded px-2 py-0.5 select-all">${magnetLinkDisplay}</code>
+                            </p>
+                        </div>
+
+                        <!-- Ações: Copiar e Iniciar Streaming -->
+                        <div class="flex gap-2 pt-3">
+                            <!-- Botão de Cópia -->
+                            <button 
+                                class="flex items-center justify-center flex-grow px-3 py-2 text-sm font-semibold text-white bg-gray-600 hover:bg-gray-500 rounded-lg transition duration-150 ease-in-out"
+                                onclick="copyToClipboard('${item.magnetLink}', this)"
+                                aria-label="Copiar link magnet"
+                            >
+                                <span class="material-icons text-base mr-1">content_copy</span>
+                                Copiar Magnet
+                            </button>
+                            
+                            <!-- Botão de Iniciar Streaming -->
+                            <button 
+                                class="flex items-center justify-center flex-grow px-3 py-2 text-base font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-[1.02]"
+                                onclick="startTorrent('${item.magnetLink}')"
+                                aria-label="Iniciar streaming P2P"
+                            >
+                                <span class="material-icons text-base mr-1">play_arrow</span>
+                                STREAM
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // Cria o elemento e insere o HTML
+                const cardElement = document.createElement('div');
+                cardElement.innerHTML = cardHTML;
+                resultsList.appendChild(cardElement.firstChild);
+            });
+        }
+        
+        // =================================================================
+        // # FUNÇÕES DE TORRENT (WEBTORRENT)
         // =================================================================
 
         /**
@@ -435,50 +748,138 @@
                 clearInterval(statsInterval);
                 statsInterval = null;
             }
-            // Oculta e reseta o display das estatísticas
             torrentStatsContainer.classList.add('hidden');
             statsPeers.textContent = '0';
             statsDownload.textContent = '0 B/s';
             statsUpload.textContent = '0 B/s';
             mediaPlayer.src = '';
+            mediaPlayer.poster = 'https://placehold.co/1280x720/1f2937/d1d5db?text=Aguardando+M%C3%ADdia...';
             mediaPlayer.load();
+            mediaMetadata.innerHTML = '<p>Iniciando o carregamento...</p>';
+            playPauseButton.innerHTML = '<span class="material-icons">play_arrow</span>';
+            playerWrapper.classList.remove('playing');
         }
+        
+        /**
+         * Renderiza um arquivo de torrent no player de mídia.
+         * @param {object} file - O objeto de arquivo do WebTorrent.
+         */
+        function renderTorrentFile(file, torrent) {
+            toggleView('player'); // Mostra a view do player
+            
+            mediaPlayer.src = '';
+            mediaPlayer.load();
+
+            // Renderiza o arquivo diretamente no player de vídeo
+            file.renderTo(mediaPlayer, {
+                autoplay: true 
+            }, (err, elem) => {
+                 if (err) {
+                    console.error("Erro ao renderizar o arquivo de mídia:", err);
+                    showMessage("Erro de Mídia", "Não foi possível renderizar o arquivo de mídia. Tente outro torrent.");
+                    destroyCurrentTorrent();
+                    toggleView('input'); 
+                    return;
+                }
+                console.log(`Mídia renderizada com sucesso: ${file.name}`);
+                mediaPlayer.load(); 
+                mediaPlayer.play().catch(e => console.log("Reprodução automática bloqueada:", e));
+            });
+
+            // Atualiza os metadados para mostrar qual arquivo está sendo reproduzido
+            mediaMetadata.innerHTML = `
+                <p><span class="font-bold text-emerald-300">Status:</span> Buscando/Baixando (Pares: ${torrent.numPeers})</p>
+                <p><span class="font-bold text-white">Nome do Torrent:</span> ${torrent.name}</p>
+                <p><span class="font-bold text-white">Arquivo REPRODUZINDO:</span> ${file.name} (<span class="text-sm text-gray-500">${(file.length / (1024 * 1024)).toFixed(2)} MB</span>)</p>
+                <p><span class="font-bold text-white">Tamanho Total:</span> ${(torrent.length / (1024 * 1024 * 1024)).toFixed(2)} GB</p>
+            `;
+        }
+
+        /**
+         * Exibe uma lista de arquivos de mídia para seleção se houver múltiplos.
+         * @param {object} torrent - O objeto de torrent.
+         * @param {Array<object>} mediaFiles - Lista de objetos de arquivo de mídia.
+         */
+        function displayTorrentFileSelection(torrent, mediaFiles) {
+            toggleView('player'); // Mostra a view do player
+            
+            let filesHtml = `
+                <p class="text-white font-semibold mb-3">Multiplos arquivos de mídia encontrados. Selecione qual reproduzir:</p>
+                <ul class="space-y-2 max-h-60 overflow-y-auto pr-2">
+            `;
+
+            mediaFiles.forEach((file, index) => {
+                const fileSizeMB = (file.length / (1024 * 1024)).toFixed(2);
+                filesHtml += `
+                    <li class="p-3 bg-gray-700 rounded-lg hover:bg-gray-600 cursor-pointer transition duration-200 flex justify-between items-center" 
+                        data-file-index="${index}" onclick="window.handleFileSelection(${index})">
+                        <span class="truncate pr-4">${file.name}</span>
+                        <span class="text-sm text-emerald-400 font-medium">${fileSizeMB} MB</span>
+                    </li>
+                `;
+            });
+
+            filesHtml += '</ul>';
+
+            mediaMetadata.innerHTML = `
+                <p><span class="font-bold text-emerald-300">Status:</span> Download Inicial Concluído. Pronto para seleção.</p>
+                <p><span class="font-bold text-white">Nome do Torrent:</span> ${torrent.name}</p>
+                ${filesHtml}
+            `;
+        }
+        
+        /**
+         * Função global para ser chamada pelo onclick (necessário em HTML puro).
+         */
+        window.handleFileSelection = (index) => {
+            if (!currentTorrent) return;
+            
+            // Encontra todos os arquivos de mídia novamente
+            const mediaFiles = currentTorrent.files.filter(f => isSupportedMedia(f.name));
+            
+            const selectedFile = mediaFiles[index];
+            if (selectedFile) {
+                renderTorrentFile(selectedFile, currentTorrent);
+                // remove a lista de seleção
+                torrentStatsContainer.classList.remove('hidden');
+            } else {
+                showMessage("Erro de Seleção", "Arquivo selecionado inválido.");
+            }
+        };
+
 
         /**
          * Inicia o cliente WebTorrent e adiciona o magnet link.
          * @param {string} magnetLink O link magnet.
          */
-        function startTorrent(magnetLink) {
+        window.startTorrent = (magnetLink) => {
             destroyCurrentTorrent();
             
-            // Exibir container de estatísticas
             torrentStatsContainer.classList.remove('hidden');
+            
+            showMessage("Iniciando Download P2P", "Tentando conectar-se aos pares. Por favor, aguarde...");
 
             const torrent = client.add(magnetLink, (t) => {
                 currentTorrent = t;
-                showMessage("Torrent Iniciado", `Download de "${t.name}" iniciado. Buscando pares...`);
+                
+                // Encontra todos os arquivos de mídia suportados
+                const mediaFiles = t.files.filter(f => isSupportedMedia(f.name));
 
-                // Encontra o maior arquivo de mídia (geralmente o vídeo principal)
-                const file = t.files.find(f => f.name.endsWith('.mp4') || f.name.endsWith('.mkv') || f.name.endsWith('.ogg') || f.name.endsWith('.webm') || f.name.endsWith('.mp3') || f.name.endsWith('.wav'));
-
-                if (!file) {
-                    showMessage("Erro", "Nenhum arquivo de mídia suportado encontrado neste torrent.");
+                if (mediaFiles.length === 0) {
+                    showMessage("Erro", "Nenhum arquivo de mídia (vídeo/áudio) suportado encontrado neste torrent.");
                     destroyCurrentTorrent();
+                    toggleView('input');
                     return;
                 }
 
-                // Carrega o arquivo diretamente no player de vídeo
-                file.renderTo(mediaPlayer, {
-                    autoplay: true 
-                });
+                if (mediaFiles.length === 1) {
+                    // Caso de arquivo único: reproduzir imediatamente
+                    renderTorrentFile(mediaFiles[0], t);
+                } else {
+                    // Caso de múltiplos arquivos: mostrar seletor
+                    displayTorrentFileSelection(t, mediaFiles);
+                }
 
-                // Atualiza os metadados
-                mediaMetadata.innerHTML = `
-                    <p><span class="font-bold text-emerald-300">Status:</span> Carregando (Pares Conectados: ${t.numPeers})</p>
-                    <p><span class="font-bold text-white">Nome do Torrent:</span> ${t.name}</p>
-                    <p><span class="font-bold text-white">Arquivo:</span> ${file.name}</p>
-                    <p><span class="font-bold text-white">Tamanho:</span> ${(t.length / (1024 * 1024)).toFixed(2)} MB</p>
-                `;
             });
             
             // Lidar com erros de torrent
@@ -486,6 +887,7 @@
                 console.error("Erro no Torrent:", err.message);
                 showMessage("Erro de Torrent", `Ocorreu um erro: ${err.message}. Verifique o link e tente novamente.`);
                 destroyCurrentTorrent();
+                toggleView('input');
             });
 
             // Configurar intervalo para atualização das estatísticas
@@ -500,24 +902,27 @@
         function updateTorrentStats() {
             if (!currentTorrent) return;
 
-            // Seeds/Peers
             const peers = currentTorrent.numPeers;
             statsPeers.textContent = peers;
 
-            // Download Speed
             const downloadSpeed = currentTorrent.downloadSpeed;
             statsDownload.textContent = formatSpeed(downloadSpeed);
 
-            // Upload Speed
             const uploadSpeed = currentTorrent.uploadSpeed;
             statsUpload.textContent = formatSpeed(uploadSpeed);
             
-            // Atualiza status na info da mídia
-             if (peers > 0) {
-                 mediaMetadata.querySelector('.text-emerald-300').textContent = `Baixando... (${(currentTorrent.progress * 100).toFixed(2)}%)`;
-             } else {
-                 mediaMetadata.querySelector('.text-emerald-300').textContent = `Aguardando Pares...`;
-             }
+            // Atualiza status na info da mídia (se for um torrent em download)
+            const statusElement = mediaMetadata.querySelector('.text-emerald-300');
+            if (statusElement) {
+                 const progress = (currentTorrent.progress * 100).toFixed(1);
+                 if (currentTorrent.done) {
+                    statusElement.textContent = `Completo! (100.0%)`;
+                } else if (peers > 0) {
+                    statusElement.textContent = `Baixando... (${progress}%)`;
+                } else {
+                    statusElement.textContent = `Aguardando Pares...`;
+                }
+            }
         }
 
 
@@ -530,6 +935,7 @@
          */
         function loadMediaInfoLocal(mediaSource, name, type, size = 'Local File') {
             destroyCurrentTorrent(); // Limpa qualquer torrent ativo
+            toggleView('player'); // Mostra a view do player
 
             mediaPlayer.src = mediaSource;
             mediaPlayer.poster = ''; // Remove o poster
@@ -538,29 +944,29 @@
             let displaySize = (typeof size === 'number') ? (size / (1024 * 1024)).toFixed(2) + ' MB' : size;
             
             mediaMetadata.innerHTML = `
-                <p><span class="font-bold text-emerald-300">Status:</span> Arquivo local carregado. Clique no Play para iniciar.</p>
+                <p><span class="font-bold text-emerald-300">Status:</span> Arquivo local carregado.</p>
                 <p><span class="font-bold text-white">Nome:</span> ${name}</p>
                 <p><span class="font-bold text-white">Tipo:</span> ${type}</p>
                 <p><span class="font-bold text-white">Tamanho:</span> ${displaySize}</p>
                 <p><span class="font-bold text-white">Origem:</span> Arquivo Local</p>
             `;
-            mediaPlayer.style.display = 'block';
             
             mediaPlayer.play().catch(e => {
                 console.log("Reprodução automática bloqueada ou erro:", e);
                 playPauseButton.innerHTML = '<span class="material-icons">play_arrow</span>';
             });
+            
+            // Garante que as estatísticas do torrent estejam escondidas para arquivos locais
+            torrentStatsContainer.classList.add('hidden');
         }
         
         /**
          * Alterna entre Play e Pause.
          */
         function togglePlay() {
-            if (!mediaPlayer.src) {
-                showMessage("Atenção", "Nenhuma mídia carregada. Por favor, selecione um arquivo ou insira um Magnet Link.");
+            if (playerView.classList.contains('hidden') || !mediaPlayer.src) {
                 return;
             }
-
             if (mediaPlayer.paused || mediaPlayer.ended) {
                 mediaPlayer.play();
                 showActionFeedback('play_arrow');
@@ -612,7 +1018,11 @@
             if (!mediaPlayer.duration) return;
 
             const rect = progressContainer.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
+            // Lógica para clique/toque (clientX para mouse, touches[0].clientX para touch)
+            const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : null);
+            if (clientX === null) return;
+
+            const clickX = clientX - rect.left;
             const width = rect.width;
             const percent = Math.max(0, Math.min(1, clickX / width));
             const newTime = mediaPlayer.duration * percent;
@@ -633,7 +1043,7 @@
         }
 
         /**
-         * Busca relativa no vídeo (usado pelos botões de skip).
+         * Busca relativa no vídeo (usado pelos botões de skip e atalhos de teclado).
          * @param {number} seconds - Segundos para avançar (positivo) ou retroceder (negativo).
          */
         function seekRelative(seconds) {
@@ -676,12 +1086,37 @@
         // =================================================================
         
         function setupEventListeners() {
-            // --- Handlers de Carregamento ---
+            
+            // Botão Voltar ao Menu (Player View)
+            backToMenuButton.addEventListener('click', () => {
+                toggleView('input');
+            });
 
-            // Clique na Zona de Drop
+
+            // --- Handlers de Busca de Torrent ---
+            searchTorrentBtn.addEventListener('click', () => {
+                const query = searchInput.value.trim();
+                if (query.length > 2) {
+                    searchTorrents(query);
+                } else {
+                    showMessage("Atenção", "Por favor, digite um termo de busca com pelo menos 3 caracteres.");
+                }
+            });
+
+             searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchTorrentBtn.click();
+                }
+            });
+
+
+            // --- Handlers de Carregamento de Mídia Local ---
+
+            // Clique na Zona de Drop (Local File)
             fileDropZone.addEventListener('click', () => fileInput.click());
 
-            // Carregar Arquivo após seleção
+            // Carregar Arquivo após seleção (Local File)
             fileInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -690,7 +1125,7 @@
                 }
             });
 
-            // Lógica de Drag & Drop
+            // Lógica de Drag & Drop (Local File)
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 fileDropZone.addEventListener(eventName, e => {
                     e.preventDefault();
@@ -705,25 +1140,14 @@
             });
             fileDropZone.addEventListener('drop', (e) => {
                 const file = e.dataTransfer.files[0];
-                if (file && (file.type.startsWith('video/') || file.type.startsWith('audio/'))) {
+                if (file && isSupportedMedia(file.name)) {
                     const fileURL = URL.createObjectURL(file);
                     loadMediaInfoLocal(fileURL, file.name, file.type, file.size);
                 } else if (file) {
-                    showMessage("Atenção", "O arquivo arrastado não é um arquivo de mídia (vídeo ou áudio).");
+                    showMessage("Atenção", "O arquivo arrastado não é um arquivo de mídia suportado (vídeo ou áudio).");
                 }
             }, false);
 
-            // Carregar Magnet Link
-            loadMagnetBtn.addEventListener('click', () => {
-                const magnetLink = magnetLinkInput.value.trim();
-                if (magnetLink.startsWith('magnet:?')) {
-                    startTorrent(magnetLink);
-                } else if (magnetLink.length > 0) {
-                    showMessage("Erro de Formato", "O link não é um Magnet Link válido. Ele deve começar com 'magnet:?'.");
-                } else {
-                    showMessage("Atenção", "Por favor, insira um link Magnet.");
-                }
-            });
 
             // --- Handlers dos Prompts do Player (Customizados) ---
 
@@ -732,7 +1156,8 @@
             mediaPlayer.onclick = togglePlay;
 
             mediaPlayer.onpause = () => playPauseButton.innerHTML = '<span class="material-icons">play_arrow</span>';
-            mediaPlayer.onplay = () => playPauseButton.innerHTML = '<span class="material-icons">pause</span>';
+            mediaPlayer.onplay = () => { playerWrapper.classList.add('playing'); playPauseButton.innerHTML = '<span class="material-icons">pause</span>'; };
+            mediaPlayer.onended = () => playerWrapper.classList.remove('playing');
             
             // Voltar 10s
             rewindButton.onclick = () => seekRelative(-10);
@@ -740,28 +1165,6 @@
             // Avançar 10s
             forwardButton.onclick = () => seekRelative(10);
             
-            // Próximo Episódio (Simulado)
-            nextEpisodeButton.onclick = () => {
-                if (!mediaPlayer.src) {
-                    showMessage("Atenção", "Nenhuma mídia carregada.");
-                    return;
-                }
-                mediaPlayer.currentTime = mediaPlayer.duration - 5; 
-                showMessage("Ação SimuLada", "Pulando para o próximo episódio.");
-                showActionFeedback('skip_next');
-            };
-
-            // Avançar Tempo Playlist / Próximo Item (Simulado)
-            nextTrackButton.onclick = () => {
-                if (!mediaPlayer.src) {
-                    showMessage("Atenção", "Nenhuma mídia carregada.");
-                    return;
-                }
-                showMessage("Ação SimuLada", "Avançando para o próximo item da playlist.");
-                showActionFeedback('queue_play_next');
-            };
-
-
             // Volume/Mudo
             muteButton.onclick = toggleMute;
             volumeSlider.oninput = (e) => {
@@ -773,18 +1176,39 @@
             // Progresso/Busca
             mediaPlayer.ontimeupdate = updateTimeDisplay;
             
-            // Lógica de Busca (Seek) com Mouse
-            progressContainer.onmousedown = (e) => {
-                if (e.button !== 0) return;
+            // Lógica de Busca (Seek) com Mouse/Touch
+            let dragStartTime = 0;
+            const startSeek = (e) => {
+                if (!mediaPlayer.duration || e.button !== 0) return; // Apenas botão esquerdo
+                e.preventDefault();
                 isSeeking = true;
+                playerWrapper.classList.add('seeking');
                 seek(e);
+                dragStartTime = Date.now();
             };
-            document.onmousemove = (e) => {
-                if (isSeeking) seek(e);
+            
+            const moveSeek = (e) => {
+                if (isSeeking) {
+                    e.preventDefault();
+                    seek(e);
+                }
             };
-            document.onmouseup = () => {
-                isSeeking = false;
+
+            const endSeek = () => {
+                if (isSeeking) {
+                    isSeeking = false;
+                    playerWrapper.classList.remove('seeking');
+                }
             };
+            
+            progressContainer.addEventListener('mousedown', startSeek);
+            document.addEventListener('mousemove', moveSeek);
+            document.addEventListener('mouseup', endSeek);
+            
+            progressContainer.addEventListener('touchstart', (e) => startSeek(e.touches[0]), { passive: false });
+            document.addEventListener('touchmove', (e) => moveSeek(e.touches[0]), { passive: false });
+            document.addEventListener('touchend', endSeek);
+
 
             // Tela Cheia
             fullscreenButton.onclick = toggleFullscreen;
@@ -792,6 +1216,36 @@
                 const icon = document.fullscreenElement ? 'fullscreen_exit' : 'fullscreen';
                 fullscreenButton.innerHTML = `<span class="material-icons">${icon}</span>`;
             };
+            
+            // --- Atalhos de Teclado (Modern Player) ---
+            document.addEventListener('keydown', (e) => {
+                // Apenas processa atalhos se o player estiver visível e não estiver focado em um input de texto.
+                const isInputFocused = document.activeElement.tagName === 'INPUT';
+                if (playerView.classList.contains('hidden') || isInputFocused) return;
+                
+                switch (e.key) {
+                    case ' ': // Barra de Espaço: Play/Pause
+                        e.preventDefault();
+                        togglePlay();
+                        break;
+                    case 'ArrowRight': // Seta Direita: Avançar 10s
+                        e.preventDefault();
+                        seekRelative(10);
+                        break;
+                    case 'ArrowLeft': // Seta Esquerda: Retroceder 10s
+                        e.preventDefault();
+                        seekRelative(-10);
+                        break;
+                    case 'f': // 'f': Tela Cheia
+                        e.preventDefault();
+                        toggleFullscreen();
+                        break;
+                    case 'm': // 'm': Mudo
+                        e.preventDefault();
+                        toggleMute();
+                        break;
+                }
+            });
         }
 
         // =================================================================
@@ -804,11 +1258,8 @@
             client = new WebTorrent();
             setupEventListeners(); // Configura todos os eventos
             
-            // Carrega o Magnet Link padrão no início
-            const initialMagnet = magnetLinkInput.value.trim();
-            if (initialMagnet) {
-                 startTorrent(initialMagnet);
-            }
+            // Exibe a view de input unificada
+            toggleView('input'); 
         }
     </script>
 </body>

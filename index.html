@@ -157,9 +157,6 @@
             <!-- TAB 1: CATÁLOGO GERAL (Início) -->
             <div id="tab-catalog" class="input-group active">
                 
-                <h3 style="margin: 0 0 15px 0; color: var(--text-secondary); font-size: 1rem;">Destaques Locais (Demo)</h3>
-                <div class="catalog-grid" id="catalogGrid"></div>
-                
                 <!-- BOTÃO PARA CARREGAR SUPERFLIX (Desabilitado até o Proxy ser configurado) -->
                 <button class="superflix-btn" onclick="loadSuperflixCatalog()" id="loadSuperflixBtn" disabled>
                     <span class="material-icons">lock</span> Configure o Proxy para carregar Animes Populares
@@ -234,18 +231,12 @@
         const progressBar = document.getElementById('progressBar');
         const volumeSlider = document.getElementById('volSlider');
 
-        // Catálogo Local de Demonstração
-        function getLocalCatalog() {
-            return [
-                { title: "Big Buck Bunny", type: "Demo MP4", img: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Big_buck_bunny_poster_big.jpg", link: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", isMagnet: false },
-                { title: "Sintel (Torrent)", type: "Demo Magnet", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Sintel_poster.jpg/320px-Sintel_poster.jpg", link: "magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel", isMagnet: true }
-            ];
-        }
+        // REMOVIDA: function getLocalCatalog() não é mais necessária.
 
         // --- INICIALIZAÇÃO E EVENTOS ---
         window.onload = () => {
             if (addonBaseUrl) document.getElementById('addonUrl').value = addonBaseUrl;
-            renderCatalog(getLocalCatalog(), 'catalogGrid');
+            // REMOVIDA: Não chama mais renderCatalog(getLocalCatalog(), 'catalogGrid');
             setupPlayerEvents();
             checkProxyUrlAndEnableButton(); // NOVO: Verifica e configura o botão ao carregar
         };
@@ -450,8 +441,8 @@
                     if (clickHandler) {
                         clickHandler(item);
                     } else {
-                        // Comportamento padrão para catálogo local
-                        loadMedia(item.link, item.title, item.isMagnet ? 'magnet' : 'url');
+                        // Comportamento original para catálogo local removido, mas esta rota não deve ser mais usada.
+                        showAlert("Erro", "Nenhum manipulador de clique definido para este item.");
                     }
                 };
                 grid.appendChild(card);

@@ -5,16 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OakCine | Neon Experience</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- WebTorrent -->
     <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
     
-    <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
-    <!-- Fonte Outfit -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
 
     <script>
@@ -95,15 +91,6 @@
             box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
         }
 
-        .neon-btn-secondary {
-            background: linear-gradient(135deg, #06b6d4, #0891b2);
-            transition: all 0.3s ease;
-        }
-        .neon-btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 20px rgba(8, 145, 178, 0.5);
-        }
-
         /* Player Sliders */
         input[type=range] {
             -webkit-appearance: none;
@@ -133,13 +120,22 @@
             background: rgba(168, 85, 247, 0.1) !important;
             transform: scale(1.02);
         }
+
+        /* AI Animation */
+        @keyframes ai-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(6, 182, 212, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+        }
+        .ai-glow:focus-within {
+            animation: ai-pulse 2s infinite;
+        }
     </style>
 </head>
 <body class="flex flex-col items-center min-h-screen pb-20">
 
-    <!-- 1. LOGO ANIMADA -->
     <header class="w-full max-w-6xl p-6 flex justify-between items-center animate-float">
-        <div class="flex items-center gap-3 select-none cursor-pointer">
+        <div class="flex items-center gap-3 select-none cursor-pointer" onclick="location.reload()">
             <div class="relative">
                 <span class="material-icons text-5xl text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">movie_filter</span>
                 <div class="absolute inset-0 bg-neon-purple blur-2xl opacity-20"></div>
@@ -153,98 +149,105 @@
         </div>
     </header>
 
-    <!-- 2. PLAYER DE VÍDEO PRINCIPAL -->
+    <section class="w-full max-w-3xl px-4 mb-8 relative z-50">
+        <div class="relative group ai-glow rounded-xl">
+            <div class="absolute -inset-0.5 bg-gradient-to-r from-neon-purple via-cyan-500 to-neon-cyan rounded-xl blur opacity-30 group-hover:opacity-75 transition duration-500"></div>
+            
+            <div class="relative flex items-center bg-[#0f172a] rounded-xl border border-gray-700/50 p-1 shadow-2xl">
+                <div class="pl-4 pr-2 flex items-center justify-center">
+                    <span class="material-icons text-transparent bg-clip-text bg-gradient-to-br from-neon-purple to-neon-cyan text-2xl animate-pulse-slow">auto_awesome</span>
+                </div>
+                <input type="text" id="aiSearchInput" class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-2 py-3 outline-none text-lg font-light" placeholder="O que você quer assistir? (Ex: Matrix 4K HDR)" autocomplete="off">
+                <button onclick="performSmartSearch()" class="mr-1 px-6 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition flex items-center gap-2 border border-gray-700">
+                    <span class="hidden md:inline text-sm font-bold">BUSCAR</span>
+                    <span class="material-icons text-sm">search</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex gap-2 mt-3 justify-center md:justify-start overflow-x-auto pb-2 scrollbar-hide">
+            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider self-center mr-2">Filtros AI:</span>
+            <button onclick="setSearchTag('4K HDR')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-neon-purple/20 border border-white/10 hover:border-neon-purple/50 text-xs text-gray-300 transition whitespace-nowrap">✨ 4K HDR</button>
+            <button onclick="setSearchTag('Dublado')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-neon-cyan/20 border border-white/10 hover:border-neon-cyan/50 text-xs text-gray-300 transition whitespace-nowrap">🇧🇷 Dublado</button>
+            <button onclick="setSearchTag('YTS')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-green-500/20 border border-white/10 hover:border-green-500/50 text-xs text-gray-300 transition whitespace-nowrap">🟢 YTS Library</button>
+            <button onclick="setSearchTag('1337x')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/50 text-xs text-gray-300 transition whitespace-nowrap">🔴 1337x DB</button>
+        </div>
+    </section>
+
     <main class="w-full max-w-5xl px-4 mb-10 relative z-10">
         <div id="playerContainer" class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800 group transition-all duration-500 hover:shadow-neon-purple/20">
-            
-            <!-- Vídeo Element -->
             <video id="nativeVideo" class="w-full h-full object-contain"></video>
             
-            <!-- Placeholder / Empty State -->
             <div id="videoPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 backdrop-blur-sm z-20 transition-opacity duration-500">
                 <div class="p-6 rounded-full bg-white/5 mb-4 animate-pulse-slow">
                     <span class="material-icons text-6xl text-gray-600">smart_display</span>
                 </div>
                 <h2 class="text-2xl font-bold text-gray-300">Aguardando Mídia</h2>
-                <p class="text-gray-500 text-sm mt-2">Utilize os controles abaixo para carregar</p>
+                <p class="text-gray-500 text-sm mt-2">Busque acima ou cole um Magnet Link</p>
             </div>
 
-            <!-- Loading Spinner -->
             <div id="loadingOverlay" class="absolute inset-0 flex-col items-center justify-center bg-black/90 z-30 hidden">
                 <div class="w-16 h-16 border-4 border-neon-purple border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
                 <p id="loadingText" class="text-white font-medium tracking-wide animate-pulse">Iniciando...</p>
             </div>
 
-            <!-- Overlay Play Central -->
             <div id="centerPlayBtn" class="absolute inset-0 flex items-center justify-center z-10 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300" onclick="togglePlay()">
                 <div class="bg-black/40 p-4 rounded-full backdrop-blur-sm hover:scale-110 transition-transform duration-200">
                     <span class="material-icons text-6xl text-white drop-shadow-md">play_arrow</span>
                 </div>
             </div>
 
-            <!-- Interface de Controles (Hover) -->
             <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-40" id="controlsBar">
-                
-                <!-- Progress Bar -->
                 <div class="w-full mb-4 group/progress cursor-pointer relative h-2" id="progressContainer">
-                    <!-- Track -->
                     <div class="absolute top-0 left-0 right-0 bottom-0 bg-gray-700/50 rounded-full"></div>
-                    <!-- Buffer -->
                     <div id="bufferBar" class="absolute top-0 left-0 h-full bg-white/20 rounded-full w-0 transition-all duration-200"></div>
-                    <!-- Played -->
                     <div id="playBar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-neon-purple to-neon-cyan rounded-full w-0 relative">
-                        <!-- Thumb (Glow) -->
                         <div class="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)] scale-0 group-hover/progress:scale-100 transition-transform"></div>
                     </div>
                 </div>
-
-                <!-- Botões e Infos -->
                 <div class="flex items-center justify-between select-none">
                     <div class="flex items-center gap-4">
-                        <button id="playBtn" class="text-gray-200 hover:text-white hover:scale-110 transition-transform">
-                            <span class="material-icons text-3xl">play_arrow</span>
-                        </button>
-                        
+                        <button id="playBtn" class="text-gray-200 hover:text-white hover:scale-110 transition-transform"><span class="material-icons text-3xl">play_arrow</span></button>
                         <div class="flex items-center gap-2 group/vol">
-                            <button id="muteBtn" class="text-gray-300 hover:text-white transition">
-                                <span class="material-icons">volume_up</span>
-                            </button>
+                            <button id="muteBtn" class="text-gray-300 hover:text-white transition"><span class="material-icons">volume_up</span></button>
                             <input type="range" id="volSlider" min="0" max="1" step="0.05" value="1" class="w-0 group-hover/vol:w-24 transition-all duration-300 overflow-hidden ml-1">
                         </div>
-
                         <span id="timeDisplay" class="text-xs font-mono text-gray-300 ml-2 tracking-wider">00:00 / 00:00</span>
                     </div>
-
                     <div class="flex items-center gap-3">
-                        <!-- Stats do Torrent (Mini) -->
                         <div id="miniStats" class="hidden md:flex items-center gap-3 text-xs font-mono bg-white/5 px-3 py-1 rounded-full border border-white/10">
                             <span class="text-green-400 flex items-center gap-1"><i class="material-icons text-[14px]">arrow_downward</i> <span id="dlSpeed">0 KB/s</span></span>
                             <span class="text-blue-400 flex items-center gap-1"><i class="material-icons text-[14px]">people</i> <span id="peersCount">0</span></span>
                         </div>
-
-                        <button id="fsBtn" class="text-gray-300 hover:text-white hover:scale-110 transition-transform">
-                            <span class="material-icons text-3xl">fullscreen</span>
-                        </button>
+                        <button id="fsBtn" class="text-gray-300 hover:text-white hover:scale-110 transition-transform"><span class="material-icons text-3xl">fullscreen</span></button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 3. PROMPTS E CARREGAMENTO (CARDS ESTILIZADOS) -->
-        <section class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl mt-8">
-            
-            <!-- Card: Magnet Link -->
+        <div id="mediaInfo" class="w-full mt-4 glass-panel p-6 rounded-2xl border border-gray-700/50 hidden animate-float">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan mb-1">Mídia Ativa</h2>
+                    <p id="infoFilename" class="text-lg text-white font-medium truncate max-w-2xl">Nome do Arquivo...</p>
+                </div>
+                <div class="text-right hidden md:block">
+                    <p id="infoSize" class="text-sm text-gray-400 font-mono bg-black/30 px-3 py-1 rounded-full">0 MB</p>
+                </div>
+            </div>
+            <div id="torrentStatsGrid" class="grid grid-cols-3 gap-4 mt-6 border-t border-gray-700/50 pt-4 hidden">
+                <div class="bg-black/20 p-3 rounded-lg"><p class="text-xs text-gray-500 uppercase font-bold">Peers</p><p id="infoPeers" class="text-xl font-mono text-neon-cyan">0</p></div>
+                <div class="bg-black/20 p-3 rounded-lg"><p class="text-xs text-gray-500 uppercase font-bold">Download</p><p id="infoDown" class="text-xl font-mono text-green-400">0 KB/s</p></div>
+                <div class="bg-black/20 p-3 rounded-lg"><p class="text-xs text-gray-500 uppercase font-bold">Progresso</p><p id="infoProgress" class="text-xl font-mono text-neon-purple">0%</p></div>
+            </div>
+        </div>
+
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-8">
             <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
                 <div class="absolute top-0 right-0 w-32 h-32 bg-neon-purple/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                
-                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <span class="material-icons text-neon-purple">bolt</span> Stream P2P
-                </h3>
-                
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2"><span class="material-icons text-neon-purple">bolt</span> Stream P2P</h3>
                 <div class="flex flex-col gap-3">
-                    <input type="text" id="magnetInput" placeholder="Cole seu Magnet Link (magnet:?xt=...)" 
-                           class="neon-input w-full rounded-lg px-4 py-3 text-gray-200 placeholder-gray-500">
-                    
+                    <input type="text" id="magnetInput" placeholder="Cole seu Magnet Link (magnet:?xt=...)" class="neon-input w-full rounded-lg px-4 py-3 text-gray-200 placeholder-gray-500">
                     <button id="loadMagnetBtn" class="neon-btn-primary w-full py-3 rounded-lg font-bold text-white flex items-center justify-center gap-2 shadow-lg">
                         <span class="material-icons text-sm">play_circle</span> Tocar Magnet
                     </button>
@@ -252,10 +255,8 @@
                 <p class="text-xs text-gray-500 mt-3 text-center">*Requer um link válido e peers ativos.</p>
             </div>
 
-            <!-- Card: Arquivo Local -->
             <div id="dropZone" class="glass-panel p-6 rounded-2xl relative overflow-hidden cursor-pointer group transition-all border-2 border-dashed border-gray-700 hover:border-neon-cyan">
                 <input type="file" id="fileInput" class="hidden" accept="video/*,.torrent">
-                
                 <div class="h-full flex flex-col items-center justify-center text-center space-y-3 py-2">
                     <div class="p-4 rounded-full bg-neon-cyan/10 group-hover:bg-neon-cyan/20 transition-colors">
                         <span class="material-icons text-4xl text-neon-cyan">folder_open</span>
@@ -266,39 +267,17 @@
                     </div>
                 </div>
             </div>
-
         </section>
 
-        <!-- 4. INFO DETALHADA (Aparece quando ativo) -->
-        <div id="mediaInfo" class="w-full max-w-5xl mt-6 glass-panel p-6 rounded-2xl border border-gray-700/50 hidden animate-float">
-            <div class="flex items-start justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan mb-1">Mídia Ativa</h2>
-                    <p id="infoFilename" class="text-lg text-white font-medium truncate max-w-2xl">Nome do Arquivo...</p>
+        <section id="historySection" class="w-full mt-8 hidden">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2 pl-2">
+                <span class="material-icons text-neon-cyan">history</span> Recentes
+            </h3>
+            <div id="historyList" class="grid grid-cols-1 gap-3">
                 </div>
-                <div class="text-right hidden md:block">
-                    <p id="infoSize" class="text-sm text-gray-400 font-mono bg-black/30 px-3 py-1 rounded-full">0 MB</p>
-                </div>
-            </div>
-            
-            <!-- Stats Grid (Para Torrents) -->
-            <div id="torrentStatsGrid" class="grid grid-cols-3 gap-4 mt-6 border-t border-gray-700/50 pt-4 hidden">
-                <div class="bg-black/20 p-3 rounded-lg">
-                    <p class="text-xs text-gray-500 uppercase font-bold">Peers</p>
-                    <p id="infoPeers" class="text-xl font-mono text-neon-cyan">0</p>
-                </div>
-                <div class="bg-black/20 p-3 rounded-lg">
-                    <p class="text-xs text-gray-500 uppercase font-bold">Download</p>
-                    <p id="infoDown" class="text-xl font-mono text-green-400">0 KB/s</p>
-                </div>
-                <div class="bg-black/20 p-3 rounded-lg">
-                    <p class="text-xs text-gray-500 uppercase font-bold">Progresso</p>
-                    <p id="infoProgress" class="text-xl font-mono text-neon-purple">0%</p>
-                </div>
-            </div>
-        </div>
+        </section>
 
-    </div>
+    </main>
 
     <script>
         // =================================================
@@ -308,113 +287,196 @@
         let currentTorrent = null;
         let updateInterval = null;
 
-        // Elementos
+        // Elementos UI
         const video = document.getElementById('nativeVideo');
         const placeholder = document.getElementById('videoPlaceholder');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const loadingText = document.getElementById('loadingText');
-        const controlsLayer = document.getElementById('controlsLayer');
         const centerPlayBtn = document.getElementById('centerPlayBtn');
+        const mediaInfo = document.getElementById('mediaInfo');
         
         // Inputs
         const magnetInput = document.getElementById('magnetInput');
         const loadMagnetBtn = document.getElementById('loadMagnetBtn');
         const fileInput = document.getElementById('fileInput');
         const dropZone = document.getElementById('dropZone');
+        const aiSearchInput = document.getElementById('aiSearchInput');
+
+        // Histórico
+        const historySection = document.getElementById('historySection');
+        const historyList = document.getElementById('historyList');
         
-        // Info Elements
-        const mediaInfo = document.getElementById('mediaInfo');
+        // Stats & Controls
         const infoFilename = document.getElementById('infoFilename');
         const infoSize = document.getElementById('infoSize');
         const torrentStatsGrid = document.getElementById('torrentStatsGrid');
-        
-        // Player Controls
         const playBtn = document.getElementById('playBtn');
         const muteBtn = document.getElementById('muteBtn');
         const volSlider = document.getElementById('volSlider');
-        const fsBtn = document.getElementById('fullscreenBtn');
+        const fsBtn = document.getElementById('fsBtn');
         const progressContainer = document.getElementById('progressContainer');
         const playBar = document.getElementById('playBar');
         const bufferBar = document.getElementById('bufferBar');
         const timeDisplay = document.getElementById('timeDisplay');
         const miniStats = document.getElementById('miniStats');
 
+        // Init
+        renderHistory();
 
         // =================================================
-        // CORE: FUNÇÕES DE CARREGAMENTO
+        // BUSCA INTELIGENTE
         // =================================================
+        function performSmartSearch() {
+            let query = aiSearchInput.value.trim();
+            if (!query) return alert("Digite o nome de um filme ou série.");
+            
+            const searchBtnIcon = aiSearchInput.nextElementSibling.querySelector('.material-icons');
+            const originalIcon = searchBtnIcon.innerText;
+            searchBtnIcon.classList.add('animate-spin');
+            searchBtnIcon.innerText = 'sync';
 
-        // 1. Carregar Magnet
+            let googleQuery = `"${query}" (1080p OR 720p OR 4K) (legendado OR dublado) (ext:torrent OR magnet:) -fake`;
+            if(query.toLowerCase().includes('yts')) googleQuery = `site:yts.mx "${query.replace('yts', '').trim()}"`;
+            else if (query.toLowerCase().includes('1337x')) googleQuery = `site:1337x.to "${query.replace('1337x', '').trim()}"`;
+
+            setTimeout(() => {
+                searchBtnIcon.classList.remove('animate-spin');
+                searchBtnIcon.innerText = originalIcon;
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(googleQuery)}`, '_blank');
+                placeholder.querySelector('h2').innerText = "Aguardando Link...";
+                placeholder.querySelector('p').innerText = "Copie o Magnet Link do resultado e cole abaixo.";
+            }, 800);
+        }
+
+        function setSearchTag(tag) {
+            aiSearchInput.value = aiSearchInput.value ? `${aiSearchInput.value} ${tag}` : tag;
+            aiSearchInput.focus();
+        }
+        aiSearchInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') performSmartSearch(); });
+
+        // =================================================
+        // HISTÓRICO LOGIC
+        // =================================================
+        function addToHistory(name, uri, size) {
+            if(!uri || !uri.startsWith('magnet:')) return; // Apenas Magnets (arquivos locais expiram url blob)
+            
+            let history = JSON.parse(localStorage.getItem('oak_history') || '[]');
+            // Remove duplicatas
+            history = history.filter(h => h.uri !== uri);
+            // Adiciona ao topo
+            history.unshift({ name, uri, size, date: new Date().getTime() });
+            // Limita a 5 itens
+            if(history.length > 5) history.pop();
+            
+            localStorage.setItem('oak_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function deleteHistory(index) {
+            let history = JSON.parse(localStorage.getItem('oak_history') || '[]');
+            history.splice(index, 1);
+            localStorage.setItem('oak_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem('oak_history') || '[]');
+            
+            if(history.length === 0) {
+                historySection.classList.add('hidden');
+                return;
+            }
+            
+            historySection.classList.remove('hidden');
+            historyList.innerHTML = history.map((item, index) => `
+                <div class="glass-panel p-4 rounded-xl flex justify-between items-center group hover:bg-white/5 transition animate-float" style="animation-delay: ${index * 100}ms">
+                    <div class="flex items-center gap-4 overflow-hidden">
+                        <div class="p-3 rounded-full bg-neon-purple/10 text-neon-purple border border-neon-purple/20">
+                            <span class="material-icons">movie</span>
+                        </div>
+                        <div class="truncate">
+                            <p class="text-white font-bold text-sm truncate hover:text-neon-cyan transition cursor-default" title="${item.name}">${item.name}</p>
+                            <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold mt-1">${formatBytes(item.size)} • ${new Date(item.date).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="loadMagnetLink('${item.uri}')" class="p-2 rounded-full hover:bg-neon-cyan/20 text-gray-400 hover:text-neon-cyan transition border border-transparent hover:border-neon-cyan/30" title="Assistir Novamente">
+                            <span class="material-icons">play_arrow</span>
+                        </button>
+                        <button onclick="deleteHistory(${index})" class="p-2 rounded-full hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition border border-transparent hover:border-red-500/30" title="Remover">
+                            <span class="material-icons text-sm">close</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // =================================================
+        // CORE PLAYER
+        // =================================================
         function loadMagnetLink(uri) {
             if (!uri) return alert('Cole um link válido!');
+            magnetInput.value = ''; // Limpa input
             
             resetPlayer();
             setLoading(true, "Conectando à rede P2P...");
+            
+            // Scroll para o player
+            document.getElementById('playerContainer').scrollIntoView({behavior: 'smooth', block: 'center'});
             
             client.add(uri, (torrent) => {
                 currentTorrent = torrent;
                 setLoading(true, "Baixando metadados...");
                 
-                // Procura vídeo
                 const file = torrent.files.find(f => f.name.match(/\.(mp4|mkv|webm|ogg|mov)$/i));
                 
                 if (!file) {
                     setLoading(false);
-                    return alert("Nenhum vídeo compatível encontrado no torrent.");
+                    return alert("Nenhum vídeo compatível encontrado.");
                 }
 
                 setLoading(true, `Carregando: ${file.name}`);
                 
-                // Renderiza
+                // Salva no histórico
+                addToHistory(file.name, uri, file.length);
+
                 file.renderTo(video, { autoplay: true }, (err) => {
                     if (err) {
-                        console.error(err);
                         setLoading(false);
-                        return alert("Erro ao renderizar: " + err.message);
+                        return alert("Erro render: " + err.message);
                     }
                     setupMediaReady(file.name, file.length, true);
                 });
             });
             
-            // Erro no Magnet
             client.on('error', err => {
                 setLoading(false);
-                alert("Erro no cliente WebTorrent: " + err.message);
+                alert("Erro WebTorrent: " + err.message);
             });
         }
 
-        // 2. Carregar Arquivo Local
         function loadLocalFile(file) {
             resetPlayer();
-            
             if (file.name.endsWith('.torrent')) {
-                // Se for arquivo .torrent
                 const reader = new FileReader();
-                reader.onload = event => loadMagnetLink(event.target.result); // WebTorrent aceita buffer
+                reader.onload = event => loadMagnetLink(event.target.result);
                 reader.readAsArrayBuffer(file);
                 return;
             }
-
-            // Se for Vídeo
             const url = URL.createObjectURL(file);
             video.src = url;
             video.load();
-            
-            // Tenta dar play quando estiver pronto
             video.oncanplay = () => {
                 setupMediaReady(file.name, file.size, false);
-                video.play().catch(e => console.log("Autoplay bloqueado", e));
-                video.oncanplay = null; // Remove listener
+                video.play().catch(()=>{});
+                video.oncanplay = null;
             };
         }
 
-        // Configura a UI quando a mídia está pronta
         function setupMediaReady(name, size, isTorrent) {
             setLoading(false);
             placeholder.style.display = 'none';
-            centerPlayBtn.style.display = 'none'; // Esconde play central inicial
-            
-            // Mostra Info
+            centerPlayBtn.style.display = 'none';
             mediaInfo.classList.remove('hidden');
             infoFilename.innerText = name;
             infoSize.innerText = formatBytes(size);
@@ -431,42 +493,31 @@
             }
         }
 
-        // Monitora Stats do Torrent
         function startStatsMonitor() {
             if(updateInterval) clearInterval(updateInterval);
-            
             updateInterval = setInterval(() => {
                 if(currentTorrent) {
                     const dl = formatSpeed(currentTorrent.downloadSpeed);
-                    const ul = formatSpeed(currentTorrent.uploadSpeed);
                     const peers = currentTorrent.numPeers;
                     const prog = (currentTorrent.progress * 100).toFixed(1);
-
-                    // Painel Info
                     document.getElementById('infoDown').innerText = dl;
                     document.getElementById('infoPeers').innerText = peers;
                     document.getElementById('infoProgress').innerText = prog + '%';
-                    
-                    // Mini Stats (Header)
                     document.getElementById('dlSpeed').innerText = dl;
                     document.getElementById('peersCount').innerText = peers;
                 }
             }, 1000);
         }
 
-        // Reset
         function resetPlayer() {
             if (currentTorrent) {
                 currentTorrent.destroy();
                 currentTorrent = null;
             }
             if (updateInterval) clearInterval(updateInterval);
-            
             video.pause();
             video.src = '';
             video.load();
-            
-            // Reseta UI
             placeholder.style.display = 'flex';
             centerPlayBtn.style.display = 'flex';
             mediaInfo.classList.add('hidden');
@@ -487,158 +538,57 @@
         }
 
         // =================================================
-        // EVENT LISTENERS (PROMPTS)
+        // EVENTOS E CONTROLES
         // =================================================
-        
-        // Botão Magnet
-        loadMagnetBtn.addEventListener('click', () => {
-            loadMagnetLink(magnetInput.value.trim());
-        });
-        
-        magnetInput.addEventListener('keydown', (e) => {
-            if(e.key === 'Enter') loadMagnetLink(magnetInput.value.trim());
-        });
-
-        // Drag & Drop e Click
+        loadMagnetBtn.addEventListener('click', () => loadMagnetLink(magnetInput.value.trim()));
+        magnetInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') loadMagnetLink(magnetInput.value.trim()); });
         dropZone.addEventListener('click', () => fileInput.click());
-        
-        fileInput.addEventListener('change', (e) => {
-            if(e.target.files.length) loadLocalFile(e.target.files[0]);
-        });
+        fileInput.addEventListener('change', (e) => { if(e.target.files.length) loadLocalFile(e.target.files[0]); });
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-active'));
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-active'); if(e.dataTransfer.files.length) loadLocalFile(e.dataTransfer.files[0]); });
 
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('drag-active');
-        });
-        
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('drag-active');
-        });
-        
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-active');
-            if(e.dataTransfer.files.length) loadLocalFile(e.dataTransfer.files[0]);
-        });
-
-        // =================================================
-        // CONTROLES DO PLAYER
-        // =================================================
-        
-        // Play/Pause
         const togglePlay = () => {
-            if(video.paused) {
-                video.play();
-                playBtn.innerHTML = '<span class="material-icons text-3xl">pause</span>';
-                centerPlayBtn.style.opacity = '0';
-            } else {
-                video.pause();
-                playBtn.innerHTML = '<span class="material-icons text-3xl">play_arrow</span>';
-                centerPlayBtn.style.opacity = '1';
-            }
+            if(video.paused) { video.play(); playBtn.innerHTML = '<span class="material-icons text-3xl">pause</span>'; centerPlayBtn.style.opacity = '0'; } 
+            else { video.pause(); playBtn.innerHTML = '<span class="material-icons text-3xl">play_arrow</span>'; centerPlayBtn.style.opacity = '1'; }
         };
-        
         playBtn.addEventListener('click', togglePlay);
-        // O clique no vídeo também alterna, mas apenas se os controles não forem clicados
         video.addEventListener('click', togglePlay);
         
-        // Volume
-        volSlider.addEventListener('input', (e) => {
-            video.volume = e.target.value;
-            updateMuteIcon(video.volume);
-        });
-
-        muteBtn.addEventListener('click', () => {
-            video.muted = !video.muted;
-            updateMuteIcon(video.muted ? 0 : video.volume);
-            if(!video.muted && video.volume === 0) {
-                video.volume = 0.5; 
-                volSlider.value = 0.5;
-            }
-        });
-
-        function updateMuteIcon(vol) {
-            let icon = 'volume_up';
-            if(vol == 0) icon = 'volume_off';
-            else if(vol < 0.5) icon = 'volume_down';
-            muteBtn.innerHTML = `<span class="material-icons">${icon}</span>`;
-        }
-
-        // Fullscreen
-        fsBtn.addEventListener('click', () => {
-            if(!document.fullscreenElement) {
-                document.getElementById('playerContainer').requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-        });
-
-        // Barra de Progresso e Tempo
+        volSlider.addEventListener('input', (e) => { video.volume = e.target.value; updateMuteIcon(video.volume); });
+        muteBtn.addEventListener('click', () => { video.muted = !video.muted; updateMuteIcon(video.muted ? 0 : video.volume); if(!video.muted && video.volume === 0) { video.volume = 0.5; volSlider.value = 0.5; } });
+        function updateMuteIcon(vol) { let icon = 'volume_up'; if(vol == 0) icon = 'volume_off'; else if(vol < 0.5) icon = 'volume_down'; muteBtn.innerHTML = `<span class="material-icons">${icon}</span>`; }
+        
+        fsBtn.addEventListener('click', () => { if(!document.fullscreenElement) document.getElementById('playerContainer').requestFullscreen(); else document.exitFullscreen(); });
+        
         video.addEventListener('timeupdate', () => {
             if(isNaN(video.duration)) return;
-            
             const pct = (video.currentTime / video.duration) * 100;
             playBar.style.width = `${pct}%`;
             timeDisplay.innerText = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-            
-            // Buffer
-            if(video.buffered.length) {
-                const bufPct = (video.buffered.end(video.buffered.length - 1) / video.duration) * 100;
-                bufferBar.style.width = `${bufPct}%`;
-            }
+            if(video.buffered.length) bufferBar.style.width = `${(video.buffered.end(video.buffered.length - 1) / video.duration) * 100}%`;
         });
-
-        // Seek (Clique na barra)
         progressContainer.addEventListener('click', (e) => {
             const rect = progressContainer.getBoundingClientRect();
-            const pos = (e.clientX - rect.left) / rect.width;
-            if(video.duration) video.currentTime = pos * video.duration;
+            if(video.duration) video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
         });
 
-        // Atalhos
         document.addEventListener('keydown', (e) => {
             if(document.activeElement.tagName === 'INPUT') return;
-            
             switch(e.key.toLowerCase()) {
                 case ' ': case 'k': e.preventDefault(); togglePlay(); break;
-                case 'f': toggleFullscreen(); break;
+                case 'f': if(!document.fullscreenElement) document.getElementById('playerContainer').requestFullscreen(); else document.exitFullscreen(); break;
                 case 'm': video.muted = !video.muted; updateMuteIcon(video.muted ? 0 : video.volume); break;
                 case 'arrowright': video.currentTime += 5; break;
                 case 'arrowleft': video.currentTime -= 5; break;
-                case 'arrowup': 
-                    e.preventDefault(); 
-                    video.volume = Math.min(1, video.volume + 0.1); 
-                    volSlider.value = video.volume;
-                    updateMuteIcon(video.volume);
-                    break;
-                case 'arrowdown': 
-                    e.preventDefault(); 
-                    video.volume = Math.max(0, video.volume - 0.1); 
-                    volSlider.value = video.volume;
-                    updateMuteIcon(video.volume);
-                    break;
+                case 'arrowup': e.preventDefault(); video.volume = Math.min(1, video.volume + 0.1); volSlider.value = video.volume; updateMuteIcon(video.volume); break;
+                case 'arrowdown': e.preventDefault(); video.volume = Math.max(0, video.volume - 0.1); volSlider.value = video.volume; updateMuteIcon(video.volume); break;
             }
         });
 
-        // Utils
-        function formatTime(s) {
-            if(isNaN(s)) return "0:00";
-            const m = Math.floor(s / 60);
-            const sec = Math.floor(s % 60);
-            return `${m}:${sec < 10 ? '0'+sec : sec}`;
-        }
-
-        function formatBytes(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        function formatSpeed(bytes) {
-            return formatBytes(bytes) + '/s';
-        }
+        function formatTime(s) { if(isNaN(s)) return "0:00"; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec < 10 ? '0'+sec : sec}`; }
+        function formatBytes(bytes) { if (bytes === 0) return '0 B'; const k = 1024; const sizes = ['B', 'KB', 'MB', 'GB', 'TB']; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]; }
+        function formatSpeed(bytes) { return formatBytes(bytes) + '/s'; }
     </script>
 </body>
 </html>

@@ -3,624 +3,936 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AniStream Player | Catálogo e Superflix Integrados</title>
+    <title>AniStream Player | Design Avançado e WebTorrent</title>
     
-    <!-- Fontes e Ícones -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
-    <!-- WebTorrent (Essencial para Magnet/Torrent) -->
     <script src="https://cdn.jsdelivr.net/webtorrent/latest/webtorrent.min.js"></script>
     
     <style>
         /* =================================================================
-           # ESTILOS GERAIS (TEMA DARK/STREAMING)
+           # PALETA DE CORES E VARIÁVEIS
            ================================================================= */
         :root {
-            --primary: #e50914;         /* Vermelho Netflix */
-            --superflix: #9c27b0;       /* Roxo para a API */
-            --bg-dark: #141414;         /* Fundo Principal */
-            --bg-medium: #222;          /* Fundo de Painéis/Inputs */
-            --border: #404040; 
-            --text: #ffffff;
-            --text-secondary: #b3b3b3;
-            --player-max-width: 1300px;
-            --player-height-ratio: 56.25%;
+            --primary: #00e676;         /* Verde Neon para Ação e Progresso */
+            --secondary: #ff3d00;       /* Laranja/Vermelho para Busca/Foco */
+            --blue-accent: #00b0ff;     /* Azul Vibrante para Foco Secundário */
+            --bg-dark: #121212;         /* Fundo escuro principal */
+            --bg-medium: #282828;       /* Fundo de cards/controles */
+            --bg-light: #3a3a3a;        /* Botões / Fundo claro */
+            --text-main: #e0e0e0;       /* Texto principal claro */
+            --text-secondary: #a0a0a0;  /* Texto secundário/hint */
+            --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-dark: 0 8px 25px rgba(0, 0, 0, 0.6);
+            --radius: 12px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', Arial, sans-serif; outline: none; transition: all 0.2s ease-in-out; color: inherit; }
-        body { background-color: #000; color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+        /* =================================================================
+           # RESET E BASE
+           ================================================================= */
+        * {
+            box-sizing: border-box;
+            transition: all 0.2s ease-out; /* Transições suaves para a maioria dos elementos */
+        }
 
-        /* HEADER */
-        header { padding: 15px 4%; background: var(--bg-dark); z-index: 20; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; border-bottom: 1px solid var(--border); }
-        .logo { font-size: 2rem; font-weight: 900; color: var(--primary); letter-spacing: -1px; text-transform: uppercase; cursor: pointer; }
-        .logo span { color: var(--text); font-weight: 300; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-        /* ABAS */
-        .nav-menu { display: flex; gap: 20px; }
-        .nav-item { background: none; border: none; color: var(--text-secondary); font-size: 0.9rem; cursor: pointer; font-weight: 500; transition: color 0.2s; padding: 5px 0; }
-        .nav-item:hover, .nav-item.active { color: var(--text); font-weight: 700; }
-        .nav-item.active { border-bottom: 2px solid var(--primary); }
+        /* =================================================================
+           # ESTRUTURA PRINCIPAL DO PLAYER/BUSCA
+           ================================================================= */
+        #main-container {
+            width: 100%;
+            max-width: 1200px;
+            box-shadow: var(--shadow-dark);
+            border-radius: var(--radius);
+            overflow: hidden;
+            background-color: var(--bg-medium);
+        }
 
-        /* LAYOUT PRINCIPAL */
-        .main-layout { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px 4%; width: 100%; }
-        .player-section { width: 100%; max-width: var(--player-max-width); margin-bottom: 30px; }
-        #videoTitle { font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-        .player-container { width: 100%; position: relative; padding-bottom: var(--player-height-ratio); height: 0; background: #000; box-shadow: 0 20px 50px rgba(0,0,0,0.8); border-radius: 4px; overflow: hidden; }
-        .video-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        #nativePlayer, #ytPlayer { width: 100%; height: 100%; position: absolute; top: 0; left: 0; object-fit: contain; }
-        .video-wrapper.youtube-mode #nativePlayer { z-index: 0; }
-        .video-wrapper.youtube-mode #ytPlayer { z-index: 6; }
+        /* =================================================================
+           # TELA INICIAL / BUSCADOR (NOVA SEÇÃO)
+           ================================================================= */
+        #home-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 80px 20px;
+            text-align: center;
+        }
 
-        /* CONTROLES (Mantidos) */
-        .custom-controls { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%); padding: 0 20px 15px 20px; opacity: 0; transition: opacity 0.3s; z-index: 10; }
-        .video-wrapper:hover .custom-controls, .video-wrapper.paused .custom-controls { opacity: 1; }
-        .progress-bar { height: 4px; background: rgba(255,255,255,0.3); margin-bottom: 10px; cursor: pointer; position: relative; }
-        .progress-fill { height: 100%; background: var(--primary); width: 0%; border-radius: 2px; position: relative; }
-        .controls-row { display: flex; justify-content: space-between; align-items: center; }
-        .btn { background: none; border: none; color: #fff; cursor: pointer; padding: 5px; display: flex; }
-        .btn:hover { transform: scale(1.1); }
-        .material-icons { font-size: 1.8rem; }
-        #volSlider { height: 5px; cursor: pointer; }
+        #home-screen.hidden {
+            display: none;
+        }
 
-        /* INPUTS E CONTEÚDO */
-        .content-panel { width: 100%; max-width: var(--player-max-width); }
-        .input-group { display: none; flex-direction: column; gap: 15px; padding: 20px 0; }
-        .input-group.active { display: flex; }
+        #home-screen h1 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        #home-screen p {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            max-width: 600px;
+        }
+
+        #search-container {
+            display: flex;
+            width: 100%;
+            max-width: 550px;
+            border-radius: 50px;
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+        }
+
+        #search-input {
+            flex-grow: 1;
+            padding: 15px 25px;
+            border: none;
+            outline: none;
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            font-size: 1rem;
+            border-top-left-radius: 50px;
+            border-bottom-left-radius: 50px;
+        }
+        #search-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        #search-button {
+            background-color: var(--primary);
+            color: var(--bg-dark);
+            border: none;
+            padding: 0 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #search-button:hover {
+            background-color: #00c853; /* Tom ligeiramente mais escuro */
+        }
+        #search-button:active {
+            transform: scale(0.98);
+        }
         
-        /* BARRA DE PESQUISA LINK/MAGNET e API */
-        .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
-        .search-box input { flex: 1; background: var(--bg-medium); border: 1px solid #444; color: white; padding: 12px 15px; font-size: 1rem; border-radius: 4px; }
-        .search-box button, .action-btn { background: var(--primary); color: white; border: none; padding: 0 25px; font-weight: 700; font-size: 1rem; cursor: pointer; border-radius: 4px; text-transform: uppercase; }
-        .search-box button:hover { background: #f40612; }
-
-        /* GRID CATÁLOGO */
-        .catalog-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
-            gap: 15px; 
+        #loading-message, #error-message {
             margin-top: 20px;
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            font-weight: 500;
         }
-        .catalog-card { background: #222; border-radius: 4px; overflow: hidden; cursor: pointer; transition: transform 0.3s; position: relative; aspect-ratio: 2/3; }
-        .catalog-card:hover { transform: scale(1.05); z-index: 5; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid var(--primary); }
-        .card-img { width: 100%; height: 100%; object-fit: cover; }
-        .card-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); padding: 10px; }
-        .card-title { font-size: 0.85rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
-        
-        /* BOTÃO SUPERFLIX */
-        .superflix-btn { background: var(--superflix); color: white; width: 100%; padding: 15px; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .superflix-btn:hover { background: #7b1fa2; }
-        .superflix-btn:disabled { background: #555; cursor: not-allowed; }
 
-        /* LOADING & MODAL (Mantidos) */
-        #torrentStatus { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 15; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        #loading-message {
+            background-color: var(--blue-accent);
+            color: var(--bg-dark);
+            display: none; /* Controlado via JS */
+        }
         
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; justify-content: center; align-items: center; }
-        .modal-box { background: var(--bg-dark); padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; text-align: center; border: 1px solid var(--border); }
+        #error-message {
+            background-color: var(--secondary);
+            color: var(--text-main);
+            display: none; /* Controlado via JS */
+        }
+
+
+        /* =================================================================
+           # PLAYER CONTAINER
+           ================================================================= */
+        #player-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* Relação de aspecto 16:9 */
+            background-color: #000;
+            border-radius: var(--radius);
+            overflow: hidden;
+            display: none; /* Inicialmente oculto */
+        }
+        
+        #player-container.active {
+            display: block;
+        }
+
+        #player-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            padding-top: 0;
+            z-index: 9999;
+            border-radius: 0;
+        }
+
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Garante que o vídeo seja totalmente visível */
+            cursor: pointer;
+        }
+
+        /* =================================================================
+           # CONTROLES
+           ================================================================= */
+        .controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0));
+            padding: 10px 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        #player-container:hover .controls,
+        #player-container.paused .controls,
+        .controls:hover {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .controls-row-1 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Barra de Progresso (Progress Bar) */
+        #progress-bar-container {
+            flex-grow: 1;
+            height: 8px;
+            background-color: var(--bg-medium);
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        #progress-bar-loaded,
+        #progress-bar-played {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        #progress-bar-loaded {
+            background-color: var(--bg-light);
+            width: 0; /* Inicializado em JS */
+        }
+
+        #progress-bar-played {
+            background-color: var(--primary);
+            width: 0; /* Inicializado em JS */
+            position: relative;
+        }
+
+        /* Marker (Círculo na barra de progresso) */
+        #progress-marker {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translate(50%, -50%);
+            width: 14px;
+            height: 14px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+        
+        /* Tooltip de Tempo (mostra o tempo ao passar o mouse) */
+        #progress-bar-container:hover::before {
+            content: attr(data-time-preview);
+            position: absolute;
+            top: -30px;
+            padding: 4px 8px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: var(--text-main);
+            font-size: 0.8rem;
+            border-radius: 4px;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+
+        /* Controles - Segunda Linha */
+        .controls-row-2 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .controls-left, .controls-right {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Botões de Controle (Ícones) */
+        .control-button {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .control-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--primary);
+        }
+        .control-button i {
+            font-size: 24px;
+        }
+
+        /* Display de Tempo */
+        .time-display {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0 5px;
+        }
+
+        /* Volume Slider */
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            width: 100px;
+        }
+
+        #volume-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            background: var(--bg-light);
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        #volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        #volume-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        /* Rate Control */
+        #rate-control {
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            border: none;
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        #rate-control:hover {
+            background-color: var(--bg-light);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* =================================================================
+           # TELA DE OVERLAY (PLAY/PAUSE)
+           ================================================================= */
+        #play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+
+        #player-container.paused #play-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #play-large {
+            background-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border-radius: 50%;
+            padding: 30px;
+            cursor: pointer;
+            transform: scale(1);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        #play-large:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        #play-large i {
+            color: var(--text-main);
+            font-size: 60px;
+        }
+        
+        /* =================================================================
+           # INFORMAÇÕES DO TORRENT
+           ================================================================= */
+        #torrent-info {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            z-index: 100;
+            padding: 5px 10px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 6px;
+            color: var(--primary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            opacity: 0.8;
+        }
+
+        #torrent-info span {
+            display: block;
+        }
+
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="logo">Ani<span>Stream</span></div>
-        <div class="nav-menu">
-            <button class="nav-item active" onclick="switchTab('catalog', this)">Início</button>
-            <button class="nav-item" onclick="switchTab('url', this)">Link/Magnet</button>
-            <button class="nav-item" onclick="switchTab('addon', this)">Configuração Proxy</button>
+    <div id="main-container">
+        <!-- TELA INICIAL / BUSCADOR -->
+        <div id="home-screen">
+            <h1>AniStream Player</h1>
+            <p>Este player usa WebTorrent. Para "buscar" e reproduzir um vídeo, cole um **Magnet Link** ou a **URL de um arquivo .torrent** no campo abaixo. *Não requer API ou proxy externos.*</p>
+            
+            <form id="search-form" onsubmit="handleSearch(event)">
+                <div id="search-container">
+                    <input type="text" id="search-input" placeholder="Cole Magnet Link ou URL do Torrent aqui..." required>
+                    <button type="submit" id="search-button">
+                        <i class="material-icons">search</i>
+                    </button>
+                </div>
+            </form>
+            
+            <div id="loading-message">Carregando metadados do Torrent...</div>
+            <div id="error-message"></div>
         </div>
-        <div style="width: 32px; height: 32px; background: #333; border-radius: 4px;"></div>
-    </header>
 
-    <div class="main-layout">
-        
-        <!-- PLAYER -->
-        <div class="player-section">
-            <h2 id="videoTitle">Pronto para assistir</h2>
-            <div class="player-container" id="videoContainer">
-                <div class="video-wrapper paused" id="videoWrapper">
-                    <video id="nativePlayer" playsinline></video>
-                    <iframe id="ytPlayer" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
-                    
-                    <!-- Overlay de Loading/Status -->
-                    <div id="torrentStatus">
-                        <div class="spinner"></div>
-                        <div id="statusText" style="font-size: 1.2rem; font-weight: 600;">Carregando...</div>
-                        <div id="statusDetail" style="color: #aaa; font-size: 0.9rem; margin-top: 5px;"></div>
-                    </div>
 
-                    <!-- Controles Personalizados -->
-                    <div class="custom-controls">
-                        <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
-                        <div class="controls-row">
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <button class="btn" id="playBtn" onclick="togglePlay()"><span class="material-icons">play_arrow</span></button>
-                                <button class="btn" onclick="seekRelative(-10)"><span class="material-icons">replay_10</span></button>
-                                <button class="btn" onclick="seekRelative(10)"><span class="material-icons">forward_10</span></button>
-                                <button class="btn" id="muteBtn" onclick="toggleMute()"><span class="material-icons">volume_up</span></button>
-                                <input type="range" id="volSlider" min="0" max="1" step="0.05" value="1" style="width: 80px;">
-                                <span style="font-size: 0.8rem; margin-left: 10px;" id="timeDisplay">00:00:00 / 00:00:00</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <button class="btn" onclick="toggleFullscreen()"><span class="material-icons">fullscreen</span></button>
-                            </div>
+        <!-- PLAYER CONTAINER -->
+        <div id="player-container">
+            <video id="native-video"></video>
+            
+            <!-- OVERLAY DE PLAY/PAUSE -->
+            <div id="play-overlay">
+                <div id="play-large">
+                    <i class="material-icons">play_arrow</i>
+                </div>
+            </div>
+
+            <!-- INFORMAÇÕES DO TORRENT -->
+            <div id="torrent-info">
+                <span id="download-speed">↓ 0.0 KB/s</span>
+                <span id="upload-speed">↑ 0.0 KB/s</span>
+                <span id="peers-count">Pares: 0</span>
+            </div>
+
+            <!-- CONTROLES -->
+            <div class="controls">
+                <!-- LINHA 1: PROGRESSO -->
+                <div class="controls-row-1">
+                    <div id="progress-bar-container">
+                        <div id="progress-bar-loaded"></div>
+                        <div id="progress-bar-played">
+                            <div id="progress-marker"></div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- SEÇÃO DE CONTEÚDO (INPUTS/CATÁLOGO) -->
-        <div class="content-panel">
-            
-            <!-- TAB 1: CATÁLOGO GERAL (Início) -->
-            <div id="tab-catalog" class="input-group active">
-                
-                <!-- CAMPO DE PESQUISA SUPERFLIX (NOVO) -->
-                <h3 style="margin: 0;">Pesquisar Catálogo Superflix</h3>
-                <div class="search-box">
-                    <input type="text" id="superflixSearchInput" placeholder="Busque por título de anime, série ou filme..." onkeydown="if(event.key === 'Enter') searchSuperflixCatalog()">
-                    <button onclick="searchSuperflixCatalog()"><span class="material-icons">search</span></button>
-                </div>
-
-                <!-- BOTÃO PARA CARREGAR LISTA POPULAR (Se a pesquisa estiver vazia) -->
-                <button class="superflix-btn" onclick="loadSuperflixCatalog()" id="loadSuperflixBtn" disabled>
-                    <span class="material-icons">lock</span> Configure o Proxy para carregar Animes Populares
-                </button>
-                
-                <!-- RESULTADOS DA SUPERFLIX APARECERÃO AQUI -->
-                <div id="superflixSection" style="margin-top: 30px; display: block;">
-                    <h3 id="superflixTitle" style="color:var(--text); margin-bottom:15px; font-weight:700;"></h3>
-                    <div class="catalog-grid" id="superflixGrid"></div>
-                </div>
-            </div>
-
-            <!-- TAB 2: LINK/MAGNET & LOCAL FILES -->
-            <div id="tab-url" class="input-group">
-                <h3 style="margin: 0;">Carregar Mídia Externa</h3>
-                <div class="search-box">
-                    <input type="text" id="directLink" placeholder="Cole Link Magnet, YouTube ou URL MP4...">
-                    <button onclick="loadFromInput()">Reproduzir</button>
-                </div>
-                
-                <div class="file-drop-zone" style="border: 2px dashed #444; padding: 20px; text-align: center; border-radius: 8px; cursor: pointer;" onclick="document.getElementById('fileInput').click()">
-                    <span class="material-icons" style="font-size: 3rem; display: block; margin-bottom: 10px;">cloud_upload</span> 
-                    Ou clique para carregar Arquivo Local (.mp4, .torrent)
-                    <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(this.files)">
-                </div>
-            </div>
-
-            <!-- TAB 3: CONFIGURAÇÃO PROXY -->
-            <div id="tab-addon" class="input-group">
-                <h3 style="margin: 0;">Configuração de Proxy e API</h3>
-                
-                <div style="background: var(--bg-medium); padding: 15px; border-radius: 4px;">
-                    <p style="margin: 0 0 10px 0; color: var(--text-secondary); font-size: 0.9rem;">URL do Proxy Vercel (Obrigatório para evitar CORS):</p>
-                    <div class="search-box">
-                        <input type="text" id="addonUrl" placeholder="Ex: https://seu-proxy.vercel.app">
-                        <button onclick="saveAddonUrl()">Salvar</button>
+                <!-- LINHA 2: BOTÕES E TEMPO -->
+                <div class="controls-row-2">
+                    <div class="controls-left">
+                        <button id="play-button" class="control-button">
+                            <i class="material-icons">play_arrow</i>
+                        </button>
+                        
+                        <div class="volume-control">
+                            <button id="mute-button" class="control-button">
+                                <i class="material-icons">volume_up</i>
+                            </button>
+                            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1">
+                        </div>
+                        
+                        <div class="time-display">
+                            <span id="current-time">0:00</span> / <span id="duration">0:00</span>
+                        </div>
                     </div>
-                    <p style="color:var(--text-secondary); font-size: 0.8rem; margin-top: 10px;">Esta URL é usada para buscar o catálogo Superflix (aba Início) e Streams do Addon Stremio.</p>
+                    
+                    <div class="controls-right">
+                        <select id="rate-control">
+                            <option value="0.5">0.5x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1" selected>Normal</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="2">2x</option>
+                        </select>
+                        
+                        <button id="fullscreen-button" class="control-button">
+                            <i class="material-icons">fullscreen</i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- MODAL -->
-    <div id="modal" class="modal">
-        <div class="modal-box">
-            <h3 id="modalTitle">Aviso</h3>
-            <p id="modalMsg" style="color: #ccc; margin: 15px 0;">Mensagem...</p>
-            <button class="action-btn" onclick="document.getElementById('modal').style.display='none'" style="width: 100%;">OK</button>
-        </div>
-    </div>
-
+    
     <script>
-        /* =================================================================
-           # LÓGICA JAVASCRIPT (PLAYER, WEBTORRENT E API)
-           ================================================================= */
-        
-        // --- CONFIGURAÇÃO E VARIÁVEIS GLOBAIS ---
-        const client = new WebTorrent();
-        let addonBaseUrl = localStorage.getItem('addonUrl') || '';
-        
-        // DOM Elements
-        const nativeVideo = document.getElementById('nativePlayer');
-        const ytIframe = document.getElementById('ytPlayer');
-        const wrapper = document.getElementById('videoWrapper');
-        const titleEl = document.getElementById('videoTitle');
-        const statusEl = document.getElementById('torrentStatus');
-        const statusText = document.getElementById('statusText');
-        const statusDetail = document.getElementById('statusDetail');
-        const playBtn = document.getElementById('playBtn');
-        const muteBtn = document.getElementById('muteBtn');
-        const progressBar = document.getElementById('progressBar');
-        const volumeSlider = document.getElementById('volSlider');
-        const superflixTitleEl = document.getElementById('superflixTitle');
-        const loadSuperflixBtn = document.getElementById('loadSuperflixBtn');
+        // Variáveis Globais de Firebase (Mantidas para a estrutura, mesmo que não usadas no WebTorrent)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : undefined;
 
+        // =================================================================
+        // # VARIÁVEIS DE ELEMENTOS
+        // =================================================================
+        const mainContainer = document.getElementById('main-container');
+        const homeScreen = document.getElementById('home-screen');
+        const searchInput = document.getElementById('search-input');
+        const loadingMessage = document.getElementById('loading-message');
+        const errorMessage = document.getElementById('error-message');
+        const playerContainer = document.getElementById('player-container');
+        const nativeVideo = document.getElementById('native-video');
+        const playButton = document.getElementById('play-button');
+        const muteButton = document.getElementById('mute-button');
+        const volumeSlider = document.getElementById('volume-slider');
+        const fullscreenButton = document.getElementById('fullscreen-button');
+        const progressBarContainer = document.getElementById('progress-bar-container');
+        const progressBarLoaded = document.getElementById('progress-bar-loaded');
+        const progressBarPlayed = document.getElementById('progress-bar-played');
+        const currentTimeDisplay = document.getElementById('current-time');
+        const durationDisplay = document.getElementById('duration');
+        const playLarge = document.getElementById('play-large');
+        const rateControl = document.getElementById('rate-control');
+        const torrentInfo = document.getElementById('torrent-info');
+        const downloadSpeedDisplay = document.getElementById('download-speed');
+        const uploadSpeedDisplay = document.getElementById('upload-speed');
+        const peersCountDisplay = document.getElementById('peers-count');
 
-        // --- INICIALIZAÇÃO E EVENTOS ---
-        window.onload = () => {
-            if (addonBaseUrl) document.getElementById('addonUrl').value = addonBaseUrl;
-            setupPlayerEvents();
-            checkProxyUrlAndEnableButton();
-            // Carrega o catálogo popular na inicialização (se o proxy estiver configurado)
-            if (addonBaseUrl) loadSuperflixCatalog(); 
-            else superflixTitleEl.innerText = 'Catálogo Superflix (Configure o Proxy)';
-        };
+        // =================================================================
+        // # WEBTORRENT E ESTADO
+        // =================================================================
+        let webtorrentClient = null;
+        let currentTorrent = null;
+        let isSeeking = false;
 
-        // --- NAVEGAÇÃO ---
-        window.switchTab = (tabId, btn) => {
-            document.querySelectorAll('.input-group').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
-            btn.classList.add('active');
-        };
+        /**
+         * Inicializa o cliente WebTorrent se ainda não estiver inicializado.
+         */
+        function initializeWebTorrentClient() {
+            if (!webtorrentClient) {
+                webtorrentClient = new WebTorrent();
+                console.log('WebTorrent Client inicializado.');
+            }
+        }
         
-        // --- PLAYER CORE & CONTROLES ---
-        
-        function updateTimeDisplay() {
-            const formatTime = (seconds) => {
-                if (isNaN(seconds) || seconds < 0) return '00:00:00';
-                return new Date(seconds * 1000).toISOString().substr(11, 8);
-            };
-            const current = formatTime(nativeVideo.currentTime);
-            const duration = formatTime(nativeVideo.duration);
-            document.getElementById('timeDisplay').innerText = `${current} / ${duration}`;
+        /**
+         * Lida com o envio do formulário de busca e inicia o carregamento do vídeo.
+         * @param {Event} e O evento de submit do formulário.
+         */
+        window.handleSearch = function(e) {
+            e.preventDefault();
+            const query = searchInput.value.trim();
+            errorMessage.style.display = 'none';
+
+            if (!query) {
+                showError('Por favor, insira um link magnet ou URL de torrent.');
+                return;
+            }
             
-            const pct = (nativeVideo.currentTime / nativeVideo.duration) * 100;
-            document.getElementById('progressFill').style.width = pct + '%';
+            // Limpa qualquer torrent anterior
+            if (currentTorrent) {
+                currentTorrent.destroy();
+                currentTorrent = null;
+                nativeVideo.src = '';
+                nativeVideo.removeAttribute('src');
+                nativeVideo.load();
+            }
+
+            // Inicia o carregamento
+            initializeWebTorrentClient();
+            loadVideoFromQuery(query);
         }
 
-        function loadMedia(source, title, type) {
-            titleEl.innerText = title;
-            statusEl.style.display = 'none';
-            wrapper.classList.remove('youtube-mode');
-            ytIframe.src = '';
+        /**
+         * Tenta carregar o vídeo a partir do link/query fornecido.
+         * @param {string} query O Magnet Link ou URL do Torrent.
+         */
+        function loadVideoFromQuery(query) {
+            loadingMessage.style.display = 'block';
+            homeScreen.classList.remove('active');
             
-            // Limpa torrents anteriores
-            if (client.torrents.length > 0) client.torrents.forEach(t => t.destroy());
-
-            if (type === 'youtube') {
-                wrapper.classList.add('youtube-mode');
-                nativeVideo.pause();
-                nativeVideo.style.zIndex = 0; 
-                ytIframe.style.zIndex = 6;
-                ytIframe.src = `https://www.youtube.com/embed/${source}?autoplay=1&rel=0`;
-            } 
-            else if (type === 'magnet' || type === 'file') {
-                nativeVideo.style.zIndex = 5; 
-                ytIframe.style.zIndex = 0;
+            webtorrentClient.add(query, { destroyStoreOnDestroy: true }, (torrent) => {
+                loadingMessage.style.display = 'none';
+                currentTorrent = torrent;
                 
-                statusEl.style.display = 'flex';
-                statusText.innerText = "Conectando aos peers...";
-
-                client.add(source, torrent => {
-                    const file = torrent.files.find(f => f.name.match(/\.(mp4|mkv|webm)$/i));
-                    
-                    torrent.on('download', () => {
-                        statusDetail.innerText = `Baixado: ${(torrent.downloaded/1024/1024).toFixed(1)}MB | Vel: ${(torrent.downloadSpeed/1024/1024).toFixed(2)}MB/s | Peers: ${torrent.numPeers}`;
-                    });
-
-                    if(file) {
-                        file.renderTo(nativeVideo, { autoplay: true }, (err) => {
-                            if(err) showAlert("Erro WebTorrent", err.message);
-                            statusEl.style.display = 'none';
-                            updatePlayIcon(true);
-                        });
-                    } else {
-                        showAlert("Erro", "Nenhum arquivo de vídeo compatível encontrado no torrent.");
-                        statusEl.style.display = 'none';
-                    }
+                // Trata o evento de erro
+                torrent.on('error', (err) => {
+                    console.error('Erro no Torrent:', err.message);
+                    torrent.destroy();
+                    showError(`Erro ao carregar o torrent: ${err.message}. Verifique o link.`);
+                    resetPlayerToHome();
                 });
-            } 
-            else {
-                nativeVideo.style.zIndex = 5; 
-                ytIframe.style.zIndex = 0;
-                nativeVideo.src = source;
-                nativeVideo.play().then(() => updatePlayIcon(true)).catch(() => {
-                    nativeVideo.muted = true;
+
+                // Encontra o maior arquivo de vídeo no torrent
+                const file = torrent.files.find((file) => file.name.endsWith('.mp4') || file.name.endsWith('.webm') || file.name.endsWith('.mkv'));
+
+                if (!file) {
+                    torrent.destroy();
+                    showError('Nenhum arquivo de vídeo compatível (.mp4, .webm) encontrado no torrent.');
+                    resetPlayerToHome();
+                    return;
+                }
+
+                // Cria o stream para o elemento de vídeo
+                file.renderTo(nativeVideo, { autoplay: true }, () => {
+                    console.log(`Reproduzindo: ${file.name}`);
+                    setupPlayerEvents();
+                    showPlayer();
                     nativeVideo.play();
-                    updatePlayIcon(true);
                 });
+            });
+        }
+        
+        /**
+         * Exibe a tela do player e oculta a tela inicial.
+         */
+        function showPlayer() {
+            homeScreen.classList.add('hidden');
+            playerContainer.classList.add('active');
+            playerContainer.classList.remove('paused');
+        }
+
+        /**
+         * Reseta a tela para a tela inicial/busca.
+         */
+        function resetPlayerToHome() {
+            playerContainer.classList.remove('active');
+            playerContainer.classList.remove('paused');
+            homeScreen.classList.remove('hidden');
+            searchInput.value = '';
+            // Garante que o WebTorrent Client esteja parado se não houver torrents ativos
+            if (webtorrentClient && webtorrentClient.torrents.length === 0) {
+                 // É importante não destruir o cliente se ele for reutilizável
             }
         }
 
-        function setupPlayerEvents() {
-            nativeVideo.addEventListener('play', () => { updatePlayIcon(true); wrapper.classList.remove('paused'); });
-            nativeVideo.addEventListener('pause', () => { updatePlayIcon(false); wrapper.classList.add('paused'); });
-            nativeVideo.addEventListener('timeupdate', updateTimeDisplay);
-            nativeVideo.addEventListener('loadedmetadata', updateTimeDisplay);
+        /**
+         * Exibe uma mensagem de erro na tela inicial.
+         */
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            loadingMessage.style.display = 'none';
+        }
 
-            volumeSlider.oninput = (e) => setVolume(parseFloat(e.target.value));
+        // =================================================================
+        // # FUNÇÕES AUXILIARES DO PLAYER
+        // =================================================================
+
+        function formatTime(seconds) {
+            const date = new Date(null);
+            date.setSeconds(seconds);
+            return date.toISOString().substr(11, 8).replace(/^00:/, '');
+        }
+
+        function togglePlay() {
+            if (nativeVideo.paused || nativeVideo.ended) {
+                nativeVideo.play();
+            } else {
+                nativeVideo.pause();
+            }
+        }
+
+        function toggleMute() {
+            nativeVideo.muted = !nativeVideo.muted;
+        }
+        
+        function setVolume(vol) {
+             nativeVideo.volume = vol;
+             nativeVideo.muted = vol === 0;
+        }
+
+        function seekRelative(seconds) {
+            nativeVideo.currentTime = Math.max(0, Math.min(nativeVideo.duration, nativeVideo.currentTime + seconds));
+        }
+
+        function toggleFullscreen() {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else if (playerContainer.requestFullscreen) {
+                playerContainer.requestFullscreen();
+            }
+        }
+
+        function updatePlayButtonIcon() {
+            const icon = playButton.querySelector('i');
+            const largeIcon = playLarge.querySelector('i');
+            if (nativeVideo.paused) {
+                icon.textContent = 'play_arrow';
+                largeIcon.textContent = 'play_arrow';
+                playerContainer.classList.add('paused');
+            } else {
+                icon.textContent = 'pause';
+                largeIcon.textContent = 'pause';
+                playerContainer.classList.remove('paused');
+            }
+        }
+
+        function updateMuteButtonIcon() {
+            const icon = muteButton.querySelector('i');
+            if (nativeVideo.muted || nativeVideo.volume === 0) {
+                icon.textContent = 'volume_off';
+            } else if (nativeVideo.volume < 0.5) {
+                icon.textContent = 'volume_down';
+            } else {
+                icon.textContent = 'volume_up';
+            }
+        }
+
+        function updateTimeDisplay() {
+            currentTimeDisplay.textContent = formatTime(nativeVideo.currentTime);
+            if (!isFinite(nativeVideo.duration) || nativeVideo.duration === 0) {
+                 durationDisplay.textContent = '...';
+            } else {
+                 durationDisplay.textContent = formatTime(nativeVideo.duration);
+            }
+        }
+
+        function updateProgressBar() {
+            if (!isSeeking && isFinite(nativeVideo.duration) && nativeVideo.duration > 0) {
+                const progress = (nativeVideo.currentTime / nativeVideo.duration) * 100;
+                progressBarPlayed.style.width = `${progress}%`;
+            }
             
-            progressBar.addEventListener('click', (e) => {
-                const rect = progressBar.getBoundingClientRect();
-                const pos = (e.clientX - rect.left) / rect.width;
-                seekTo(pos * nativeVideo.duration);
+            // Atualizar o buffer de carregamento do torrent (não é o buffer nativo do vídeo)
+            if (currentTorrent) {
+                 const percentLoaded = currentTorrent.progress * 100;
+                 progressBarLoaded.style.width = `${percentLoaded}%`;
+
+                 // Atualizar as informações do torrent
+                 downloadSpeedDisplay.textContent = `↓ ${currentTorrent.downloadSpeed > 0 ? formatBytes(currentTorrent.downloadSpeed) + '/s' : '0.0 KB/s'}`;
+                 uploadSpeedDisplay.textContent = `↑ ${currentTorrent.uploadSpeed > 0 ? formatBytes(currentTorrent.uploadSpeed) + '/s' : '0.0 KB/s'}`;
+                 peersCountDisplay.textContent = `Pares: ${currentTorrent.numPeers}`;
+            }
+        }
+
+        // Função para formatar bytes em unidades legíveis
+        function formatBytes(bytes, decimals = 1) {
+            if (bytes === 0) return '0 Bytes';
+
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        // =================================================================
+        // # MANIPULADORES DE EVENTOS
+        // =================================================================
+
+        // Manipulador de clique para a barra de progresso
+        function handleProgressBarClick(e) {
+            const rect = progressBarContainer.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percentage = clickX / rect.width;
+            if (isFinite(nativeVideo.duration) && nativeVideo.duration > 0) {
+                nativeVideo.currentTime = nativeVideo.duration * percentage;
+            }
+        }
+        
+        // Manipulador de arrasto na barra de progresso
+        function handleProgressDrag(e) {
+            if (e.buttons !== 1) return; // Só funciona com botão esquerdo pressionado
+            isSeeking = true;
+            const rect = progressBarContainer.getBoundingClientRect();
+            let clickX = e.clientX - rect.left;
+            clickX = Math.max(0, Math.min(rect.width, clickX));
+            
+            const percentage = clickX / rect.width;
+            
+            progressBarPlayed.style.width = `${percentage * 100}%`;
+            
+            if (isFinite(nativeVideo.duration) && nativeVideo.duration > 0) {
+                const newTime = nativeVideo.duration * percentage;
+                // Atualiza o tempo de exibição durante o arraste
+                progressBarContainer.setAttribute('data-time-preview', formatTime(newTime));
+                nativeVideo.currentTime = newTime; // Aplica a busca imediatamente
+            }
+        }
+        
+        // Manipulador de mousemove para o tooltip de tempo
+        function handleProgressMouseMove(e) {
+            const rect = progressBarContainer.getBoundingClientRect();
+            let hoverX = e.clientX - rect.left;
+            hoverX = Math.max(0, Math.min(rect.width, hoverX));
+            
+            const percentage = hoverX / rect.width;
+            
+            if (isFinite(nativeVideo.duration) && nativeVideo.duration > 0) {
+                 const previewTime = nativeVideo.duration * percentage;
+                 progressBarContainer.setAttribute('data-time-preview', formatTime(previewTime));
+                 progressBarContainer.style.setProperty('--preview-x', `${hoverX}px`);
+                 
+                 // Posiciona o tooltip
+                 const tooltip = document.querySelector('#progress-bar-container::before');
+                 // Nota: A estilização do tooltip via JS direto no ::before é complexa,
+                 // mas podemos simular o posicionamento com CSS ou um elemento real.
+                 // Manteremos a lógica de 'data-time-preview' para o CSS.
+            }
+        }
+        
+        // Finaliza o arraste
+        function handleProgressMouseUp() {
+            isSeeking = false;
+        }
+
+
+        /**
+         * Configura todos os ouvintes de evento para o player.
+         */
+        function setupPlayerEvents() {
+            // Eventos do Vídeo
+            nativeVideo.addEventListener('play', updatePlayButtonIcon);
+            nativeVideo.addEventListener('pause', updatePlayButtonIcon);
+            nativeVideo.addEventListener('volumechange', updateMuteButtonIcon);
+            nativeVideo.addEventListener('timeupdate', () => {
+                updateTimeDisplay();
+                updateProgressBar();
             });
+            nativeVideo.addEventListener('loadedmetadata', updateTimeDisplay);
+            nativeVideo.addEventListener('dblclick', toggleFullscreen);
+            nativeVideo.addEventListener('click', togglePlay);
+
+
+            // Eventos dos Controles
+            playButton.addEventListener('click', togglePlay);
+            playLarge.addEventListener('click', togglePlay);
+            muteButton.addEventListener('click', toggleMute);
+            fullscreenButton.addEventListener('click', toggleFullscreen);
+
+            // Controle de Volume
+            volumeSlider.addEventListener('input', (e) => setVolume(parseFloat(e.target.value)));
             
+            // Controle de Velocidade
+            rateControl.addEventListener('change', (e) => {
+                 nativeVideo.playbackRate = parseFloat(e.target.value);
+            });
+
+            // Barra de Progresso - Clique para buscar
+            progressBarContainer.addEventListener('click', handleProgressBarClick);
+            
+            // Barra de Progresso - Arrastar para buscar
+            progressBarContainer.addEventListener('mousedown', () => {
+                document.addEventListener('mousemove', handleProgressDrag);
+                document.addEventListener('mouseup', handleProgressMouseUp, { once: true });
+            });
+            progressBarContainer.addEventListener('mousemove', handleProgressMouseMove);
+
+            // Eventos de Fullscreen
+            document.addEventListener('fullscreenchange', () => {
+                playerContainer.classList.toggle('fullscreen', document.fullscreenElement === playerContainer);
+            });
+
+            // Inicialização de UI
+            updatePlayButtonIcon();
+            updateMuteButtonIcon();
+            updateTimeDisplay();
+
             // Atalhos de teclado
             document.addEventListener('keydown', (e) => {
                 const isInputFocused = document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA';
                 if (isInputFocused) return;
-                
-                switch (e.key.toLowerCase()) {
+                switch (e.key) {
                     case ' ': case 'k': e.preventDefault(); togglePlay(); break;
                     case 'j': e.preventDefault(); seekRelative(-10); break;
                     case 'l': e.preventDefault(); seekRelative(10); break;
                     case 'm': e.preventDefault(); toggleMute(); break;
                     case 'f': e.preventDefault(); toggleFullscreen(); break;
-                    case 'arrowup': e.preventDefault(); const newVolUp = Math.min(1, nativeVideo.volume + 0.05); setVolume(newVolUp); break;
-                    case 'arrowdown': e.preventDefault(); const newVolDown = Math.max(0, nativeVideo.volume - 0.05); setVolume(newVolDown); break;
-                    case 'arrowleft': e.preventDefault(); seekRelative(-5); break;
-                    case 'arrowright': e.preventDefault(); seekRelative(5); break;
-                    default: if (e.key >= '0' && e.key <= '9') { e.preventDefault(); const time = (nativeVideo.duration / 10) * parseInt(e.key); seekTo(time); } break;
+                    case 'ArrowUp': e.preventDefault(); const newVolUp = Math.min(1, nativeVideo.volume + 0.05); setVolume(newVolUp); volumeSlider.value = newVolUp; break;
+                    case 'ArrowDown': e.preventDefault(); const newVolDown = Math.max(0, nativeVideo.volume - 0.05); setVolume(newVolDown); volumeSlider.value = newVolDown; break;
+                    case 'ArrowLeft': e.preventDefault(); seekRelative(-5); break;
+                    case 'ArrowRight': e.preventDefault(); seekRelative(5); break;
+                    default: if (e.key >= '0' && e.key <= '9') { e.preventDefault(); const time = (nativeVideo.duration / 10) * parseInt(e.key); nativeVideo.currentTime = time; } break;
                 }
             });
         }
         
-        window.togglePlay = () => nativeVideo.paused ? nativeVideo.play() : nativeVideo.pause();
-        
-        window.seekTo = (time) => nativeVideo.currentTime = time;
-        window.seekRelative = (val) => nativeVideo.currentTime += val;
-        
-        window.setVolume = (vol) => {
-            nativeVideo.volume = vol;
-            volumeSlider.value = vol;
-            nativeVideo.muted = (vol === 0);
-            muteBtn.innerHTML = nativeVideo.muted ? '<span class="material-icons">volume_off</span>' : '<span class="material-icons">volume_up</span>';
+        // =================================================================
+        // # INICIALIZAÇÃO
+        // =================================================================
+
+        window.onload = function() {
+            console.log('AniStream Player carregado.');
+            // O player começa na tela inicial, esperando um link para carregar.
+            resetPlayerToHome();
         };
 
-        window.toggleMute = () => {
-            const newMuteState = !nativeVideo.muted;
-            if (newMuteState) {
-                // Mudo
-                nativeVideo.muted = true;
-                muteBtn.innerHTML = '<span class="material-icons">volume_off</span>';
-                volumeSlider.value = 0;
-            } else {
-                // Desmudo (retorna ao último volume, ou 1 se estiver zerado)
-                nativeVideo.muted = false;
-                const currentVol = parseFloat(volumeSlider.value);
-                if (currentVol === 0) {
-                    volumeSlider.value = 1;
-                    nativeVideo.volume = 1;
-                }
-                muteBtn.innerHTML = '<span class="material-icons">volume_up</span>';
+        // Adiciona um listener para a tecla ENTER no input
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('search-form').dispatchEvent(new Event('submit'));
             }
-        };
-
-        window.toggleFullscreen = () => {
-            if(!document.fullscreenElement) document.getElementById('videoContainer').requestFullscreen();
-            else document.exitFullscreen();
-        };
-
-        function updatePlayIcon(isPlaying) {
-            playBtn.innerHTML = isPlaying ? '<span class="material-icons">pause</span>' : '<span class="material-icons">play_arrow</span>';
-        }
-
-        function showAlert(title, msg) {
-            document.getElementById('modalTitle').innerText = title;
-            document.getElementById('modalMsg').innerText = msg;
-            document.getElementById('modal').style.display = 'flex';
-        }
-
-        // --- FUNÇÕES DE INPUT ---
-
-        window.loadFromInput = () => {
-            const val = document.getElementById('directLink').value.trim();
-            if(!val) return;
-            
-            if(val.startsWith('magnet:')) loadMedia(val, "Stream Magnet", 'magnet');
-            else if(val.includes('youtube.com') || val.includes('youtu.be')) {
-                const id = val.match(/(?:v=|\/)([\w-]{11})/)?.[1];
-                if(id) loadMedia(id, "YouTube Video", 'youtube');
-            } else {
-                loadMedia(val, "Stream Direto", 'url');
-            }
-        }
-
-        window.handleFileSelect = (files) => {
-            if(!files.length) return;
-            const file = files[0];
-            if(file.name.endsWith('.torrent')) {
-                loadMedia(file, file.name.replace('.torrent',''), 'magnet'); 
-            } else if (file.type.startsWith('video/')) {
-                loadMedia(URL.createObjectURL(file), file.name, 'url');
-            } else {
-                showAlert("Formato Inválido", "Selecione um arquivo .torrent ou de vídeo.");
-            }
-        }
+        });
         
-        // --- FUNÇÕES DE CATALOGO/RENDERIZAÇÃO ---
-        
-        function renderCatalog(items, targetId, title, clickHandler) {
-            const grid = document.getElementById(targetId);
-            grid.innerHTML = '';
-            superflixTitleEl.innerText = title;
-
-            if (items.length === 0) {
-                superflixTitleEl.innerText = 'Nenhum resultado encontrado. Tente outra busca ou carregue os Populares.';
-                return;
-            }
-
-            items.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'catalog-card';
-                card.innerHTML = `
-                    <img src="${item.img || 'https://placehold.co/320x480/181818/b3b3b3?text=N/A'}" class="card-img" alt="${item.title}" onerror="this.onerror=null;this.src='https://placehold.co/320x480/181818/b3b3b3?text=N/A'">
-                    <div class="card-overlay"><div class="card-title">${item.title}</div></div>
-                `;
-                card.onclick = () => {
-                    if (clickHandler) {
-                        clickHandler(item);
-                    } else {
-                        showAlert("Erro", "Nenhum manipulador de clique definido para este item.");
-                    }
-                };
-                grid.appendChild(card);
-            });
-        }
-
-        // --- FUNÇÕES DE ADDON/API ---
-        
-        function checkProxyUrlAndEnableButton() {
-            // Verifica se a URL salva é um endereço HTTP válido (não apenas vazio)
-            if (addonBaseUrl && addonBaseUrl.startsWith('http')) {
-                loadSuperflixBtn.disabled = false;
-                loadSuperflixBtn.innerHTML = '<span class="material-icons">movie_filter</span> Carregar Animes Populares (Superflix API)';
-            } else {
-                loadSuperflixBtn.disabled = true;
-                loadSuperflixBtn.innerHTML = '<span class="material-icons">lock</span> Configure o Proxy para carregar Animes Populares';
-                superflixTitleEl.innerText = 'Catálogo Superflix (Configure o Proxy)';
-            }
-        }
-
-
-        window.saveAddonUrl = () => {
-            const url = document.getElementById('addonUrl').value.trim().replace(/\/$/, '');
-            if(!url.startsWith('http')) return showAlert("Erro", "URL inválida. Use o formato https://...");
-            
-            localStorage.setItem('addonUrl', url);
-            addonBaseUrl = url;
-            checkProxyUrlAndEnableButton(); // NOVO: Atualiza o botão após salvar
-            // Tenta carregar a lista popular imediatamente após salvar
-            if (addonBaseUrl) loadSuperflixCatalog(); 
-            showAlert("Sucesso", "URL do Proxy Vercel salva! Agora você pode carregar o catálogo na aba 'Início'.");
-        };
-
-        // Função para carregar a lista POPULAR
-        window.loadSuperflixCatalog = async () => {
-            if(!addonBaseUrl || !addonBaseUrl.startsWith('http')) {
-                return showAlert("Configuração Necessária", "A URL do Proxy Vercel não está configurada.");
-            }
-            
-            loadSuperflixBtn.disabled = true;
-            loadSuperflixBtn.innerHTML = '<span class="spinner" style="width: 20px; height: 20px; margin: 0;"></span> Carregando Populares...';
-            
-            statusEl.style.display = 'flex';
-            statusText.innerText = "Buscando Animes Populares...";
-            statusDetail.innerText = `Consultando Proxy em: ${addonBaseUrl}/superflix`;
-            
-            await fetchCatalogData(`${addonBaseUrl}/superflix`, 'Catálogo Superflix (Animes Populares)');
-            
-            // Re-habilita o botão para permitir recarregamento manual, a menos que haja pesquisa ativa
-            if (document.getElementById('superflixSearchInput').value.trim() === '') {
-                checkProxyUrlAndEnableButton();
-            } else {
-                loadSuperflixBtn.innerHTML = '<span class="material-icons">movie_filter</span> Carregar Animes Populares (Superflix API)';
-            }
-
-        };
-        
-        // Função para PESQUISAR
-        window.searchSuperflixCatalog = async () => {
-            const query = document.getElementById('superflixSearchInput').value.trim();
-            if (!query) {
-                // Se o campo de pesquisa estiver vazio, carrega a lista popular
-                return loadSuperflixCatalog();
-            }
-            
-            if(!addonBaseUrl || !addonBaseUrl.startsWith('http')) {
-                return showAlert("Configuração Necessária", "A URL do Proxy Vercel não está configurada.");
-            }
-            
-            loadSuperflixBtn.disabled = true; // Desabilita o botão popular durante a pesquisa
-            loadSuperflixBtn.innerHTML = '<span class="material-icons">search</span> Buscando...';
-            
-            statusEl.style.display = 'flex';
-            statusText.innerText = `Pesquisando por: ${query}`;
-            statusDetail.innerText = `Consultando Proxy em: ${addonBaseUrl}/search/${encodeURIComponent(query)}`;
-            
-            // O endpoint do proxy para pesquisa deve ser: /search/<query>
-            await fetchCatalogData(`${addonBaseUrl}/search/${encodeURIComponent(query)}`, `Resultados da Pesquisa por: "${query}"`);
-            
-            // Restaura o botão popular após a pesquisa
-            checkProxyUrlAndEnableButton();
-        }
-
-
-        // Função centralizada para buscar e renderizar o catálogo
-        async function fetchCatalogData(url, title) {
-            try {
-                const response = await fetch(url);
-                
-                if(!response.ok) {
-                    throw new Error(`Erro HTTP ${response.status} ao conectar ao Proxy.`);
-                }
-                
-                const data = await response.json();
-                
-                const items = Array.isArray(data) ? data : (data.results || data.list || []);
-                
-                // Mapeia os dados da API Superflix para o formato do nosso cartão
-                const mappedItems = items
-                    .filter(item => item.poster_path || item.image) // Filtra itens sem imagem
-                    .map(item => ({
-                        title: item.title || item.name || "Sem Título",
-                        img: item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : (item.image || ''),
-                        id: item.id // Guarda o ID do TMDB
-                    }));
-
-                // Renderiza o catálogo
-                renderCatalog(mappedItems, 'superflixGrid', title, (item) => searchStreams(item.id, item.title));
-
-                statusEl.style.display = 'none';
-                window.scrollTo({top:0, behavior:'smooth'});
-
-            } catch (e) {
-                console.error("Erro no carregamento do catálogo:", e);
-                statusEl.style.display = 'none';
-                
-                // Limpa o grid em caso de erro
-                document.getElementById('superflixGrid').innerHTML = '';
-
-                showAlert("Erro API", "Falha ao carregar catálogo. Verifique se a URL do Proxy Vercel está correta e funcionando na aba 'Configuração Proxy'. Detalhes: " + e.message);
-            }
-        }
-
-
-        // Função para buscar streams (Magnets/URLs) usando o ID do TMDB
-        async function searchStreams(id, title) {
-            if(!addonBaseUrl || !addonBaseUrl.startsWith('http')) {
-                return showAlert("Configuração Necessária", "A URL do Proxy Vercel não está configurada ou é inválida. Por favor, vá para a aba 'Configuração Proxy'.");
-            }
-
-            statusEl.style.display = 'flex';
-            statusText.innerText = `Buscando streams para: ${title}`;
-            statusDetail.innerText = "Consultando Addon Stremio via Proxy...";
-            
-            const type = 'movie'; // Assumindo 'movie' para o TMDB ID no addon Stremio
-            // O endpoint do proxy para streams deve ser: /streams/<type>/<id>.json
-            const url = `${addonBaseUrl}/streams/${type}/${id}.json`; 
-            
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                statusEl.style.display = 'none';
-                
-                if(!data.streams || !data.streams.length) return showAlert("Info", `Nenhum stream encontrado para ${title}.`);
-                
-                // Prioriza links diretos (http) sobre infoHash (magnet)
-                const stream = data.streams.find(s => s.url) || data.streams.find(s => s.infoHash);
-                
-                if (stream) {
-                    const link = stream.url || stream.infoHash;
-                    const streamType = link.startsWith('http') ? 'url' : 'magnet';
-                    loadMedia(link, title, streamType);
-                    window.scrollTo({top:0, behavior:'smooth'});
-                } else {
-                    showAlert("Info", "Nenhum link de stream válido encontrado.");
-                }
-
-            } catch(e) {
-                statusEl.style.display = 'none';
-                showAlert("Erro Stream", "Falha ao buscar streams no addon: " + e.message);
-            }
-        }
     </script>
 </body>
 </html>

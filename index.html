@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OakCine | Playlist Player</title>
+    <title>OakCine | AI Streamer</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -25,7 +25,7 @@
                         'glass-bg': 'rgba(30, 41, 59, 0.7)',
                     },
                     animation: {
-                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     }
                 }
             }
@@ -48,194 +48,172 @@
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-        /* Glassmorphism */
         .glass-panel {
-            background: rgba(30, 41, 59, 0.4);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
         }
 
-        /* Playlist Item Active State */
         .playlist-item.active {
-            background: rgba(6, 182, 212, 0.15);
+            background: linear-gradient(90deg, rgba(6, 182, 212, 0.2) 0%, transparent 100%);
             border-left: 3px solid #06b6d4;
         }
-        .playlist-item:hover:not(.active) {
-            background: rgba(255,255,255,0.05);
-        }
+        .playlist-item:hover:not(.active) { background: rgba(255,255,255,0.05); }
 
-        /* Inputs e Sliders */
         .neon-input {
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(15, 23, 42, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
         }
-        .neon-input:focus { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.3); outline: none; }
+        .neon-input:focus { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); outline: none; }
 
+        /* Slider */
         input[type=range] { -webkit-appearance: none; background: transparent; }
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #fff; margin-top: -5px;
-            cursor: pointer; box-shadow: 0 0 10px rgba(255, 255, 255, 0.8); transition: transform 0.1s;
+            -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #fff; margin-top: -4px;
+            cursor: pointer; box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
         }
-        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255, 255, 255, 0.2); border-radius: 2px; }
-
-        /* Animations */
-        @keyframes ai-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(6, 182, 212, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
-        }
-        .ai-glow:focus-within { animation: ai-pulse 2s infinite; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255, 255, 255, 0.2); border-radius: 2px; }
     </style>
 </head>
 <body class="flex flex-col items-center min-h-screen pb-20">
 
     <header class="w-full max-w-7xl p-6 flex justify-between items-center">
         <div class="flex items-center gap-3 select-none cursor-pointer" onclick="location.reload()">
-            <div class="relative">
-                <span class="material-icons text-5xl text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">movie_filter</span>
-                <div class="absolute inset-0 bg-neon-purple blur-2xl opacity-20"></div>
-            </div>
+            <span class="material-icons text-4xl text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">movie_filter</span>
             <div>
-                <h1 class="text-4xl font-black tracking-tighter text-white drop-shadow-lg">
-                    Oak<span class="text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">Cine</span>
-                </h1>
-                <p class="text-[10px] text-gray-400 font-bold tracking-[0.2em] uppercase ml-1">Player & Playlist</p>
+                <h1 class="text-3xl font-black tracking-tighter text-white">Oak<span class="text-neon-cyan">Cine</span></h1>
             </div>
         </div>
     </header>
 
-    <section class="w-full max-w-3xl px-4 mb-8 relative z-50">
-        <div class="relative group ai-glow rounded-xl">
-            <div class="absolute -inset-0.5 bg-gradient-to-r from-neon-purple via-cyan-500 to-neon-cyan rounded-xl blur opacity-30 group-hover:opacity-75 transition duration-500"></div>
-            <div class="relative flex items-center bg-[#0f172a] rounded-xl border border-gray-700/50 p-1 shadow-2xl">
-                <div class="pl-4 pr-2 flex items-center justify-center">
-                    <span class="material-icons text-transparent bg-clip-text bg-gradient-to-br from-neon-purple to-neon-cyan text-2xl animate-pulse-slow">auto_awesome</span>
-                </div>
-                <input type="text" id="aiSearchInput" class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-2 py-3 outline-none text-lg font-light" placeholder="Buscar (Ex: Interestelar 4K)..." autocomplete="off">
-                <button onclick="performSmartSearch()" class="mr-1 px-6 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition flex items-center gap-2 border border-gray-700">
-                    <span class="hidden md:inline text-sm font-bold">BUSCAR</span>
-                    <span class="material-icons text-sm">search</span>
-                </button>
+    <section class="w-full max-w-4xl px-4 mb-6 relative z-50">
+        <div class="glass-panel rounded-xl p-1 flex flex-col md:flex-row gap-2 items-center shadow-2xl relative overflow-hidden">
+            <div class="relative w-full md:w-auto">
+                <select id="searchMode" class="w-full md:w-48 bg-[#0f172a] text-gray-300 text-xs font-bold uppercase tracking-wide py-3 px-4 rounded-lg border border-gray-700 outline-none appearance-none cursor-pointer hover:text-white transition">
+                    <option value="torrent">🌊 Torrent (Best)</option>
+                    <option value="direct">📂 Index Of (Direct)</option>
+                    <option value="stream">📺 Web Stream</option>
+                </select>
+                <span class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">expand_more</span>
             </div>
+
+            <div class="flex-1 relative w-full flex items-center">
+                <span class="material-icons text-neon-purple text-xl absolute left-3">auto_awesome</span>
+                <input type="text" id="aiSearchInput" 
+                       class="w-full bg-[#0f172a]/50 text-white placeholder-gray-500 px-10 py-3 rounded-lg outline-none border border-transparent focus:border-neon-purple/50 transition-colors"
+                       placeholder="O que vamos assistir hoje? (Ex: Oppenheimer 4K)" autocomplete="off">
+            </div>
+
+            <button onclick="performSmartSearch()" class="w-full md:w-auto px-6 py-3 rounded-lg bg-gradient-to-r from-neon-purple to-indigo-600 hover:from-indigo-500 hover:to-neon-purple text-white font-bold text-sm tracking-wider transition-all shadow-lg flex items-center justify-center gap-2">
+                BUSCAR
+            </button>
+
+            <div id="aiLoadingBar" class="absolute bottom-0 left-0 h-1 bg-neon-cyan transition-all duration-[2000ms] ease-out w-0"></div>
+        </div>
+        
+        <div id="aiFeedback" class="h-6 mt-2 text-center text-xs font-mono text-neon-cyan hidden">
+            <span class="animate-pulse">Inicializando busca neural...</span>
         </div>
     </section>
 
-    <div class="w-full max-w-7xl px-4 flex flex-col lg:flex-row gap-6">
+    <div class="w-full max-w-7xl px-4 flex flex-col lg:flex-row gap-6 items-start">
         
-        <div class="flex-1 min-w-0">
-            <div id="playerContainer" class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800 group transition-all duration-500 hover:shadow-neon-purple/20">
-                <video id="nativeVideo" class="w-full h-full object-contain"></video>
+        <div class="flex-1 w-full min-w-0 flex flex-col gap-4">
+            
+            <div id="playerContainer" class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800 group">
+                <video id="nativeVideo" class="w-full h-full object-contain bg-black"></video>
                 
-                <div id="videoPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 backdrop-blur-sm z-20 transition-opacity duration-500">
-                    <div class="p-6 rounded-full bg-white/5 mb-4 animate-pulse-slow">
-                        <span class="material-icons text-6xl text-gray-600">smart_display</span>
+                <div id="videoPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 z-20">
+                    <div class="p-5 rounded-full bg-white/5 mb-4 animate-pulse">
+                        <span class="material-icons text-5xl text-gray-600">folder_open</span>
                     </div>
-                    <h2 class="text-2xl font-bold text-gray-300">Aguardando Mídia</h2>
-                    <p class="text-gray-500 text-sm mt-2">Arraste uma pasta inteira ou um arquivo</p>
+                    <h2 class="text-xl font-bold text-gray-300">Aguardando Mídia</h2>
+                    <p class="text-gray-500 text-xs mt-2">Arraste Arquivos ou Pastas para começar</p>
                 </div>
 
-                <div id="loadingOverlay" class="absolute inset-0 flex-col items-center justify-center bg-black/90 z-30 hidden">
-                    <div class="w-16 h-16 border-4 border-neon-purple border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
-                    <p id="loadingText" class="text-white font-medium tracking-wide animate-pulse">Carregando...</p>
+                <div id="loadingOverlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-30 hidden">
+                    <div class="w-12 h-12 border-4 border-neon-cyan border-t-transparent rounded-full animate-spin mb-3"></div>
+                    <p id="loadingText" class="text-neon-cyan text-xs font-bold tracking-widest animate-pulse">CARREGANDO</p>
                 </div>
 
-                <div id="centerPlayBtn" class="absolute inset-0 flex items-center justify-center z-10 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300" onclick="togglePlay()">
-                    <div class="bg-black/40 p-4 rounded-full backdrop-blur-sm hover:scale-110 transition-transform duration-200">
-                        <span class="material-icons text-6xl text-white drop-shadow-md">play_arrow</span>
+                <div id="centerPlayBtn" class="absolute inset-0 flex items-center justify-center z-10 cursor-pointer bg-black/20 hover:bg-black/10 transition-colors" onclick="togglePlay()" style="display: none;">
+                    <div class="bg-black/60 p-4 rounded-full backdrop-blur-sm hover:scale-110 transition-transform">
+                        <span class="material-icons text-6xl text-white">play_arrow</span>
                     </div>
                 </div>
 
-                <div class="absolute bottom-0 left-0 right-0 p-4 lg:p-6 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-40" id="controlsBar">
-                    <div class="w-full mb-4 group/progress cursor-pointer relative h-2" id="progressContainer">
-                        <div class="absolute top-0 left-0 right-0 bottom-0 bg-gray-700/50 rounded-full"></div>
-                        <div id="bufferBar" class="absolute top-0 left-0 h-full bg-white/20 rounded-full w-0 transition-all duration-200"></div>
-                        <div id="playBar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-neon-purple to-neon-cyan rounded-full w-0 relative">
-                            <div class="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)] scale-0 group-hover/progress:scale-100 transition-transform"></div>
+                <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-40">
+                    <div class="w-full mb-3 group/progress cursor-pointer relative h-1 hover:h-2 transition-all" id="progressContainer">
+                        <div class="absolute inset-0 bg-gray-700/50 rounded-full"></div>
+                        <div id="playBar" class="absolute top-0 left-0 h-full bg-neon-cyan rounded-full w-0 relative">
+                            <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full scale-0 group-hover/progress:scale-100 transition-transform shadow-lg"></div>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between select-none">
-                        <div class="flex items-center gap-2 lg:gap-4">
-                            <button id="prevBtn" class="text-gray-400 hover:text-white hover:scale-110 transition" title="Anterior">
-                                <span class="material-icons">skip_previous</span>
-                            </button>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <button id="prevBtn" class="text-gray-400 hover:text-white transition"><span class="material-icons">skip_previous</span></button>
+                            <button id="playBtn" class="text-white hover:scale-110 transition"><span class="material-icons text-3xl">play_arrow</span></button>
+                            <button id="nextBtn" class="text-gray-400 hover:text-white transition"><span class="material-icons">skip_next</span></button>
                             
-                            <button id="playBtn" class="text-gray-200 hover:text-white hover:scale-110 transition-transform">
-                                <span class="material-icons text-3xl">play_arrow</span>
-                            </button>
-                            
-                            <button id="nextBtn" class="text-gray-400 hover:text-white hover:scale-110 transition" title="Próximo">
-                                <span class="material-icons">skip_next</span>
-                            </button>
-
-                            <div class="flex items-center gap-2 group/vol ml-2">
-                                <button id="muteBtn" class="text-gray-300 hover:text-white transition"><span class="material-icons">volume_up</span></button>
-                                <input type="range" id="volSlider" min="0" max="1" step="0.05" value="1" class="w-0 group-hover/vol:w-24 transition-all duration-300 overflow-hidden ml-1">
+                            <div class="flex items-center gap-2 ml-2 group/vol">
+                                <button id="muteBtn" class="text-gray-300 hover:text-white"><span class="material-icons text-sm">volume_up</span></button>
+                                <input type="range" id="volSlider" min="0" max="1" step="0.05" value="1" class="w-0 group-hover/vol:w-20 transition-all overflow-hidden">
                             </div>
-                            <span id="timeDisplay" class="text-xs font-mono text-gray-300 ml-2 tracking-wider">00:00 / 00:00</span>
+                            <span id="timeDisplay" class="text-[10px] font-mono text-gray-400">0:00 / 0:00</span>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <button id="fsBtn" class="text-gray-300 hover:text-white hover:scale-110 transition-transform"><span class="material-icons text-3xl">fullscreen</span></button>
+                        <button id="fsBtn" class="text-gray-300 hover:text-white"><span class="material-icons">fullscreen</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="glass-panel p-4 rounded-xl">
+                    <div class="flex items-center gap-2 mb-2 text-neon-purple font-bold text-sm">
+                        <span class="material-icons text-sm">bolt</span> Magnet Link
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="magnetInput" placeholder="magnet:?xt=..." class="neon-input w-full rounded px-3 py-2 text-xs text-white">
+                        <button id="loadMagnetBtn" class="bg-neon-purple hover:bg-purple-600 text-white px-3 rounded transition"><span class="material-icons text-sm">play_arrow</span></button>
+                    </div>
+                </div>
+
+                <div id="dropZone" class="glass-panel p-4 rounded-xl border border-dashed border-gray-600 hover:border-neon-cyan cursor-pointer transition group relative">
+                    <input type="file" id="fileInput" class="hidden" accept="video/*,.torrent" multiple>
+                    <input type="file" id="folderInput" class="hidden" webkitdirectory directory multiple>
+                    
+                    <div class="text-center z-10 relative">
+                        <span class="material-icons text-gray-400 group-hover:text-white transition mb-1">drive_folder_upload</span>
+                        <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Upload Local</p>
+                        <div class="flex justify-center gap-2 mt-2">
+                            <span onclick="event.stopPropagation(); document.getElementById('fileInput').click()" class="text-[10px] bg-white/10 px-2 py-1 rounded hover:bg-white/20">Arquivos</span>
+                            <span onclick="event.stopPropagation(); document.getElementById('folderInput').click()" class="text-[10px] bg-neon-cyan/20 text-neon-cyan px-2 py-1 rounded hover:bg-neon-cyan/30">Pasta</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-6">
-                <div id="mediaInfo" class="glass-panel p-5 rounded-2xl border border-gray-700/50 hidden mb-6">
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan mb-1">Reproduzindo</h2>
-                            <p id="infoFilename" class="text-white font-medium truncate max-w-xl">Nome do Arquivo...</p>
-                        </div>
-                    </div>
-                    <div id="torrentStatsGrid" class="grid grid-cols-3 gap-4 mt-4 border-t border-gray-700/50 pt-4 hidden">
-                        <div><p class="text-xs text-gray-500 font-bold uppercase">Peers</p><p id="infoPeers" class="text-lg font-mono text-neon-cyan">0</p></div>
-                        <div><p class="text-xs text-gray-500 font-bold uppercase">Velocidade</p><p id="infoDown" class="text-lg font-mono text-green-400">0 KB/s</p></div>
-                        <div><p class="text-xs text-gray-500 font-bold uppercase">Progresso</p><p id="infoProgress" class="text-lg font-mono text-neon-purple">0%</p></div>
-                    </div>
+            <div id="mediaInfo" class="hidden bg-black/20 rounded-lg p-3 border border-white/5">
+                <h3 id="infoFilename" class="text-sm text-white font-medium truncate">Nome do arquivo...</h3>
+                <div id="torrentStats" class="hidden flex gap-4 mt-1 text-[10px] font-mono text-gray-400">
+                    <span class="text-green-400">DL: <span id="infoDown">0 KB/s</span></span>
+                    <span class="text-blue-400">Peers: <span id="infoPeers">0</span></span>
                 </div>
-
-                <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="glass-panel p-5 rounded-xl group">
-                        <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2"><span class="material-icons text-neon-purple">bolt</span> Magnet Link</h3>
-                        <div class="flex flex-col gap-2">
-                            <input type="text" id="magnetInput" placeholder="magnet:?xt=..." class="neon-input w-full rounded-lg px-3 py-2 text-sm text-gray-200">
-                            <button id="loadMagnetBtn" class="neon-btn-primary w-full py-2 rounded-lg font-bold text-white text-sm">Tocar Magnet</button>
-                        </div>
-                    </div>
-
-                    <div id="dropZone" class="glass-panel p-5 rounded-xl relative overflow-hidden cursor-pointer group border-2 border-dashed border-gray-700 hover:border-neon-cyan transition-colors">
-                        <input type="file" id="fileInput" class="hidden" accept="video/*,.torrent">
-                        <input type="file" id="folderInput" class="hidden" webkitdirectory directory multiple>
-                        
-                        <div class="h-full flex flex-col items-center justify-center text-center py-1 z-10 relative">
-                            <span class="material-icons text-3xl text-neon-cyan mb-2">folder_open</span>
-                            <h3 class="text-sm font-bold text-white">Carregar Mídia</h3>
-                            <p class="text-xs text-gray-400 mt-1">Suporta Pastas inteiras (Séries/Playlists)</p>
-                            
-                            <div class="flex gap-2 mt-3 w-full px-4">
-                                <button onclick="event.stopPropagation(); document.getElementById('fileInput').click()" class="flex-1 bg-white/10 hover:bg-white/20 py-1 rounded text-xs text-white transition border border-white/10">Arquivo</button>
-                                <button onclick="event.stopPropagation(); document.getElementById('folderInput').click()" class="flex-1 bg-neon-cyan/20 hover:bg-neon-cyan/30 py-1 rounded text-xs text-neon-cyan transition border border-neon-cyan/30">Pasta</button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
             </div>
         </div>
 
-        <div id="playlistPanel" class="w-full lg:w-80 hidden flex-col gap-4 animate-float" style="animation-delay: 0.2s;">
-            <div class="glass-panel rounded-2xl flex flex-col h-[600px] sticky top-6">
-                <div class="p-4 border-b border-gray-700/50 flex justify-between items-center bg-black/20 rounded-t-2xl">
-                    <h3 class="text-white font-bold flex items-center gap-2">
-                        <span class="material-icons text-neon-cyan">queue_music</span> Playlist
-                    </h3>
-                    <span id="playlistCount" class="text-xs bg-neon-cyan/20 text-neon-cyan px-2 py-0.5 rounded-full font-mono">0 itens</span>
+        <div id="playlistPanel" class="w-full lg:w-80 hidden flex-col gap-2 animate-float">
+            <div class="glass-panel rounded-xl flex flex-col h-[500px] lg:h-[600px] sticky top-4">
+                <div class="p-3 border-b border-white/5 bg-black/20 rounded-t-xl flex justify-between items-center">
+                    <span class="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                        <span class="material-icons text-sm text-neon-cyan">queue_music</span> Playlist
+                    </span>
+                    <span id="playlistCount" class="text-[10px] text-gray-400 font-mono">0</span>
                 </div>
                 
-                <div id="playlistContainer" class="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-gray-700">
+                <div id="playlistContainer" class="flex-1 overflow-y-auto p-2 space-y-1">
                     </div>
             </div>
         </div>
@@ -243,75 +221,118 @@
     </div>
 
     <script>
-        // =========================================================
-        // ESTADO GERAL
-        // =========================================================
+        // ===========================================
+        // CONFIGURAÇÃO
+        // ===========================================
         const client = new WebTorrent();
         let currentTorrent = null;
         let playlist = [];
         let currentPlaylistIndex = -1;
         let updateInterval = null;
 
-        // Elementos DOM
+        // DOM
         const video = document.getElementById('nativeVideo');
         const placeholder = document.getElementById('videoPlaceholder');
         const loadingOverlay = document.getElementById('loadingOverlay');
-        const mediaInfo = document.getElementById('mediaInfo');
-        
-        // Playlist DOM
-        const playlistPanel = document.getElementById('playlistPanel');
-        const playlistContainer = document.getElementById('playlistContainer');
-        
-        // Inputs
-        const fileInput = document.getElementById('fileInput');
-        const folderInput = document.getElementById('folderInput');
-        const dropZone = document.getElementById('dropZone');
+        const centerPlayBtn = document.getElementById('centerPlayBtn');
         
         // Controles
         const playBtn = document.getElementById('playBtn');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
+        const playBar = document.getElementById('playBar');
+        const progressContainer = document.getElementById('progressContainer');
+        
+        // ===========================================
+        // LÓGICA DE BUSCA IA (CORRIGIDA)
+        // ===========================================
+        const aiSearchInput = document.getElementById('aiSearchInput');
+        const searchMode = document.getElementById('searchMode');
+        const aiFeedback = document.getElementById('aiFeedback');
+        const aiLoadingBar = document.getElementById('aiLoadingBar');
 
-        // =========================================================
-        // LÓGICA DA PLAYLIST
-        // =========================================================
+        function performSmartSearch() {
+            const query = aiSearchInput.value.trim();
+            const mode = searchMode.value;
+            
+            if(!query) return alert("Digite algo para a IA buscar.");
 
-        // Função principal chamada ao carregar uma PASTA ou múltiplos arquivos
+            // 1. Efeito Visual de "Pensando"
+            aiFeedback.classList.remove('hidden');
+            aiLoadingBar.style.width = '100%';
+            
+            const messages = ["Analisando metadados...", "Filtrando fakes...", "Otimizando rota P2P..."];
+            let msgIdx = 0;
+            
+            const msgInterval = setInterval(() => {
+                aiFeedback.querySelector('span').innerText = messages[msgIdx];
+                msgIdx = (msgIdx + 1) % messages.length;
+            }, 400);
+
+            // 2. Construção da Query (Google Dorking)
+            setTimeout(() => {
+                clearInterval(msgInterval);
+                let finalQuery = "";
+                
+                switch(mode) {
+                    case 'direct':
+                        // Busca diretórios abertos (Apache/Nginx index)
+                        finalQuery = `intitle:"index of" "${query}" (mp4|mkv|avi) -html -htm -php -asp`;
+                        break;
+                    case 'torrent':
+                        // Busca focada em trackers confiáveis e arquivos de alta qualidade
+                        finalQuery = `"${query}" (1080p OR 2160p OR 4K) (BluRay OR WEB-DL) (ext:torrent OR magnet) -fake -virus`;
+                        break;
+                    case 'stream':
+                        // Busca genérica em sites de streaming
+                        finalQuery = `"${query}" "assistir online" (legendado OR dublado) -download`;
+                        break;
+                }
+
+                // Reset visual
+                aiFeedback.classList.add('hidden');
+                aiLoadingBar.style.width = '0';
+                
+                // Executa
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(finalQuery)}`, '_blank');
+            }, 1500);
+        }
+
+        aiSearchInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') performSmartSearch(); });
+
+
+        // ===========================================
+        // LÓGICA DA PLAYLIST (CORRIGIDA)
+        // ===========================================
         function handleFiles(files) {
-            // 1. Filtrar apenas vídeos
             const videoFiles = Array.from(files).filter(f => f.name.match(/\.(mp4|mkv|webm|ogg|mov|m4v|avi)$/i));
             
-            if (videoFiles.length === 0) return alert("Nenhum arquivo de vídeo compatível encontrado.");
+            if (videoFiles.length === 0) return alert("Nenhum vídeo encontrado.");
 
-            // 2. Ordenação Inteligente (Ex: Ep 1, Ep 2, Ep 10...)
-            playlist = videoFiles.sort((a, b) => 
-                a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
-            );
+            // Ordenação Natural (1, 2, 10 em vez de 1, 10, 2)
+            playlist = videoFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
             
-            // 3. Limpar player anterior e mostrar painel
-            resetPlayer();
-            playlistPanel.classList.remove('hidden');
-            playlistPanel.classList.add('flex');
-            document.getElementById('playlistCount').innerText = `${playlist.length} itens`;
-
-            // 4. Renderizar a lista visualmente
+            resetAll();
+            
+            // Mostrar Playlist
+            document.getElementById('playlistPanel').classList.remove('hidden');
+            document.getElementById('playlistPanel').classList.add('flex');
+            document.getElementById('playlistCount').innerText = playlist.length;
+            
             renderPlaylistUI();
-
-            // 5. PLAY IMEDIATO no primeiro item (Auto-Start)
+            
+            // AUTOPLAY IMEDIATO
             loadPlaylistItem(0);
         }
 
         function renderPlaylistUI() {
-            playlistContainer.innerHTML = playlist.map((file, index) => `
-                <div onclick="loadPlaylistItem(${index})" 
-                     id="plist-item-${index}"
-                     class="playlist-item p-3 rounded-lg cursor-pointer transition flex items-center gap-3 group ${index === currentPlaylistIndex ? 'active' : ''}">
-                    <div class="text-gray-500 group-hover:text-white text-xs font-mono w-5 text-center">${index + 1}</div>
+            const container = document.getElementById('playlistContainer');
+            container.innerHTML = playlist.map((file, index) => `
+                <div onclick="loadPlaylistItem(${index})" id="item-${index}" 
+                     class="playlist-item p-2 rounded mb-1 cursor-pointer flex items-center gap-2 group transition-all ${index === currentPlaylistIndex ? 'active' : ''}">
+                    <span class="text-[10px] font-mono w-4 text-center text-gray-500 group-hover:text-white">${index + 1}</span>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm text-gray-300 group-hover:text-white truncate font-medium ${index === currentPlaylistIndex ? 'text-neon-cyan' : ''}">${file.name}</p>
-                        <p class="text-[10px] text-gray-500 truncate">${formatBytes(file.size)}</p>
+                        <p class="text-xs text-gray-300 truncate group-hover:text-white font-medium">${file.name}</p>
                     </div>
-                    ${index === currentPlaylistIndex ? '<span class="material-icons text-neon-cyan text-sm animate-pulse">equalizer</span>' : ''}
+                    ${index === currentPlaylistIndex ? '<span class="material-icons text-[10px] text-neon-cyan animate-pulse">equalizer</span>' : ''}
                 </div>
             `).join('');
         }
@@ -320,20 +341,149 @@
             if (index < 0 || index >= playlist.length) return;
             
             currentPlaylistIndex = index;
-            const file = playlist[index];
+            renderPlaylistUI(); // Atualiza destaque visual
             
-            // Atualiza UI da playlist (Destaca o ativo)
-            renderPlaylistUI();
-            
-            // Rola a lista até o item ativo
-            const activeEl = document.getElementById(`plist-item-${index}`);
-            if(activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Scroll automático na lista
+            document.getElementById(`item-${index}`).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-            // Prepara o Vídeo
+            const file = playlist[index];
             const url = URL.createObjectURL(file);
             
-            // Configura o Player
-            video.src = url;
+            playVideoSource(url, file.name);
+        }
+
+        function playVideoSource(src, name) {
+            setLoading(true);
+            video.src = src;
             video.load();
             
-            setLoading(true, `Carregando: ${file.name}`);
+            document.getElementById('mediaInfo').classList.remove('hidden');
+            document.getElementById('infoFilename').innerText = name;
+            document.getElementById('torrentStats').classList.add('hidden');
+
+            video.oncanplay = () => {
+                setLoading(false);
+                placeholder.style.display = 'none';
+                centerPlayBtn.style.display = 'none';
+                video.play().catch(() => centerPlayBtn.style.display = 'flex');
+                video.oncanplay = null;
+            };
+        }
+
+        // ===========================================
+        // TORRENT & MAGNET
+        // ===========================================
+        function loadMagnet(uri) {
+            if(!uri) return;
+            resetAll();
+            setLoading(true);
+
+            client.add(uri, (torrent) => {
+                currentTorrent = torrent;
+                const file = torrent.files.find(f => f.name.match(/\.(mp4|mkv|webm|ogg)$/i));
+                
+                if(!file) { setLoading(false); return alert("Vídeo não encontrado no torrent."); }
+
+                file.renderTo(video, { autoplay: true }, (err) => {
+                    if(err) return;
+                    setLoading(false);
+                    placeholder.style.display = 'none';
+                    document.getElementById('mediaInfo').classList.remove('hidden');
+                    document.getElementById('infoFilename').innerText = file.name;
+                    document.getElementById('torrentStats').classList.remove('hidden');
+                    
+                    // Monitoramento
+                    updateInterval = setInterval(() => {
+                        document.getElementById('infoDown').innerText = (torrent.downloadSpeed / 1024 / 1024).toFixed(2) + ' MB/s';
+                        document.getElementById('infoPeers').innerText = torrent.numPeers;
+                    }, 1000);
+                });
+            });
+        }
+
+        document.getElementById('loadMagnetBtn').addEventListener('click', () => loadMagnet(document.getElementById('magnetInput').value));
+
+        // ===========================================
+        // CONTROLES & EVENTOS
+        // ===========================================
+        function resetAll() {
+            if(currentTorrent) { currentTorrent.destroy(); currentTorrent = null; }
+            if(updateInterval) clearInterval(updateInterval);
+            video.pause();
+            video.src = '';
+            playlist = [];
+            document.getElementById('playlistPanel').classList.remove('flex');
+            document.getElementById('playlistPanel').classList.add('hidden');
+            placeholder.style.display = 'flex';
+        }
+
+        function setLoading(state) {
+            loadingOverlay.classList.toggle('hidden', !state);
+            loadingOverlay.classList.toggle('flex', state);
+        }
+
+        function togglePlay() {
+            if(video.paused) {
+                video.play();
+                playBtn.innerHTML = '<span class="material-icons text-3xl">pause</span>';
+                centerPlayBtn.style.display = 'none';
+            } else {
+                video.pause();
+                playBtn.innerHTML = '<span class="material-icons text-3xl">play_arrow</span>';
+                centerPlayBtn.style.display = 'flex';
+            }
+        }
+
+        // Eventos Player
+        playBtn.addEventListener('click', togglePlay);
+        video.addEventListener('click', togglePlay);
+        video.addEventListener('ended', () => {
+            if(playlist.length > 0 && currentPlaylistIndex < playlist.length - 1) {
+                loadPlaylistItem(currentPlaylistIndex + 1);
+            } else {
+                playBtn.innerHTML = '<span class="material-icons text-3xl">replay</span>';
+                centerPlayBtn.style.display = 'flex';
+            }
+        });
+        
+        document.getElementById('prevBtn').addEventListener('click', () => loadPlaylistItem(currentPlaylistIndex - 1));
+        document.getElementById('nextBtn').addEventListener('click', () => loadPlaylistItem(currentPlaylistIndex + 1));
+
+        // Progress Bar
+        video.addEventListener('timeupdate', () => {
+            if(video.duration) {
+                const pct = (video.currentTime / video.duration) * 100;
+                playBar.style.width = pct + '%';
+                document.getElementById('timeDisplay').innerText = 
+                    new Date(video.currentTime * 1000).toISOString().substr(14, 5) + " / " + 
+                    new Date(video.duration * 1000).toISOString().substr(14, 5);
+            }
+        });
+        
+        progressContainer.addEventListener('click', (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            video.currentTime = pos * video.duration;
+        });
+
+        // Volume
+        document.getElementById('volSlider').addEventListener('input', (e) => video.volume = e.target.value);
+
+        // Drag & Drop
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-neon-cyan'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-neon-cyan'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-neon-cyan');
+            if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+        });
+
+        // Inputs Manuais
+        document.getElementById('fileInput').addEventListener('change', (e) => handleFiles(e.target.files));
+        document.getElementById('folderInput').addEventListener('change', (e) => handleFiles(e.target.files));
+        document.getElementById('fsBtn').addEventListener('click', () => !document.fullscreenElement ? document.getElementById('playerContainer').requestFullscreen() : document.exitFullscreen());
+
+    </script>
+</body>
+</html>

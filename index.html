@@ -3,904 +3,587 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AniStream Player | Design Avançado e WebTorrent</title>
+    <title>AniStream Player | Completo</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Fontes e Ícones -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
+    <!-- 🚨 WEBTORRENT (Essencial para Magnet/Torrent) 🚨 -->
     <script src="https://cdn.jsdelivr.net/webtorrent/latest/webtorrent.min.js"></script>
     
     <style>
         /* =================================================================
-           # PALETA DE CORES E VARIÁVEIS
+           # ESTILOS GERAIS (TEMA NETFLIX/DARK)
            ================================================================= */
         :root {
-            --primary: #00e676;         /* Verde Neon para Ação e Progresso */
-            --secondary: #ff3d00;       /* Laranja/Vermelho para Busca/Foco */
-            --blue-accent: #00b0ff;     /* Azul Vibrante para Foco Secundário */
-            --bg-dark: #121212;         /* Fundo escuro principal */
-            --bg-medium: #282828;       /* Fundo de cards/controles */
-            --bg-light: #3a3a3a;        /* Borda / Foco */
+            --primary: #e50914; /* Vermelho Netflix */
+            --primary-light: #ff3838;
+            --bg-dark: #141414;
+            --bg-panel: #181818;
+            --bg-medium: #2f2f2f;
+            --border: #404040; 
             --text: #ffffff;
-            --text-secondary: #bbbbbb;  /* Texto de apoio */
-            --player-height-ratio: 56.25%; /* 16:9 Aspect Ratio */
-            --transition-speed: 0.2s;
+            --text-secondary: #b3b3b3;
+            --shadow-m: rgba(0, 0, 0, 0.75);
+            --player-max-width: 1300px;
+            --player-height-ratio: 56.25%; /* 16:9 */
         }
 
         * { 
             box-sizing: border-box; 
             margin: 0; 
             padding: 0; 
-            font-family: 'Roboto', Arial, sans-serif; 
+            font-family: 'Poppins', Arial, sans-serif; 
             outline: none; 
+            transition: all 0.2s ease-in-out; 
             color: inherit;
         }
         
         body { 
-            background-color: var(--bg-dark); 
+            background-color: #000; 
             color: var(--text); 
             min-height: 100vh; 
             display: flex; 
             flex-direction: column; 
-            align-items: center; 
+            overflow-x: hidden; 
         }
 
-        /* -----------------------------------------------------------------
-           # HEADER E BARRA DE BUSCA (MELHORADA)
-           ----------------------------------------------------------------- */
+        /* --- HEADER --- */
         header { 
-            width: 100%;
-            padding: 15px 30px; 
-            background: var(--bg-dark); 
+            padding: 15px 4%; 
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%); 
             z-index: 20; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            gap: 20px;
-            border-bottom: 2px solid var(--bg-medium);
-            position: sticky; 
+            position: sticky;
             top: 0;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            background-color: var(--bg-dark); /* Fallback */
         }
-        .logo { font-size: 1.8rem; font-weight: 900; display: flex; align-items: center; gap: 8px; }
-        .logo .material-icons { color: var(--blue-accent); font-size: 2.2rem; }
+        .logo { font-size: 2rem; font-weight: 900; color: var(--primary); letter-spacing: -1px; text-transform: uppercase; cursor: pointer; }
+        .logo span { color: var(--text); font-weight: 300; }
 
-        .search-container { flex: 1; max-width: 900px; display: flex; gap: 0; position: relative; }
-        
-        /* Fundo e Borda da Busca - Cor Não-Branca */
-        .search-container input {
-            flex: 1;
-            padding: 12px 20px; 
-            font-size: 1rem;
-            border-radius: 30px 0 0 30px;
-            background: #1e1e1e; /* Cor escura */
-            border: 1px solid var(--bg-light);
-            color: var(--text); 
-            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+        /* --- MENU DE NAVEGAÇÃO (ABAS) --- */
+        .nav-menu { display: flex; gap: 20px; margin-left: 40px; }
+        .nav-item { 
+            background: none; border: none; color: var(--text-secondary); 
+            font-size: 0.9rem; cursor: pointer; font-weight: 500; transition: color 0.2s;
         }
-        .search-container input:focus {
-            border-color: var(--secondary);
-            box-shadow: 0 0 0 1px var(--secondary);
-            background: #222;
-        }
-        
-        /* Botão da Busca */
-        .search-container button {
-            padding: 0 25px; 
-            border-radius: 0 30px 30px 0; 
-            background: var(--secondary);
-            border: 1px solid var(--secondary);
-            border-left: none;
-            cursor: pointer; 
-            transition: background var(--transition-speed);
-        }
-        .search-container button:hover {
-            background: #ff5722;
-        }
+        .nav-item:hover { color: var(--text); }
+        .nav-item.active { color: var(--text); font-weight: 700; cursor: default; }
 
-        /* -----------------------------------------------------------------
-           # LAYOUT PRINCIPAL E PLAYER
-           ----------------------------------------------------------------- */
+        /* --- ÁREA PRINCIPAL --- */
         .main-layout { 
-            width: 100%;
-            max-width: 1300px; 
-            padding: 20px 30px; 
+            flex: 1; 
             display: flex; 
             flex-direction: column; 
-            align-items: center;
-        }
-        
-        #videoTitle { 
-            font-size: 1.5rem; 
-            font-weight: 700; 
-            margin: 25px 0 15px 0; 
-            align-self: flex-start;
-            color: var(--blue-accent);
+            align-items: center; 
+            padding: 20px 4%; 
+            width: 100%;
         }
 
+        /* --- PLAYER DE VÍDEO --- */
+        .player-section {
+            width: 100%;
+            max-width: var(--player-max-width);
+            margin-bottom: 30px;
+        }
+
+        #videoTitle { 
+            font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; 
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        
         .player-container { 
             width: 100%; 
             position: relative; 
             padding-bottom: var(--player-height-ratio); 
             height: 0; 
-            border-radius: 12px; 
-            overflow: hidden;
             background: #000;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        #nativePlayer, #ytPlayer {
-            position: absolute; 
-            width: 100%; 
-            height: 100%; 
-            object-fit: contain; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            border-radius: 4px;
+            overflow: hidden;
         }
         
-        /* -----------------------------------------------------------------
-           # CONTROLES CUSTOMIZADOS
-           ----------------------------------------------------------------- */
-        .custom-controls { 
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 10px 20px;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));
-            opacity: 0;
-            transition: opacity 0.3s ease-out;
-            z-index: 10;
+        .video-wrapper { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         }
-        .video-wrapper:hover .custom-controls { opacity: 1; }
+        
+        #nativePlayer, #ytPlayer {
+            width: 100%; height: 100%; position: absolute; top: 0; left: 0; 
+            object-fit: contain;
+        }
+        #nativePlayer { z-index: 5; }
+        #ytPlayer { z-index: 0; border: none; }
+        .video-wrapper.youtube-mode #nativePlayer { z-index: 0; }
+        .video-wrapper.youtube-mode #ytPlayer { z-index: 6; }
+
+        /* Controles */
+        .custom-controls { 
+            position: absolute; bottom: 0; left: 0; width: 100%; 
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%); 
+            padding: 0 20px 15px 20px; 
+            opacity: 0; transition: opacity 0.3s; z-index: 10; 
+        }
+        .video-wrapper:hover .custom-controls, .video-wrapper.paused .custom-controls { opacity: 1; }
         
         .progress-bar { 
-            height: 6px;
-            background: #444; 
-            margin-bottom: 10px; 
-            cursor: pointer; 
-            position: relative; 
-            border-radius: 3px; 
+            height: 4px; background: rgba(255,255,255,0.3); 
+            margin-bottom: 10px; cursor: pointer; position: relative; border-radius: 2px; 
+            transition: height 0.1s;
         }
+        .progress-bar:hover { height: 6px; }
         .progress-fill { 
-            height: 100%; 
-            background: var(--primary); 
-            width: 0%; 
-            border-radius: 3px; 
-            position: relative; 
+            height: 100%; background: var(--primary); width: 0%; border-radius: 2px; position: relative; 
+        }
+        .progress-fill::after {
+            content: ''; position: absolute; right: -6px; top: 50%; transform: translateY(-50%);
+            width: 12px; height: 12px; background: var(--primary); border-radius: 50%;
+            display: none; 
+        }
+        .progress-bar:hover .progress-fill::after { display: block; }
+
+        .controls-row { display: flex; justify-content: space-between; align-items: center; }
+        .btn { background: none; border: none; color: #fff; cursor: pointer; padding: 5px; display: flex; }
+        .btn:hover { transform: scale(1.1); }
+        .material-icons { font-size: 1.8rem; }
+
+        /* --- PAINEL DE CONTEÚDO (INPUTS) --- */
+        .content-panel {
+            width: 100%;
+            max-width: var(--player-max-width);
+            background: var(--bg-dark);
         }
 
-        .controls-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .left-controls, .right-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .btn { 
-            font-size: 1.8rem; 
-            color: var(--text); 
-            padding: 5px; 
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            transition: color var(--transition-speed);
-        }
-        .btn:hover { color: var(--primary); }
+        .input-group { display: none; flex-direction: column; gap: 15px; padding: 20px 0; }
+        .input-group.active { display: flex; }
 
-        /* Volume Slider */
-        #volumeSlider {
-            width: 80px;
-            height: 4px;
-            cursor: pointer;
-            background: transparent;
-            -webkit-appearance: none;
+        .search-box { display: flex; gap: 10px; }
+        .search-box input {
+            flex: 1; background: #333; border: 1px solid #444; color: white;
+            padding: 12px 15px; font-size: 1rem; border-radius: 4px;
         }
-        #volumeSlider::-webkit-slider-runnable-track { background: var(--bg-light); border-radius: 3px; }
-        #volumeSlider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 12px; width: 12px;
-            border-radius: 50%;
-            background: var(--primary);
-            margin-top: -4px;
+        .search-box button, .action-btn {
+            background: var(--primary); color: white; border: none;
+            padding: 0 25px; font-weight: 700; font-size: 1rem; cursor: pointer;
+            border-radius: 4px; text-transform: uppercase;
         }
-        
-        /* Selects (Qualidade/Velocidade) */
-        .select-group select {
-            background: var(--bg-medium);
-            color: var(--text);
-            border: 1px solid var(--bg-light);
-            padding: 5px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+        .search-box button:hover, .action-btn:hover { background: #f40612; }
 
-        /* -----------------------------------------------------------------
-           # PAINEL DE CONTROLE (Inputs e Opções)
-           ----------------------------------------------------------------- */
-        .media-control-panel { 
-            width: 100%;
-            margin-top: 40px; 
-            padding: 20px;
-            background: var(--bg-medium);
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        .file-drop-zone {
+            border: 2px dashed #444; padding: 30px; text-align: center;
+            border-radius: 8px; cursor: pointer; color: #888;
         }
-        
-        .source-menu { 
-            display: flex; gap: 20px; margin-bottom: 20px; 
-            border-bottom: 1px solid var(--bg-light); 
-            padding-bottom: 10px; 
-            justify-content: center;
-        }
-        .source-menu button {
-             transition: color var(--transition-speed);
-             background: none;
-             border: none;
-             cursor: pointer;
-             font-size: 1rem;
-             color: var(--text-secondary);
-             position: relative;
-             padding-bottom: 5px;
-        }
-        .source-menu button.active { 
-            color: var(--primary); 
-        }
-        
-        .link-loader button {
-            border: none;
-            background: var(--primary); 
-            color: var(--bg-dark); 
-            font-weight: 700;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background var(--transition-speed);
-        }
-        
-        /* Inputs dentro do painel de controle */
-        .link-loader input, .torrent-upload-btn, .addon-config-section input {
-            border: 1px solid var(--bg-light); 
-            color: var(--text); padding: 12px 20px; border-radius: 8px; 
-            font-size: 1rem; 
-            background: #1e1e1e; /* Cor escura para inputs do painel */
-        }
-        .torrent-upload-btn {
-            background: var(--bg-light);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-transform: uppercase;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background var(--transition-speed), border-color var(--transition-speed);
-        }
-        .addon-config-section .catalog-search {
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-            width: 100%;
-            padding-top: 10px;
-            border-top: 1px solid var(--bg-light);
-        }
-        
-        /* Estilos de resultados de Addon */
-        #addonStreamResults, #addonCatalogResults {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            padding: 10px;
-            margin-top: 15px;
-            justify-content: flex-start;
-            width: 100%;
-            border-top: 1px solid var(--bg-light);
-            padding-top: 20px;
-        }
-        .addon-item {
-            background: var(--bg-light);
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: left;
-            width: 100%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-        }
-        .addon-item.catalog {
-            width: calc(50% - 10px);
-            max-width: none;
-            border-left: 3px solid var(--blue-accent);
-        }
-        .addon-item:hover {
-            background: #444;
-            box-shadow: 0 0 10px rgba(0, 176, 255, 0.3);
-        }
+        .file-drop-zone:hover { border-color: var(--text-secondary); color: var(--text); }
 
-        /* Spinner para Loading */
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Grid de Catálogo */
+        .catalog-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px; margin-top: 20px;
+        }
+        .catalog-card {
+            background: #222; border-radius: 4px; overflow: hidden; cursor: pointer;
+            transition: transform 0.3s; position: relative; aspect-ratio: 2/3;
+        }
+        .catalog-card:hover { transform: scale(1.05); z-index: 5; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .card-img { width: 100%; height: 100%; object-fit: cover; }
+        .card-overlay {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            padding: 10px; opacity: 0; transition: opacity 0.3s;
+        }
+        .catalog-card:hover .card-overlay { opacity: 1; }
+        .card-title { font-size: 0.9rem; font-weight: 600; }
+
+        /* Status Torrent */
         #torrentStatus {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            display: none; flex-direction: column;
-            justify-content: center; align-items: center; gap: 15px;
-            z-index: 15;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 15;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center;
         }
         .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid var(--primary);
-            border-radius: 50%; width: 50px; height: 50px;
-            animation: spin 1s linear infinite;
+            width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 15px;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Modal */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; justify-content: center; align-items: center; }
+        .modal-box { background: #181818; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; }
     </style>
 </head>
-<body onload="initializePlayer();">
+<body>
 
     <header>
-        <div class="logo">
-            <span class="material-icons">play_circle</span>
-            ANIStream
+        <div class="logo">Ani<span>Stream</span></div>
+        <div class="nav-menu">
+            <button class="nav-item active" onclick="switchTab('catalog', this)">Início</button>
+            <button class="nav-item" onclick="switchTab('url', this)">Link/Magnet</button>
+            <button class="nav-item" onclick="switchTab('torrent', this)">Arquivo Local</button>
+            <button class="nav-item" onclick="switchTab('addon', this)">Addons</button>
         </div>
-        
-        <div class="search-container">
-            <input type="text" id="mainSearchInput" placeholder="Busque por Título, tt-ID, Link Magnet/URL..." title="Pressione ENTER para buscar no Addon ou carregar">
-            <button onclick="handleMainSearch()" title="Buscar/Carregar">
-                <span class="material-icons">search</span>
-            </button>
-        </div>
-
-        <div class="avatar"></div>
+        <div style="width: 32px; height: 32px; background: #333; border-radius: 4px;"></div>
     </header>
 
     <div class="main-layout">
         
-        <div class="player-container">
-            <div class="video-wrapper paused" id="videoWrapper">
-                <video id="nativePlayer" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" muted></video>
-                <iframe id="ytPlayer" src="" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen;" allowfullscreen></iframe>
-                
-                <div id="torrentStatus">
-                    <div class="spinner"></div>
-                    <p id="torrentStatusText" style="font-size: 1.2rem; color: var(--text);"></p>
-                    <p id="torrentProgress" style="font-size: 1rem; color: var(--text-secondary);"></p>
-                </div>
-
-                <div class="custom-controls">
-                    <div class="progress-bar" id="progressBar" onclick="seekAbsolute(event)">
-                        <div class="progress-fill" id="progressFill"></div>
+        <!-- SEÇÃO DO PLAYER -->
+        <div class="player-section">
+            <h2 id="videoTitle">Pronto para assistir</h2>
+            <div class="player-container">
+                <div class="video-wrapper paused" id="videoWrapper">
+                    <video id="nativePlayer" playsinline></video>
+                    <iframe id="ytPlayer" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+                    
+                    <!-- Overlay de Loading -->
+                    <div id="torrentStatus">
+                        <div class="spinner"></div>
+                        <div id="statusText" style="font-size: 1.2rem; font-weight: 600;">Carregando...</div>
+                        <div id="statusDetail" style="color: #aaa; font-size: 0.9rem; margin-top: 5px;"></div>
                     </div>
-                    <div class="controls-row">
-                        <div class="left-controls">
-                            <button class="btn" id="playBtn" title="Play/Pause (K ou Espaço)"><span class="material-icons">play_arrow</span></button>
-                            <button class="btn" onclick="seekRelative(-10)" title="Retroceder 10s (J)"><span class="material-icons">replay_10</span></button>
-                            <button class="btn" onclick="seekRelative(10)" title="Avançar 10s (L)"><span class="material-icons">forward_10</span></button>
-                            
-                            <button class="btn" id="muteBtn" title="Mudo (M)"><span class="material-icons">volume_up</span></button>
-                            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5" oninput="setVolume(this.value)" title="Volume (Setas Cima/Baixo)">
-                            <span id="timeDisplay">00:00 / 00:00</span>
+
+                    <!-- Controles -->
+                    <div class="custom-controls">
+                        <div class="progress-bar" id="progressBar">
+                            <div class="progress-fill" id="progressFill"></div>
                         </div>
-                        <div class="right-controls">
-                            <div class="select-group" style="display:flex; align-items:center; gap: 5px;">
-                                <select id="qualitySelect" onchange="setVideoQuality(this.value)" title="Qualidade do Vídeo">
-                                    <option value="Auto" selected>Automático</option>
-                                    <option value="1080p">1080p HD</option>
-                                    <option value="720p">720p HD</option>
-                                    <option value="480p">480p</option>
-                                    <option value="360p">360p</option>
-                                </select>
-                                <select id="rateSelect" onchange="setPlaybackRate(this.value)" title="Velocidade de Reprodução">
-                                    <option value="0.5">0.5x</option>
-                                    <option value="1.0" selected>Normal</option>
-                                    <option value="1.5">1.5x</option>
-                                    <option value="2.0">2.0x</option>
-                                </select>
+                        <div class="controls-row">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <button class="btn" id="playBtn"><span class="material-icons">play_arrow</span></button>
+                                <button class="btn" onclick="seek(-10)"><span class="material-icons">replay_10</span></button>
+                                <button class="btn" onclick="seek(10)"><span class="material-icons">forward_10</span></button>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <button class="btn" id="muteBtn"><span class="material-icons">volume_up</span></button>
+                                    <input type="range" id="volSlider" min="0" max="1" step="0.1" style="width: 80px;">
+                                </div>
+                                <span style="font-size: 0.8rem; margin-left: 10px;" id="timeDisplay">00:00</span>
                             </div>
-                            
-                            <button class="btn" onclick="toggleFullscreen()" title="Tela Cheia (F)"><span class="material-icons">fullscreen</span></button>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <button class="btn" onclick="toggleFullscreen()"><span class="material-icons">fullscreen</span></button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <h4 id="videoTitle">Selecione um título para iniciar a reprodução</h4>
 
-        <div class="media-control-panel">
+        <!-- SEÇÃO DE CONTEÚDO (INPUTS) -->
+        <div class="content-panel">
             
-            <div class="source-menu">
-                <button id="menuUrlBtn" class="active" onclick="switchSourceMode('url')">Link Direto / Magnet</button>
-                <button id="menuTorrentBtn" onclick="switchSourceMode('torrent')">Arquivo Torrent</button>
-                <button id="menuUploadBtn" onclick="switchSourceMode('upload')">Vídeo Local</button>
-                <button id="menuAddonBtn" onclick="switchSourceMode('addon')">⚙️ Addon Stremio-Like</button>
-            </div>
-            
-            <div id="urlInputContainer" class="input-content" style="display: flex;">
-                <div class="link-loader" style="display: flex; gap: 10px; width: 100%;">
-                    <input type="text" id="videoUrl" placeholder="Cole o LINK MAGNET, Hash, URL Direto ou YouTube aqui..." style="flex: 1;">
-                    <button onclick="loadVideo()">CARREGAR</button>
+            <!-- 1. CATÁLOGO (Padrão) -->
+            <div id="tab-catalog" class="input-group active">
+                <div class="search-box">
+                    <input type="text" id="catalogSearch" placeholder="Buscar filmes, séries, animes...">
+                    <button onclick="handleCatalogSearch()">Buscar</button>
                 </div>
+                <h3 style="margin-top: 10px; color: #555; font-size: 0.9rem;">Destaques Locais</h3>
+                <div class="catalog-grid" id="catalogGrid"></div>
             </div>
-            
-            <div id="torrentInputContainer" class="input-content" style="display: none;">
-                <div class="torrent-upload-section">
-                    <span style="color: var(--text-secondary); font-size: 1.1rem;">Inicie um stream WebTorrent selecionando o arquivo **.torrent** local.</span>
-                    <input type="file" id="torrentFile" accept=".torrent" onchange="handleTorrentFileUpload(event)" style="display: none;">
-                    <button class="torrent-upload-btn" onclick="document.getElementById('torrentFile').click()">
-                        <span class="material-icons">upload_file</span> SELECIONAR ARQUIVO .TORRENT
-                    </button>
+
+            <!-- 2. LINK / MAGNET -->
+            <div id="tab-url" class="input-group">
+                <h3 style="margin: 0;">Carregar via Link</h3>
+                <div class="search-box">
+                    <input type="text" id="directLink" placeholder="Cole Link Magnet, YouTube ou URL MP4...">
+                    <button onclick="loadFromInput()">Reproduzir</button>
                 </div>
+                <p style="color: #666; font-size: 0.8rem;">Suporta: Magnet Links (WebTorrent), YouTube, MP4/WebM diretos.</p>
             </div>
-            
-            <div id="uploadInputContainer" class="input-content" style="display: none;">
-                <div class="file-upload-section">
-                    <span style="color: var(--text-secondary); font-size: 1.1rem;">Reprodução Imediata de um arquivo de vídeo do seu computador (MP4, WebM, etc.).</span>
-                    <input type="file" id="videoFile" accept="video/*" onchange="handleFileUpload(event)" style="display: none;">
-                    <button class="torrent-upload-btn" onclick="document.getElementById('videoFile').click()">
-                        <span class="material-icons">play_circle</span> REPRODUZIR VÍDEO LOCAL
-                    </button>
+
+            <!-- 3. ARQUIVO LOCAL -->
+            <div id="tab-torrent" class="input-group">
+                <h3 style="margin: 0;">Carregar Arquivo</h3>
+                <div class="file-drop-zone" onclick="document.getElementById('fileInput').click()">
+                    <span class="material-icons" style="font-size: 3rem; display: block; margin-bottom: 10px;">cloud_upload</span>
+                    Clique para selecionar .torrent ou vídeo (.mp4, .mkv)
+                    <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(this.files)">
                 </div>
             </div>
 
-            <div id="addonInputContainer" class="input-content" style="display: none;">
-                <div class="addon-config-section">
-                    <span style="font-size: 1.2rem; font-weight: 700; color: var(--blue-accent);">Configuração e Catálogo do Addon</span>
-                    
-                    <div class="alert-box">
-                        ⚠️ **PROXY NECESSÁRIO:** As buscas reais **falharão devido ao CORS** a menos que você configure o servidor proxy externo conforme instruído.
+            <!-- 4. ADDON CONFIG -->
+            <div id="tab-addon" class="input-group">
+                <h3 style="margin: 0;">Configurar Proxy/Addon</h3>
+                <div class="search-box">
+                    <input type="text" id="addonUrl" placeholder="URL do seu Proxy Vercel (ex: https://meu-proxy.vercel.app)">
+                    <button onclick="saveAddonUrl()">Salvar</button>
+                </div>
+                <div style="background: #222; padding: 15px; border-radius: 4px; margin-top: 10px;">
+                    <p style="margin: 0 0 10px 0; color: var(--primary);"><strong>Teste de Integração</strong></p>
+                    <div class="search-box">
+                        <input type="text" id="addonIdSearch" placeholder="ID do IMDB (ex: tt0076759)">
+                        <button onclick="searchAddonStreams()">Buscar Streams</button>
                     </div>
-
-                    <div style="display: flex; gap: 10px; width: 100%;">
-                        <input type="text" id="addonUrlInput" placeholder="URL do seu PROXY/Addon (Ex: https://meuproxy.com/addon)" style="flex: 1;">
-                        <button class="link-loader" onclick="saveAddonUrl()">SALVAR URL</button>
-                    </div>
-                    <p id="currentAddonStatus" style="color: var(--text-secondary); font-size: 0.9rem;">Addon Atual: Nenhum configurado.</p>
-                    
-                    <div class="catalog-search">
-                        <span style="color: var(--primary); font-weight: 500;">2. Buscar Streams por ID (tt1234, kitsu:123, etc.)</span>
-                        <div style="display: flex; gap: 10px; width: 100%;">
-                            <input type="text" id="addonCatalogId" placeholder="Ex: tt3581652 (Big Buck Bunny Demo)" style="flex: 1;">
-                            <button class="link-loader" onclick="searchStreamsByCatalogId()">BUSCAR STREAMS</button>
-                        </div>
-                    </div>
-
+                    <div id="addonResults" style="margin-top: 15px; display: flex; flex-direction: column; gap: 5px;"></div>
                 </div>
-                
-                <div id="addonStreamResults" style="display: none;">
-                    <h5 style="width: 100%; color: var(--text-secondary);">Streams encontrados no Addon (Clique para reproduzir):</h5>
-                </div>
-                
-                <div id="addonCatalogResults" style="display: none;">
-                    <h5 style="width: 100%; color: var(--text-secondary);">Itens do Catálogo (Clique para buscar Streams):</h5>
-                </div>
-
             </div>
-            
+
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="modal" class="modal">
+        <div class="modal-box">
+            <h3 id="modalTitle">Aviso</h3>
+            <p id="modalMsg" style="color: #ccc; margin: 15px 0;">Mensagem...</p>
+            <button class="action-btn" onclick="document.getElementById('modal').style.display='none'" style="width: 100%;">Entendi</button>
         </div>
     </div>
 
     <script>
         /* =================================================================
-           # LÓGICA JAVASCRIPT: Controles e Funções
+           # LOGICA JAVASCRIPT (Player + Torrent + Addon)
            ================================================================= */
         
-        const client = typeof WebTorrent !== 'undefined' ? new WebTorrent() : null; 
-        const nativeVideo = document.getElementById('nativePlayer');
+        // --- CONFIGURAÇÃO ---
+        const client = new WebTorrent();
+        let addonBaseUrl = localStorage.getItem('addonUrl') || '';
+        
+        // DOM Elements
+        const video = document.getElementById('nativePlayer');
         const ytIframe = document.getElementById('ytPlayer');
         const wrapper = document.getElementById('videoWrapper');
+        const titleEl = document.getElementById('videoTitle');
+        const statusEl = document.getElementById('torrentStatus');
+        const statusText = document.getElementById('statusText');
+        const statusDetail = document.getElementById('statusDetail');
         const playBtn = document.getElementById('playBtn');
         const muteBtn = document.getElementById('muteBtn');
-        const volumeSlider = document.getElementById('volumeSlider');
-        const videoTitleDisplay = document.getElementById('videoTitle');
-        const torrentStatus = document.getElementById('torrentStatus');
-        const torrentProgress = document.getElementById('torrentProgress');
-        const mainSearchInput = document.getElementById('mainSearchInput');
-        const urlInput = document.getElementById('videoUrl');
-        const qualitySelect = document.getElementById('qualitySelect');
-        const addonUrlInput = document.getElementById('addonUrlInput');
-        const currentAddonStatus = document.getElementById('currentAddonStatus');
-        const addonCatalogId = document.getElementById('addonCatalogId'); 
-        const addonCatalogResultsContainer = document.getElementById('addonCatalogResults'); 
-        const addonStreamResultsContainer = document.getElementById('addonStreamResults'); 
         
-        let currentAddonBaseUrl = localStorage.getItem('addonUrl') || ''; 
-        let currentVideoSource = null;
-        
-        // --- Funções Auxiliares de Player ---
-        function formatTime(s) { const m = Math.floor(s/60); const sec = Math.floor(s%60); return `${m < 10 ? '0' : ''}${m}:${sec<10?'0':''}${sec}`; }
-        function extractYouTubeID(url) {
-            const regExp = /^(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})(?:\S+)?$/;
-            const match = url.match(regExp); return match ? match[1] : null;
-        }
-        function updateVideoTitle(title) { videoTitleDisplay.innerText = title; }
+        // --- CATÁLOGO LOCAL (Simulação) ---
+        const catalogData = [
+            { title: "Big Buck Bunny", type: "Filme", img: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Big_buck_bunny_poster_big.jpg", link: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", isMagnet: false },
+            { title: "Sintel", type: "Filme", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Sintel_poster.jpg/320px-Sintel_poster.jpg", link: "magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel", isMagnet: true },
+            { title: "Cosmos Laundromat", type: "Curta", img: "https://upload.wikimedia.org/wikipedia/commons/b/bd/Cosmos_Laundromat_Poster.jpg", link: "magnet:?xt=urn:btih:c9e15763f722f23e98a29decdfae341b98d53056&dn=Cosmos+Laundromat", isMagnet: true }
+        ];
 
-        function showTorrentStatus(text, progress = '') { torrentStatus.style.display = 'flex'; document.getElementById('torrentStatusText').innerText = text; torrentProgress.innerText = progress; }
-        function hideTorrentStatus() { torrentStatus.style.display = 'none'; }
+        // --- INICIALIZAÇÃO ---
+        window.onload = () => {
+            renderCatalog(catalogData);
+            if(addonBaseUrl) document.getElementById('addonUrl').value = addonBaseUrl;
+        };
+
+        // --- NAVEGAÇÃO ---
+        window.switchTab = (tabId, btn) => {
+            document.querySelectorAll('.input-group').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            btn.classList.add('active');
+        };
+
+        function renderCatalog(items) {
+            const grid = document.getElementById('catalogGrid');
+            grid.innerHTML = '';
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'catalog-card';
+                card.innerHTML = `
+                    <img src="${item.img}" class="card-img" alt="${item.title}">
+                    <div class="card-overlay">
+                        <div class="card-title">${item.title}</div>
+                        <div style="font-size: 0.75rem; color: #aaa;">${item.type}</div>
+                    </div>
+                `;
+                card.onclick = () => loadMedia(item.link, item.title, item.isMagnet ? 'magnet' : 'url');
+                grid.appendChild(card);
+            });
+        }
+
+        // --- PLAYER CORE ---
         
-        function togglePlay() { 
-            if (wrapper.classList.contains('youtube-mode')) return;
-            if (nativeVideo.paused || nativeVideo.ended) { nativeVideo.play().catch(error => { nativeVideo.muted = true; nativeVideo.play().catch(e => console.error("Falha ao iniciar mesmo mudo.", e)); }); } else { nativeVideo.pause(); }
+        function loadMedia(source, title, type) {
+            titleEl.innerText = title;
+            statusEl.style.display = 'none';
+            wrapper.classList.remove('youtube-mode');
+            ytIframe.src = '';
+            
+            // Limpa torrents anteriores
+            if (client.torrents.length > 0) client.torrents.forEach(t => t.destroy());
+
+            if (type === 'youtube') {
+                wrapper.classList.add('youtube-mode');
+                video.pause();
+                ytIframe.src = `https://www.youtube.com/embed/${source}?autoplay=1&rel=0`;
+            } 
+            else if (type === 'magnet' || type === 'file') {
+                // WebTorrent Logic
+                statusEl.style.display = 'flex';
+                statusText.innerText = "Conectando aos peers...";
+                statusDetail.innerText = "Aguarde o início do buffer...";
+
+                client.add(source, torrent => {
+                    const file = torrent.files.find(f => f.name.match(/\.(mp4|mkv|webm)$/i));
+                    
+                    torrent.on('download', () => {
+                        statusDetail.innerText = `Baixado: ${(torrent.downloaded/1024/1024).toFixed(1)}MB | Vel: ${(torrent.downloadSpeed/1024/1024).toFixed(2)}MB/s | Peers: ${torrent.numPeers}`;
+                    });
+
+                    if(file) {
+                        file.renderTo(video, { autoplay: true }, (err) => {
+                            if(err) showAlert("Erro", err.message);
+                            statusEl.style.display = 'none';
+                            updatePlayIcon(true);
+                        });
+                    } else {
+                        showAlert("Erro", "Nenhum vídeo encontrado no torrent.");
+                        statusEl.style.display = 'none';
+                    }
+                });
+            } 
+            else {
+                // Direct URL / Blob
+                video.src = source;
+                video.play().then(() => updatePlayIcon(true)).catch(() => {
+                    // Autoplay blocked handling
+                    video.muted = true;
+                    video.play();
+                    updatePlayIcon(true);
+                });
+            }
         }
-        function toggleMute() {
-            if (wrapper.classList.contains('youtube-mode')) return;
-            nativeVideo.muted = !nativeVideo.muted;
-            if (nativeVideo.muted) { muteBtn.innerHTML = '<span class="material-icons">volume_off</span>'; } else { updateMuteIcon(); }
+
+        function loadFromInput() {
+            const val = document.getElementById('directLink').value.trim();
+            if(!val) return;
+            
+            if(val.startsWith('magnet:')) loadMedia(val, "Stream Magnet", 'magnet');
+            else if(val.includes('youtube.com') || val.includes('youtu.be')) {
+                const id = val.match(/(?:v=|\/)([\w-]{11})/)?.[1];
+                if(id) loadMedia(id, "YouTube Video", 'youtube');
+            } else {
+                loadMedia(val, "Stream Direto", 'url');
+            }
         }
-        function updateMuteIcon() {
-            if (nativeVideo.muted || nativeVideo.volume === 0) { muteBtn.innerHTML = '<span class="material-icons">volume_off</span>'; } else if (nativeVideo.volume < 0.5) { muteBtn.innerHTML = '<span class="material-icons">volume_down</span>'; } else { muteBtn.innerHTML = '<span class="material-icons">volume_up</span>'; }
+
+        // --- ARQUIVOS LOCAIS ---
+        window.handleFileSelect = (files) => {
+            if(!files.length) return;
+            const file = files[0];
+            if(file.name.endsWith('.torrent')) {
+                loadMedia(file, file.name.replace('.torrent',''), 'magnet'); // WebTorrent aceita File objects
+            } else if (file.type.startsWith('video/')) {
+                loadMedia(URL.createObjectURL(file), file.name, 'url');
+            } else {
+                showAlert("Formato Inválido", "Selecione um arquivo .torrent ou de vídeo.");
+            }
         }
-        function setVolume(volume) { 
-            if (wrapper.classList.contains('youtube-mode')) return;
-            const newVolume = parseFloat(volume);
-            nativeVideo.volume = newVolume;
-            if (newVolume > 0 && nativeVideo.muted) { nativeVideo.muted = false; } else if (newVolume === 0) { nativeVideo.muted = true; }
-            updateMuteIcon();
+
+        // --- ADDON PROXY ---
+        window.saveAddonUrl = () => {
+            const url = document.getElementById('addonUrl').value.trim();
+            if(!url.startsWith('http')) return showAlert("Erro", "URL inválida.");
+            addonBaseUrl = url.replace(/\/$/, ''); // Remove trailing slash
+            localStorage.setItem('addonUrl', addonBaseUrl);
+            showAlert("Sucesso", "URL do Addon salva!");
+        };
+
+        window.searchAddonStreams = async () => {
+            const id = document.getElementById('addonIdSearch').value.trim();
+            if(!addonBaseUrl || !id) return showAlert("Erro", "Configure a URL e insira um ID.");
+            
+            // PROXY CALL: Assumindo que o proxy tem a rota /streams/:type/:id.json
+            const type = id.includes('tt') ? 'movie' : 'series';
+            const url = `${addonBaseUrl}/streams/${type}/${id}.json`;
+
+            try {
+                statusEl.style.display = 'flex';
+                statusText.innerText = "Buscando no Addon...";
+                
+                const res = await fetch(url);
+                if(!res.ok) throw new Error("Falha na requisição ao Proxy");
+                const data = await res.json();
+                
+                statusEl.style.display = 'none';
+                const container = document.getElementById('addonResults');
+                container.innerHTML = '';
+
+                if(!data.streams || !data.streams.length) {
+                    container.innerHTML = '<p style="color:#999">Nenhum stream encontrado.</p>';
+                    return;
+                }
+
+                data.streams.forEach(stream => {
+                    const btn = document.createElement('button');
+                    btn.className = 'action-btn';
+                    btn.style.marginTop = '5px';
+                    btn.style.background = '#333';
+                    btn.style.fontSize = '0.8rem';
+                    btn.style.textAlign = 'left';
+                    btn.innerText = `🎬 ${stream.title || stream.name || 'Stream'} (${stream.name || '?'})`;
+                    
+                    btn.onclick = () => {
+                        const link = stream.url || stream.infoHash;
+                        if(stream.url && stream.url.startsWith('http')) loadMedia(stream.url, stream.title, 'url');
+                        else if(link) loadMedia(link, stream.title, 'magnet');
+                    };
+                    container.appendChild(btn);
+                });
+
+            } catch(e) {
+                statusEl.style.display = 'none';
+                showAlert("Erro no Addon", e.message);
+            }
+        };
+
+        // --- CONTROLES UI ---
+        function updatePlayIcon(isPlaying) {
+            playBtn.innerHTML = isPlaying ? '<span class="material-icons">pause</span>' : '<span class="material-icons">play_arrow</span>';
         }
-        function setPlaybackRate(rate) { if (wrapper.classList.contains('youtube-mode')) return; nativeVideo.playbackRate = parseFloat(rate); }
-        function seekRelative(seconds) { if (wrapper.classList.contains('youtube-mode') || !nativeVideo.duration) return; nativeVideo.currentTime = Math.min(nativeVideo.duration, Math.max(0, nativeVideo.currentTime + seconds)); }
-        function seekAbsolute(e) { 
-            if (wrapper.classList.contains('youtube-mode') || !nativeVideo.duration) return;
-            const bar = document.getElementById('progressBar');
-            const rect = bar.getBoundingClientRect();
+
+        video.addEventListener('play', () => updatePlayIcon(true));
+        video.addEventListener('pause', () => updatePlayIcon(false));
+        
+        window.togglePlay = () => video.paused ? video.play() : video.pause();
+        window.seek = (val) => video.currentTime += val;
+        
+        window.toggleMute = () => {
+            video.muted = !video.muted;
+            muteBtn.innerHTML = video.muted ? '<span class="material-icons">volume_off</span>' : '<span class="material-icons">volume_up</span>';
+        };
+        
+        const volSlider = document.getElementById('volSlider');
+        volSlider.addEventListener('input', (e) => video.volume = e.target.value);
+        
+        // Barra de Progresso
+        video.addEventListener('timeupdate', () => {
+            const pct = (video.currentTime / video.duration) * 100;
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('timeDisplay').innerText = 
+                new Date(video.currentTime * 1000).toISOString().substr(11, 8) + " / " + 
+                new Date(video.duration * 1000).toISOString().substr(11, 8);
+        });
+
+        document.getElementById('progressBar').addEventListener('click', (e) => {
+            const rect = e.target.getBoundingClientRect();
             const pos = (e.clientX - rect.left) / rect.width;
-            nativeVideo.currentTime = pos * nativeVideo.duration;
-        }
-        function toggleFullscreen() { 
-            const container = document.querySelector('.player-container');
-            if (document.fullscreenElement) { document.exitFullscreen(); } else { container.requestFullscreen(); }
-        }
-        function updateTimeDisplay() {
-            document.getElementById('timeDisplay').innerText = `${formatTime(nativeVideo.currentTime)} / ${formatTime(nativeVideo.duration || 0)}`;
-        }
-        function setVideoQuality(quality) {
-            alert(`Qualidade alterada para ${quality}. (Recarregamento não implementado na demo)`);
-        }
-
-        // --- Funções de Carregamento de Mídia ---
-
-        function loadAndPlayTorrentFile(torrent) {
-             hideTorrentStatus();
-             let videoFile = torrent.files.filter(f => f.name.match(/\.(mp4|webm|ogg|mkv)$/i)).sort((a, b) => b.length - a.length)[0];
-             
-             if (!videoFile) { alert("Nenhum arquivo de vídeo compatível encontrado neste torrent."); updateVideoTitle(`Erro: ${torrent.name} sem mídia.`); return; }
-             
-             videoFile.renderTo(nativeVideo, { autoplay: true }, (err) => {
-                  if (err) { console.error("Erro ao renderizar vídeo torrent:", err); hideTorrentStatus(); return; }
-                  nativeVideo.onloadedmetadata = () => { updateVideoTitle(torrent.name); hideTorrentStatus(); togglePlay(); };
-             });
-        }
+            video.currentTime = pos * video.duration;
+        });
         
-        function handleTorrentRequest(identifier) {
-            if (!client) { alert("WebTorrent não está disponível ou inicializado."); return; }
-            if (nativeVideo) nativeVideo.pause();
-            
-            if (client.torrents.length > 0) { client.torrents.forEach(t => client.remove(t)); }
-            
-            showTorrentStatus("Iniciando busca de peers e metadados...");
-            
-            client.add(identifier, (torrent) => { 
-                torrent.on('wire', () => { showTorrentStatus("Conectado a Peers", `Peers: ${torrent.numPeers}`); });
-                torrent.on('download', () => { 
-                    const progress = (torrent.progress * 100).toFixed(1);
-                    showTorrentStatus("Baixando e Streamando...", `Progresso: ${progress}% - Peers: ${torrent.numPeers}`);
-                });
-                torrent.on('error', (err) => {
-                    hideTorrentStatus();
-                    alert(`Erro no Torrent: ${err.message}. Verifique o console.`);
-                    console.error("Erro WebTorrent:", err);
-                });
-                
-                loadAndPlayTorrentFile(torrent); 
-            });
+        window.toggleFullscreen = () => {
+            if(!document.fullscreenElement) document.getElementById('videoContainer').requestFullscreen();
+            else document.exitFullscreen();
+        };
+
+        function showAlert(title, msg) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMsg').innerText = msg;
+            document.getElementById('modal').style.display = 'flex';
         }
 
-        function handleTorrentFileUpload(e) { handleTorrentRequest(e.target.files[0]); e.target.value = ''; }
-        function handleFileUpload(e) {
-             const file = e.target.files[0];
-             if (!file) return;
-             loadVideoSource(URL.createObjectURL(file), `Local: ${file.name}`, 'direct');
-             e.target.value = '';
-        }
-
-        function loadVideoSource(source, title, type) {
-            currentVideoSource = source;
-            
-            wrapper.classList.remove('youtube-mode'); 
-            wrapper.classList.remove('local-mode'); 
-            ytIframe.src = ""; 
-            nativeVideo.src = ""; 
-            
-            if (client && client.torrents.length > 0) { client.torrents.forEach(t => client.remove(t)); }
-
-            if (type === 'magnet') {
-                handleTorrentRequest(source); 
-                updateVideoTitle(title);
-            } else if (type === 'youtube') {
-                wrapper.classList.add('youtube-mode'); 
-                nativeVideo.pause();
-                ytIframe.src = `https://www.youtube.com/embed/${source}?autoplay=1&rel=0&enablejsapi=1&mute=1&playsinline=1`; 
-                updateVideoTitle(title);
-            } else {
-                wrapper.classList.add('local-mode');
-                nativeVideo.src = source; 
-                nativeVideo.load(); 
-                updateVideoTitle(title); 
-                togglePlay();
+        // Atalhos de Teclado
+        document.addEventListener('keydown', (e) => {
+            if(document.activeElement.tagName === 'INPUT') return;
+            switch(e.key.toLowerCase()) {
+                case ' ': case 'k': e.preventDefault(); togglePlay(); break;
+                case 'f': toggleFullscreen(); break;
+                case 'm': toggleMute(); break;
+                case 'j': seek(-10); break;
+                case 'l': seek(10); break;
             }
-        }
-        
-        function loadVideo() {
-            const url = urlInput.value.trim();
-            if (!url) return;
-            const ytId = extractYouTubeID(url);
-            const isMagnet = url.startsWith('magnet:?xt=urn:btih:');
-            const isHash = /^[a-fA-F0-9]{40}$/.test(url);
-            
-            let type = 'direct';
-            let identifier = url;
+        });
 
-            if (isMagnet || isHash) {
-                type = 'magnet';
-                identifier = isMagnet ? url : `magnet:?xt=urn:btih:${url}`; 
-            } else if (ytId) {
-                type = 'youtube';
-                identifier = ytId;
-            }
-
-            loadVideoSource(identifier, `Fonte Manual: ${url.substring(0, 50)}...`, type);
-            urlInput.value = '';
-        }
-
-        // --- Funções de Addon (Com chamada real, mas requerendo Proxy externo) ---
-
-        function saveAddonUrl() {
-            const url = addonUrlInput.value.trim();
-            if (!url) {
-                currentAddonBaseUrl = '';
-                localStorage.removeItem('addonUrl');
-                currentAddonStatus.innerText = 'Addon Atual: Nenhum configurado.';
-                alert("URL do Addon removida.");
-            } else {
-                currentAddonBaseUrl = url.endsWith('/') ? url.slice(0, -1) : url;
-                localStorage.setItem('addonUrl', currentAddonBaseUrl);
-                currentAddonStatus.innerText = `Addon Atual: ${currentAddonBaseUrl.substring(0, 50)}...`;
-                alert(`URL do Addon (Proxy) salva. Tente buscar streams.`);
-            }
-        }
-
-        async function searchCatalog(query) {
-             if (!currentAddonBaseUrl) {
-                alert("Nenhuma URL de Addon/Proxy configurada.");
-                return null;
-            }
-            // MOCK DE CATÁLOGO: A busca de Catálogo (texto livre) é simulada para simplificar.
-            showTorrentStatus(`Buscando Catálogo para "${query}"...`);
-            addonStreamResultsContainer.style.display = 'none';
-            addonCatalogResultsContainer.style.display = 'none';
-            
-            try {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                const mockResults = [
-                    { id: "tt3581652", title: "Big Buck Bunny (2008)", type: "movie" },
-                    { id: "tt0076759", title: "Star Wars: A New Hope (1977)", type: "movie" },
-                    { id: "kitsu:7761", title: "Shingeki no Kyojin (2013)", type: "series" },
-                ].filter(item => item.title.toLowerCase().includes(query.toLowerCase()));
-                
-                hideTorrentStatus();
-                displayCatalogResults(mockResults);
-                return mockResults;
-
-            } catch (error) {
-                hideTorrentStatus();
-                alert(`Erro simulado na busca de Catálogo.`);
-                return null;
-            }
-        }
-        
-        function displayCatalogResults(results) {
-            addonCatalogResultsContainer.innerHTML = '<h5 style="width: 100%; color: var(--text-secondary);">Itens do Catálogo (Clique para buscar Streams):</h5>';
-            if (!results || results.length === 0) {
-                addonCatalogResultsContainer.style.display = 'none';
-                updateVideoTitle(`Catálogo: Nenhum item encontrado.`);
-                return;
-            }
-
-            addonCatalogResultsContainer.style.display = 'flex';
-            
-            results.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'addon-item catalog';
-                div.innerHTML = `<strong>${item.title}</strong><span>ID: ${item.id} | Tipo: ${item.type}</span>`;
-                div.onclick = () => {
-                    addonCatalogId.value = item.id;
-                    searchStreamsByCatalogId();
-                };
-                addonCatalogResultsContainer.appendChild(div);
-            });
-            updateVideoTitle(`Catálogo: ${results.length} itens encontrados. Clique para buscar streams.`);
-        }
-
-
-        async function searchStreamsByCatalogId() {
-            const itemID = addonCatalogId.value.trim();
-            if (!itemID) { alert("Insira um ID de Catálogo (Ex: tt1234) para buscar streams."); return; }
-            if (!currentAddonBaseUrl) { alert("Nenhuma URL de Addon/Proxy configurada."); return; }
-
-            const type = itemID.includes('tt') ? 'movie' : 'series'; 
-            const fullUrl = `${currentAddonBaseUrl}/${type}/${itemID}.json`;
-
-            showTorrentStatus(`Buscando streams via Proxy/Addon...`, fullUrl);
-            addonCatalogResultsContainer.style.display = 'none';
-            addonStreamResultsContainer.style.display = 'none';
-
-            try {
-                // Tenta a chamada real. Requer um PROXY para contornar o CORS.
-                const response = await fetch(fullUrl);
-                
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status}. Verifique o Proxy.`);
-                }
-                
-                const data = await response.json();
-                
-                const streams = data.streams || [];
-                
-                const results = streams.map(stream => ({
-                    title: stream.title || 'Link sem título',
-                    info: stream.name || stream.description || 'Fonte Desconhecida',
-                    url: stream.magnetLink || stream.url || null, 
-                })).filter(item => item.url); 
-
-                hideTorrentStatus();
-                displayStreamResults(results, itemID);
-                return results;
-
-            } catch (error) {
-                hideTorrentStatus();
-                console.error("Erro ao buscar streams (Provavelmente CORS):", error);
-                
-                // --- FALLBACK DE DEMONSTRAÇÃO (Para tt3581652) ---
-                alert(`FALHA NA CONEXÃO REAL (CORS/Proxy): Exibindo fallback para testar o player.`);
-                if (itemID === 'tt3581652') {
-                    const fallback = [
-                        { title: "Big Buck Bunny 1080p [Demo]", info: "WebTorrent Link", url: "magnet:?xt=urn:btih:657b01d782803b9b00702d73be1432f8373b9e4a&dn=Big%20Buck%20Bunny" },
-                        { title: "Big Buck Bunny 720p [Demo]", info: "HTTP Link Direto", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" },
-                    ];
-                    displayStreamResults(fallback, itemID + ' (Fallback)');
-                    return fallback;
-                }
-                displayStreamResults([], itemID);
-                return null;
-            }
-        }
-
-        function displayStreamResults(results, itemID) {
-            addonStreamResultsContainer.innerHTML = '<h5 style="width: 100%; color: var(--text-secondary);">Streams encontrados no Addon (Clique para reproduzir):</h5>';
-            if (!results || results.length === 0) {
-                addonStreamResultsContainer.style.display = 'none';
-                updateVideoTitle(`Streams para ${itemID}: Nenhum link encontrado.`);
-                return;
-            }
-
-            addonStreamResultsContainer.style.display = 'flex';
-            
-            results.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'addon-item';
-                div.innerHTML = `<strong>${item.title}</strong><span>${item.info}</span>`;
-                div.onclick = () => {
-                    const type = item.url.startsWith('magnet') ? 'magnet' : (extractYouTubeID(item.url) ? 'youtube' : 'direct');
-                    
-                    if (type === 'magnet' && !client) { alert("WebTorrent não está disponível."); return; }
-                    
-                    loadVideoSource(type === 'youtube' ? extractYouTubeID(item.url) : item.url, item.title, type);
-                    
-                    addonStreamResultsContainer.style.display = 'none';
-                    switchSourceMode('url'); 
-                };
-                addonStreamResultsContainer.appendChild(div);
-            });
-            updateVideoTitle(`Streams para ${itemID}: Clique para reproduzir.`);
-        }
-
-
-        async function handleMainSearch() {
-            const query = mainSearchInput.value.trim();
-            if (!query) return;
-
-            const ytId = extractYouTubeID(query);
-            const isMagnet = query.startsWith('magnet:?xt=urn:btih:');
-            const isHash = /^[a-fA-F0-9]{40}$/.test(query);
-            const isUrl = query.startsWith('http');
-            const isCatalogId = query.includes(':') || /^(tt|kitsu|anidb)\d+$/i.test(query); 
-            
-            if (isMagnet || isHash) {
-                const identifier = isMagnet ? query : `magnet:?xt=urn:btih:${query}`;
-                loadVideoSource(identifier, `Carregando Torrent: ${query.substring(0, 40)}...`, 'magnet');
-            } else if (ytId) {
-                loadVideoSource(ytId, `YouTube: ${query.substring(0, 50)}...`, 'youtube');
-            } else if (isUrl) {
-                loadVideoSource(query, `Link Direto: ${query.substring(0, 50)}...`, 'direct');
-            } else if (isCatalogId) {
-                addonCatalogId.value = query;
-                switchSourceMode('addon');
-                searchStreamsByCatalogId();
-            } else {
-                switchSourceMode('addon');
-                searchCatalog(query);
-            }
-            mainSearchInput.value = '';
-        }
-
-        // --- Funções de Layout e Inicialização ---
-        function switchSourceMode(mode) { 
-            document.querySelectorAll('.input-content').forEach(el => el.style.display = 'none');
-            
-            document.getElementById('urlInputContainer').style.display = mode === 'url' ? 'flex' : 'none';
-            document.getElementById('torrentInputContainer').style.display = mode === 'torrent' ? 'flex' : 'none';
-            document.getElementById('uploadInputContainer').style.display = mode === 'upload' ? 'flex' : 'none';
-            document.getElementById('addonInputContainer').style.display = mode === 'addon' ? 'flex' : 'none';
-            
-            if (mode !== 'addon') {
-                addonCatalogResultsContainer.style.display = 'none';
-                addonStreamResultsContainer.style.display = 'none';
-            }
-
-            document.getElementById('menuUrlBtn').classList.toggle('active', mode === 'url');
-            document.getElementById('menuTorrentBtn').classList.toggle('active', mode === 'torrent');
-            document.getElementById('menuUploadBtn').classList.toggle('active', mode === 'upload');
-            document.getElementById('menuAddonBtn').classList.toggle('active', mode === 'addon');
-
-            hideTorrentStatus();
-        }
-
-        function initializePlayer() {
-            switchSourceMode('url');
-            // Inicializa volume/mute
-            nativeVideo.volume = 0.5;
-            volumeSlider.value = nativeVideo.volume;
-            updateMuteIcon();
-            updateVideoTitle("Selecione um título para iniciar a reprodução");
-            
-            if (currentAddonBaseUrl) {
-                addonUrlInput.value = currentAddonBaseUrl;
-            }
-            
-            // Event Listeners:
-            document.getElementById('mainSearchInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { handleMainSearch(); } });
-            document.getElementById('videoUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') { loadVideo(); } });
-            playBtn.addEventListener('click', togglePlay);
-            muteBtn.addEventListener('click', toggleMute);
-
-            nativeVideo.addEventListener('play', () => { playBtn.innerHTML = '<span class="material-icons">pause</span>'; wrapper.classList.remove('paused'); });
-            nativeVideo.addEventListener('pause', () => { playBtn.innerHTML = '<span class="material-icons">play_arrow</span>'; wrapper.classList.add('paused'); });
-            nativeVideo.addEventListener('volumechange', updateMuteIcon);
-            nativeVideo.addEventListener('timeupdate', () => {
-                const pct = (nativeVideo.currentTime / nativeVideo.duration) * 100;
-                document.getElementById('progressFill').style.width = pct + '%';
-                updateTimeDisplay();
-            });
-            nativeVideo.addEventListener('loadedmetadata', updateTimeDisplay);
-
-            // Atalhos de teclado
-            document.addEventListener('keydown', (e) => {
-                const isInputFocused = document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA';
-                if (isInputFocused) return;
-                switch (e.key) {
-                    case ' ': case 'k': e.preventDefault(); togglePlay(); break;
-                    case 'j': e.preventDefault(); seekRelative(-10); break;
-                    case 'l': e.preventDefault(); seekRelative(10); break;
-                    case 'm': e.preventDefault(); toggleMute(); break;
-                    case 'f': e.preventDefault(); toggleFullscreen(); break;
-                    case 'ArrowUp': e.preventDefault(); const newVolUp = Math.min(1, nativeVideo.volume + 0.05); setVolume(newVolUp); volumeSlider.value = newVolUp; break;
-                    case 'ArrowDown': e.preventDefault(); const newVolDown = Math.max(0, nativeVideo.volume - 0.05); setVolume(newVolDown); volumeSlider.value = newVolDown; break;
-                    case 'ArrowLeft': e.preventDefault(); seekRelative(-5); break;
-                    case 'ArrowRight': e.preventDefault(); seekRelative(5); break;
-                    default: if (e.key >= '0' && e.key <= '9') { e.preventDefault(); const time = (nativeVideo.duration / 10) * parseInt(e.key); nativeVideo.currentTime = time; } break;
-                }
-            });
-        }
     </script>
 </body>
 </html>

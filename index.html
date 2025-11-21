@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AniStream Player | Design Avançado e WebTorrent</title>
+    <title>AniStream Player | Design Avançado, Local e WebTorrent</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -36,14 +36,14 @@
             color: var(--text-light);
             font-family: 'Roboto', sans-serif;
             height: 100%;
-            /* Permite o scroll se o conteúdo for maior que a tela (principalmente para o status) */
             overflow-y: auto; 
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* Alinha no topo, centraliza horizontalmente */
-            padding-top: 30px; /* Espaço no topo */
+            justify-content: flex-start;
+            padding-top: 30px; 
             padding-bottom: 30px; 
+            position: relative; /* Necessário para a playlist flutuante */
         }
 
         .player-container {
@@ -55,7 +55,6 @@
             border-radius: 12px;
             overflow: hidden;
             background-color: #000;
-            margin-bottom: 20px; /* Espaço para a nova área de status */
         }
 
         .video-container {
@@ -87,13 +86,11 @@
         }
 
         /* =================================================================
-           # CONTROLES DO PLAYER (Sem alteração significativa de layout)
+           # CONTROLES DO PLAYER (Visuais)
            ================================================================= */
         .controls {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 0; left: 0; right: 0;
             background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0));
             padding: 15px 15px 10px 15px;
             opacity: 0;
@@ -103,9 +100,7 @@
         }
         
         .player-container:hover .controls,
-        .player-container.show-controls .controls {
-            opacity: 1;
-        }
+        .player-container.show-controls .controls { opacity: 1; }
 
         .controls-row { display: flex; align-items: center; justify-content: space-between; }
         .left-controls, .right-controls { display: flex; align-items: center; }
@@ -120,11 +115,7 @@
         .material-icons { font-size: 24px; color: var(--text-light); }
         .time-display { font-size: 14px; font-weight: 500; margin: 0 15px; color: var(--text-light); min-width: 100px; text-align: center; }
 
-        /* Estilos de Range Slider (Volume) - Mantidos */
-        input[type=range] { -webkit-appearance: none; width: 80px; height: 4px; background: var(--bg-light); border-radius: 2px; outline: none; transition: opacity 0.2s; margin: 0 5px; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); cursor: pointer; }
-
-        /* Barra de Progresso - Mantida */
+        /* Barra de Progresso */
         .progress-bar-container { position: absolute; top: 0; left: 0; right: 0; height: 5px; cursor: pointer; transition: height 0.2s; }
         .progress-bar-container:hover { height: 10px; }
         .progress-bar { position: relative; height: 100%; background-color: rgba(255, 255, 255, 0.3); border-radius: 3px; }
@@ -135,9 +126,9 @@
 
 
         /* =================================================================
-           # ESTILOS DE INPUT (Mantidos dentro do player-container)
+           # ÁREA DE INPUT DE MAGNET LINK INICIAL
            ================================================================= */
-        .torrent-input-area {
+        .initial-input-area {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -149,16 +140,106 @@
             border-radius: 12px;
             box-shadow: 0 4px 25px rgba(0, 0, 0, 0.7);
         }
+        .initial-input-area h2 { margin-top: 0; color: var(--primary); font-size: 1.8em; margin-bottom: 20px; }
+        .initial-input-area p { margin-top: 10px; font-size: 13px; color: var(--text-muted); }
+        .initial-input-area.hidden { display: none; }
+        
+        /* =================================================================
+           # ÁREA DE CARREGAMENTO (ENTRE PLAYER E STATUS)
+           ================================================================= */
+        #torrent-load-area {
+            width: 90vw;
+            max-width: 1000px;
+            margin-top: 20px; 
+            margin-bottom: 10px;
+            background-color: var(--bg-medium);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .magnet-input-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
 
-        .torrent-input-area h2 { margin-top: 0; color: var(--primary); font-size: 1.8em; margin-bottom: 20px; }
-        #magnet-uri-input { width: 350px; padding: 12px 15px; border: 2px solid var(--bg-light); border-radius: 8px; background-color: var(--bg-dark); color: var(--text-light); margin-bottom: 15px; font-size: 1em; transition: border-color 0.3s; }
-        #magnet-uri-input:focus { outline: none; border-color: var(--primary); }
-        #load-button { padding: 12px 25px; border: none; border-radius: 8px; background-color: var(--secondary); color: var(--bg-dark); font-weight: 700; cursor: pointer; transition: background-color 0.2s, transform 0.1s; }
-        #load-button:hover { background-color: #FFEB3B; transform: translateY(-1px); }
-        .torrent-input-area p { margin-top: 10px; font-size: 13px; color: var(--text-muted); }
+        #magnet-uri-input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: 2px solid var(--bg-light);
+            border-radius: 8px;
+            background-color: var(--bg-dark); 
+            color: var(--text-light);
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        #magnet-uri-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        #load-button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--secondary); 
+            color: var(--bg-dark); 
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        #load-button:hover {
+            background-color: #FFEB3B;
+            transform: translateY(-1px);
+        }
+        
+        .file-upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            border: 2px dashed var(--bg-light);
+            border-radius: 8px;
+            padding: 20px;
+            transition: border-color 0.3s, background-color 0.2s;
+            cursor: pointer;
+        }
+        
+        .file-upload-section.drag-over {
+            border-color: var(--primary);
+            background-color: rgba(0, 196, 204, 0.1);
+        }
+
+        .file-upload-section i {
+            font-size: 30px;
+            color: var(--text-muted);
+        }
+
+        .file-upload-section p {
+            margin: 0;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        
+        #file-input-label {
+            cursor: pointer;
+            color: var(--primary);
+            font-weight: 500;
+            text-decoration: underline;
+        }
+
+        #file-upload-input {
+            display: none;
+        }
 
         /* =================================================================
-           # NOVO: ÁREA DE INFORMAÇÕES DO TORRENT (ABAIXO DO PLAYER)
+           # ÁREA DE INFORMAÇÕES DO TORRENT
            ================================================================= */
         #torrent-info-display {
             width: 90vw;
@@ -167,53 +248,126 @@
             border-radius: 12px;
             padding: 15px 20px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-            display: none; /* Inicialmente oculto, só aparece ao carregar o link */
+            display: none; 
+            flex-direction: column;
+            margin-top: 10px;
+        }
+
+        .label { color: var(--text-muted); font-size: 0.9em; font-weight: 500; }
+        .value { color: var(--text-light); font-size: 1em; font-weight: 700; text-align: right; max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        #current-status-message { color: var(--primary); font-size: 1.1em; font-weight: 700; margin-top: 5px; }
+
+        /* =================================================================
+           # PLAYLIST SIDEBAR
+           ================================================================= */
+        #playlist-container {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background-color: var(--bg-medium);
+            z-index: 999;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+            transform: translateX(300px); /* Oculto por padrão */
+            transition: transform 0.3s ease-in-out;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
             flex-direction: column;
         }
 
-        #torrent-info-display .info-row {
+        #playlist-container.open {
+            transform: translateX(0); /* Visível */
+        }
+        
+        #playlist-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        #playlist-header h3 {
+            margin: 0;
+            color: var(--text-light);
+        }
+
+        #playlist-close-btn {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 5px;
+            transition: color 0.2s;
+        }
+
+        #playlist-close-btn:hover {
+            color: var(--secondary);
+        }
+
+        #playlist-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .playlist-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
             margin-bottom: 5px;
-            border-bottom: 1px solid var(--bg-light);
-            padding-bottom: 5px;
+            border-radius: 6px;
+            background-color: var(--bg-dark);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 0.9em;
+            overflow: hidden;
+        }
+
+        .playlist-item:hover {
+            background-color: var(--bg-light);
+        }
+
+        .playlist-item.active {
+            background-color: var(--primary);
+            color: var(--bg-dark);
+            font-weight: 700;
         }
         
-        #torrent-info-display .info-row:last-child {
-            margin-bottom: 0;
-            border-bottom: none;
-            padding-bottom: 0;
+        .playlist-item.active .material-icons {
+            color: var(--bg-dark);
         }
 
-        .label {
-            color: var(--text-muted);
-            font-size: 0.9em;
-            font-weight: 500;
+        .playlist-item .material-icons {
+            font-size: 18px;
+            margin-right: 10px;
+            color: var(--primary);
+            flex-shrink: 0;
         }
-
-        .value {
-            color: var(--text-light);
-            font-size: 1em;
-            font-weight: 700;
-            text-align: right;
-            max-width: 70%;
+        
+        .playlist-item-name {
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        #current-status-message {
-            color: var(--primary); /* Destaque para o status atual */
-            font-size: 1.1em;
-            font-weight: 700;
-            margin-top: 5px;
+            flex-grow: 1;
         }
         
-        #current-status-message span {
-            color: var(--text-light);
-            font-weight: 500;
+        /* Responsividade básica para evitar que a playlist esmague o layout em telas muito pequenas */
+        @media (max-width: 600px) {
+            #playlist-container {
+                width: 100%;
+                transform: translateX(100%);
+            }
+            #playlist-container.open {
+                transform: translateX(0);
+            }
         }
+
     </style>
 </head>
 <body>
@@ -221,17 +375,16 @@
     <div id="player-container" class="player-container">
         
         <div id="video-container" class="video-container">
-            <!-- ÁREA DE INPUT DE MAGNET LINK -->
-            <div id="torrent-input-area" class="torrent-input-area">
-                <h2>Carregar Magnet Link</h2>
-                <input type="text" id="magnet-uri-input" placeholder="Cole seu Magnet URI aqui...">
-                <button id="load-button">Carregar Vídeo</button>
+            <!-- ÁREA DE INPUT DE MAGNET LINK INICIAL - SÓ APARECE SE NADA ESTIVER CARREGADO -->
+            <div id="initial-input-area" class="initial-input-area">
+                <h2>Bem-vindo ao AniStream Player</h2>
+                <p>Use a área de carregamento abaixo para iniciar a reprodução de links ou arquivos de mídia locais.</p>
                 <p>
-                    Atalhos: Espaço/K (Play/Pause), J/L (Seek +/- 10s), Setas (Volume/Seek +/- 5s), M (Mute), F (Fullscreen).
+                    Atalhos: Espaço/K (Play/Pause), J/L (Seek +/- 10s), M (Mute), F (Fullscreen).
                 </p>
             </div>
             
-            <!-- O elemento <video> será injetado aqui pelo WebTorrent -->
+            <!-- O elemento <video> será injetado aqui -->
         </div>
 
         <div id="controls" class="controls">
@@ -261,6 +414,9 @@
                 </div>
 
                 <div class="right-controls">
+                    <button id="playlist-toggle-btn" class="control-btn" title="Playlist (Mostrar/Esconder)">
+                        <i class="material-icons">queue_play_next</i>
+                    </button>
                     <button id="fullscreen-btn" class="control-btn" title="Tela Cheia (F)">
                         <i id="fullscreen-icon" class="material-icons">fullscreen</i>
                     </button>
@@ -269,7 +425,22 @@
         </div>
     </div>
     
-    <!-- NOVO CONTAINER DE INFORMAÇÕES DO TORRENT -->
+    <!-- CONTAINER DE CARREGAMENTO (ENTRE PLAYER E STATUS) -->
+    <div id="torrent-load-area">
+        <div class="magnet-input-group">
+            <input type="text" id="magnet-uri-input" placeholder="Cole seu Magnet URI aqui...">
+            <button id="load-button">Carregar Link</button>
+        </div>
+        
+        <div id="file-upload-section" class="file-upload-section">
+            <i class="material-icons">cloud_upload</i>
+            <p>Arraste e solte **arquivos de vídeo (.mp4, .webm, etc) ou .torrent** aqui</p>
+            <p>ou clique para <label id="file-input-label" for="file-upload-input">selecionar o arquivo</label>.</p>
+            <input type="file" id="file-upload-input" accept=".torrent, video/*" multiple>
+        </div>
+    </div>
+
+    <!-- CONTAINER DE INFORMAÇÕES DETALHADAS DO TORRENT (ABAIXO DA ÁREA DE CARREGAMENTO) -->
     <div id="torrent-info-display">
         <div class="info-row">
             <span class="label">Status Atual:</span>
@@ -292,6 +463,19 @@
             <span id="peer-count" class="value">0</span>
         </div>
     </div>
+    
+    <!-- PLAYLIST CONTAINER (FLUTUANTE) -->
+    <div id="playlist-container">
+        <div id="playlist-header">
+            <h3>Lista de Reprodução</h3>
+            <button id="playlist-close-btn" class="control-btn" title="Fechar Playlist">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        <ul id="playlist-list">
+            <!-- Itens serão adicionados aqui -->
+        </ul>
+    </div>
 
     <script type="module">
         // =================================================================
@@ -300,46 +484,36 @@
         const client = new WebTorrent();
         let videoElement = null; 
         let currentTorrent = null;
+        let playlist = []; // Armazena objetos { name: string, type: 'torrent' | 'local', source: string | File, id: number }
+        let currentFileId = null;
 
         // =================================================================
         // # REFERÊNCIAS DE ELEMENTOS HTML
         // =================================================================
         const playerContainer = document.getElementById('player-container');
-        const videoContainer = document.getElementById('video-container');
         const controls = document.getElementById('controls');
-        // ... (Outros controles) ...
+        const videoContainer = document.getElementById('video-container');
+        const initialInputArea = document.getElementById('initial-input-area');
         const magnetUriInput = document.getElementById('magnet-uri-input');
         const loadButton = document.getElementById('load-button');
-        const torrentInputArea = document.getElementById('torrent-input-area');
-        
-        // NOVAS REFERÊNCIAS PARA INFORMAÇÕES DE STATUS
+        const fileUploadSection = document.getElementById('file-upload-section');
+        const fileUploadInput = document.getElementById('file-upload-input');
         const torrentInfoDisplay = document.getElementById('torrent-info-display');
         const currentStatusMessage = document.getElementById('current-status-message');
         const fileNameDisplay = document.getElementById('file-name');
-        const downloadSpeedDisplay = document.getElementById('download-speed');
-        const progressPercentDisplay = document.getElementById('progress-percent');
-        const peerCountDisplay = document.getElementById('peer-count');
-        
-        // Referências de Controles (para evitar Uncaught errors no JS)
         const playPauseButton = document.getElementById('play-pause-btn');
         const playPauseIcon = document.getElementById('play-pause-icon');
-        const muteButton = document.getElementById('mute-btn');
-        const muteIcon = document.getElementById('mute-icon');
         const volumeSlider = document.getElementById('volume-slider');
-        const timeDisplay = document.getElementById('time-display');
-        const progressBarContainer = document.getElementById('progress-bar-container');
-        const progressCurrent = document.getElementById('progress-current');
-        const progressBuffered = document.getElementById('progress-buffered');
-        const progressThumb = document.getElementById('progress-thumb');
-        const fullscreenButton = document.getElementById('fullscreen-btn');
-
+        
+        // Playlist Refs
+        const playlistContainer = document.getElementById('playlist-container');
+        const playlistList = document.getElementById('playlist-list');
+        const playlistToggleButton = document.getElementById('playlist-toggle-btn');
+        const playlistCloseButton = document.getElementById('playlist-close-btn');
 
         // =================================================================
-        // # FUNÇÕES DE UTILIADADE
+        // # FUNÇÕES DE UTILIDADE
         // =================================================================
-
-        /** Formata tempo, progresso e volume... (Funções auxiliares não duplicadas) **/
-
         function formatTime(seconds) {
             if (isNaN(seconds) || seconds === Infinity) return '0:00';
             const s = Math.floor(seconds);
@@ -354,40 +528,25 @@
             }
             return timeString;
         }
-        
+
         function updateProgress() {
             if (!videoElement) return;
             const currentTime = videoElement.currentTime;
             const duration = videoElement.duration;
             
-            if (isNaN(duration) || duration <= 0) {
-                progressCurrent.style.width = '0%';
-                progressThumb.style.left = '0%';
-                timeDisplay.textContent = `${formatTime(currentTime)} / 0:00`;
-                return;
-            }
-
+            // Lógica de progresso e buffer
             const percentage = (currentTime / duration) * 100;
-            progressCurrent.style.width = `${percentage}%`;
-            progressThumb.style.left = `${percentage}%`;
-            timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
-        }
-
-        function updateBuffer() {
-            if (!videoElement || videoElement.buffered.length === 0) {
-                progressBuffered.style.width = '0%';
-                return;
-            }
-
-            const duration = videoElement.duration;
-            const bufferedEnd = videoElement.buffered.end(videoElement.buffered.length - 1);
+            document.getElementById('progress-current').style.width = `${percentage}%`;
+            document.getElementById('progress-thumb').style.left = `${percentage}%`;
+            document.getElementById('time-display').textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
             
-            if (isNaN(duration) || duration <= 0) return;
-
-            const percentage = (bufferedEnd / duration) * 100;
-            progressBuffered.style.width = `${percentage}%`;
+            // Lógica de buffer (mantida)
+            if (videoElement.buffered.length > 0 && duration > 0) {
+                const bufferedEnd = videoElement.buffered.end(videoElement.buffered.length - 1);
+                document.getElementById('progress-buffered').style.width = `${(bufferedEnd / duration) * 100}%`;
+            }
         }
-
+        
         function formatSpeed(bytes) {
             if (bytes === 0) return '0.00 B/s';
             const k = 1024;
@@ -395,28 +554,24 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
         }
+
+        function updatePlayPauseIcon() {
+            if (!videoElement) return;
+            playPauseIcon.textContent = videoElement.paused ? 'play_arrow' : 'pause';
+        }
         
-        /** (Funções de controle do player - Mantidas) **/
+        // Funções de controle do player (Play/Pause, Mute, Volume, Seek, Fullscreen)
         function togglePlay() {
             if (!videoElement) return;
-            if (videoElement.paused) {
-                videoElement.play().catch(e => console.error("Erro ao tentar dar play:", e));
-            } else {
-                videoElement.pause();
-            }
+            if (videoElement.paused) { videoElement.play().catch(e => console.error("Erro ao tentar dar play:", e)); } else { videoElement.pause(); }
             updatePlayPauseIcon();
-        }
-        function toggleMute() {
-            if (!videoElement) return;
-            videoElement.muted = !videoElement.muted;
-            updateMuteIcon();
-            if (!videoElement.muted) { volumeSlider.value = videoElement.volume; }
         }
         function setVolume(volume) {
             if (!videoElement) return;
             videoElement.volume = volume;
             videoElement.muted = volume === 0;
-            updateMuteIcon();
+            const muteIcon = document.getElementById('mute-icon');
+            muteIcon.textContent = videoElement.muted || videoElement.volume === 0 ? 'volume_off' : (videoElement.volume < 0.5 ? 'volume_down' : 'volume_up');
         }
         function seekRelative(seconds) {
             if (!videoElement) return;
@@ -424,50 +579,15 @@
         }
         function toggleFullscreen() {
             if (!videoElement) return;
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            } else if (playerContainer.requestFullscreen) {
-                playerContainer.requestFullscreen();
-            } else if (playerContainer.webkitRequestFullscreen) { 
-                playerContainer.webkitRequestFullscreen();
-            } else if (playerContainer.msRequestFullscreen) { 
-                playerContainer.msRequestFullscreen();
-            }
+            if (document.fullscreenElement) { document.exitFullscreen(); } else if (playerContainer.requestFullscreen) { playerContainer.requestFullscreen(); }
         }
-        function updatePlayPauseIcon() {
-            if (!videoElement) return;
-            playPauseIcon.textContent = videoElement.paused ? 'play_arrow' : 'pause';
-        }
-        function updateMuteIcon() {
-            if (!videoElement) return;
-            if (videoElement.muted || videoElement.volume === 0) {
-                muteIcon.textContent = 'volume_off';
-            } else if (videoElement.volume < 0.5) {
-                muteIcon.textContent = 'volume_down';
-            } else {
-                muteIcon.textContent = 'volume_up';
-            }
-        }
-        function updateFullscreenIcon() {
-            fullscreenIcon.textContent = document.fullscreenElement ? 'fullscreen_exit' : 'fullscreen';
-        }
-
 
         // =================================================================
-        // # FUNÇÃO DE ATUALIZAÇÃO DO STATUS DO TORRENT
+        // # FUNÇÕES DE STATUS DO TORRENT
         // =================================================================
-
-        /**
-         * Atualiza as informações do torrent no painel de status fixo.
-         */
         function updateTorrentInfo() {
-            if (!currentTorrent) {
+            if (!currentTorrent || currentTorrent.destroyed) {
                 torrentInfoDisplay.style.display = 'none';
-                currentStatusMessage.textContent = 'Aguardando URI...';
-                fileNameDisplay.textContent = 'N/A';
-                downloadSpeedDisplay.textContent = '0.00 B/s';
-                progressPercentDisplay.textContent = '0%';
-                peerCountDisplay.textContent = '0';
                 return;
             }
             
@@ -477,11 +597,10 @@
             const speed = formatSpeed(currentTorrent.downloadSpeed);
             const peers = currentTorrent.numPeers;
             
-            progressPercentDisplay.textContent = `${progress}%`;
-            downloadSpeedDisplay.textContent = speed;
-            peerCountDisplay.textContent = peers;
+            document.getElementById('progress-percent').textContent = `${progress}%`;
+            document.getElementById('download-speed').textContent = speed;
+            document.getElementById('peer-count').textContent = peers;
 
-            // Lógica para a mensagem de status
             if (progress === 100) {
                 currentStatusMessage.textContent = 'Download completo. Reproduzindo.';
             } else if (currentTorrent.paused) {
@@ -494,84 +613,144 @@
         }
         
         // =================================================================
-        // # CONFIGURAÇÃO DE EVENTOS DO PLAYER
+        // # LÓGICA DE REPRODUÇÃO E PLAYLIST
         // =================================================================
-        function setupPlayerEvents(nativeVideo) {
-            videoElement = nativeVideo;
+        
+        /**
+         * Adiciona um novo arquivo ou Magnet URI à playlist.
+         * @param {File | string} source - O objeto File ou a string do Magnet URI.
+         * @param {'local' | 'torrent'} type - O tipo de fonte.
+         */
+        function addFileToPlaylist(source, type) {
+            const fileName = type === 'local' ? source.name : 
+                             type === 'torrent' ? `Magnet Link (${source.substring(0, 30)}...)` : 
+                             'Arquivo Desconhecido';
+                             
+            const newId = playlist.length > 0 ? Math.max(...playlist.map(f => f.id)) + 1 : 1;
 
-            // Configuração dos Listeners do Player (Play/Pause, Volume, Tempo, Fullscreen)
-            playPauseButton.addEventListener('click', togglePlay);
-            nativeVideo.addEventListener('click', togglePlay);
-            nativeVideo.addEventListener('play', updatePlayPauseIcon);
-            nativeVideo.addEventListener('pause', updatePlayPauseIcon);
-            nativeVideo.addEventListener('timeupdate', updateProgress);
-            nativeVideo.addEventListener('progress', updateBuffer); 
-            nativeVideo.addEventListener('loadedmetadata', () => {
-                setVolume(volumeSlider.value); 
-                updateProgress();
-                updateBuffer();
-            });
-            muteButton.addEventListener('click', toggleMute);
-            volumeSlider.addEventListener('input', (e) => setVolume(parseFloat(e.target.value)));
-            nativeVideo.addEventListener('volumechange', updateMuteIcon);
-            fullscreenButton.addEventListener('click', toggleFullscreen);
-            document.addEventListener('fullscreenchange', updateFullscreenIcon);
-            progressBarContainer.addEventListener('click', (e) => {
-                const duration = videoElement.duration;
-                if (isNaN(duration) || duration <= 0) return;
-                const rect = progressBarContainer.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                videoElement.currentTime = duration * (clickX / rect.width);
-            });
+            const fileObject = {
+                id: newId,
+                name: fileName,
+                type: type,
+                source: source,
+            };
+
+            // Evita adicionar Magnet Links duplicados (arquivos locais podem ser duplicados)
+            if (type === 'torrent' && playlist.some(f => f.type === 'torrent' && f.source === source)) {
+                return;
+            }
+
+            playlist.push(fileObject);
+            renderPlaylist();
             
-            // Lógica de esconder/mostrar os controles
-            playerContainer.classList.add('show-controls'); // Visível no início
-            let controlsTimeout;
-            playerContainer.addEventListener('mousemove', () => {
-                playerContainer.classList.add('show-controls');
-                clearTimeout(controlsTimeout);
-                if (!videoElement.paused) {
-                    controlsTimeout = setTimeout(() => {
-                        playerContainer.classList.remove('show-controls');
-                    }, 3000);
-                }
-            });
-            playerContainer.addEventListener('mouseleave', () => {
-                if (!videoElement.paused) {
-                    playerContainer.classList.remove('show-controls');
-                }
-            });
-            playerContainer.addEventListener('mouseenter', () => {
-                 playerContainer.classList.add('show-controls');
-            });
-            nativeVideo.addEventListener('pause', () => {
-                playerContainer.classList.add('show-controls');
-            });
-            
-            // Inicia o loop de atualização do WebTorrent
-            setInterval(updateTorrentInfo, 1000);
+            // Inicia a reprodução se for o primeiro arquivo
+            if (playlist.length === 1 && currentFileId === null) {
+                playFile(newId);
+            }
         }
         
-        // =================================================================
-        // # LÓGICA DO WEBTORRENT
-        // =================================================================
-
         /**
-         * Carrega o torrent a partir do magnet link e configura o player.
-         * @param {string} magnetURI - O Magnet URI do torrent.
+         * Renderiza a lista de arquivos na UI da playlist.
          */
-        function loadTorrent(magnetURI) {
-            // 1. Limpa qualquer torrent anterior
+        function renderPlaylist() {
+            playlistList.innerHTML = '';
+            if (playlist.length === 0) {
+                playlistList.innerHTML = '<li style="color: var(--text-muted); padding: 10px;">Nenhum arquivo na lista.</li>';
+                return;
+            }
+
+            playlist.forEach(file => {
+                const li = document.createElement('li');
+                li.className = `playlist-item ${file.id === currentFileId ? 'active' : ''}`;
+                li.setAttribute('data-file-id', file.id);
+                li.title = file.name;
+                
+                const icon = file.type === 'local' ? 'folder_open' : 'cloud_download';
+                
+                li.innerHTML = `
+                    <i class="material-icons">${icon}</i>
+                    <span class="playlist-item-name">${file.name}</span>
+                `;
+                
+                li.addEventListener('click', () => playFile(file.id));
+                playlistList.appendChild(li);
+            });
+        }
+        
+        /**
+         * Inicia a reprodução de um arquivo da playlist.
+         * @param {number} fileId - O ID do arquivo a ser reproduzido.
+         */
+        function playFile(fileId) {
+            const file = playlist.find(f => f.id === fileId);
+            if (!file) return;
+
+            // 1. Destrói/Remove o torrent anterior, se houver
             if (currentTorrent) {
                 client.remove(currentTorrent);
+                currentTorrent = null;
             }
             
-            // 2. Oculta o input e mostra o container de informações
-            torrentInputArea.style.display = 'none'; 
-            torrentInfoDisplay.style.display = 'flex';
-            currentStatusMessage.textContent = 'Conectando aos peers...';
+            // 2. Atualiza o estado ativo
+            currentFileId = fileId;
+            renderPlaylist();
+            
+            // 3. Oculta a área de boas-vindas
+            initialInputArea.classList.add('hidden');
 
-            client.add(magnetURI, (torrent) => {
+            // 4. Limpa o container de vídeo
+            while (videoContainer.children.length > 0) {
+                const child = videoContainer.children[0];
+                if (child.id !== 'initial-input-area') {
+                    videoContainer.removeChild(child);
+                } else {
+                    break;
+                }
+            }
+            
+            // 5. Trata a reprodução
+            if (file.type === 'local') {
+                playLocalFile(file.source);
+            } else if (file.type === 'torrent') {
+                loadTorrent(file.source);
+            }
+        }
+        
+        /**
+         * Reproduz um arquivo local diretamente.
+         * @param {File} fileObject - O objeto File nativo.
+         */
+        function playLocalFile(fileObject) {
+            // Cria um URL temporário para o arquivo local
+            const url = URL.createObjectURL(fileObject);
+            
+            const nativeVideo = document.createElement('video');
+            nativeVideo.src = url;
+            nativeVideo.autoplay = true;
+            nativeVideo.controls = false; // Usaremos os controles customizados
+            nativeVideo.classList.add('injected-video');
+
+            videoContainer.appendChild(nativeVideo);
+            setupPlayerEvents(nativeVideo);
+            controls.style.visibility = 'visible';
+            
+            // Oculta informações de torrent para arquivo local
+            torrentInfoDisplay.style.display = 'none';
+            
+            // Define o nome do arquivo para o status (embora o painel esteja oculto)
+            fileNameDisplay.textContent = fileObject.name;
+            currentStatusMessage.textContent = 'Reproduzindo arquivo local.';
+        }
+        
+        /**
+         * Carrega o torrent a partir do magnet link ou de um arquivo .torrent.
+         * @param {string|File} torrentSource - Magnet URI (string) ou arquivo .torrent (File).
+         */
+        function loadTorrent(torrentSource) {
+            currentStatusMessage.textContent = 'Conectando aos peers...';
+            torrentInfoDisplay.style.display = 'flex'; // Exibe o status para torrents
+
+            client.add(torrentSource, (torrent) => {
                 currentTorrent = torrent;
                 
                 let largestFile = null;
@@ -582,17 +761,10 @@
                 });
 
                 if (largestFile) {
-                    fileNameDisplay.textContent = largestFile.name; // Exibe o nome do arquivo
+                    fileNameDisplay.textContent = largestFile.name;
                     currentStatusMessage.textContent = `Preparando: ${largestFile.name}...`;
 
-                    // Remove elementos anteriores
-                    while (videoContainer.firstChild) {
-                        videoContainer.removeChild(videoContainer.firstChild);
-                    }
-                    // Adiciona o elemento de input de volta (oculto)
-                    videoContainer.appendChild(torrentInputArea);
-
-                    // Renderiza o arquivo no container de vídeo
+                    // Renderiza o vídeo
                     largestFile.renderTo(videoContainer, {
                         controls: false, 
                         autoplay: true
@@ -600,41 +772,93 @@
                         if (err) {
                             console.error('Erro ao renderizar vídeo:', err);
                             currentStatusMessage.textContent = 'Erro ao renderizar o vídeo. Tente outro Magnet Link.';
-                            torrentInputArea.style.display = 'block';
-                            currentTorrent = null;
-                            torrentInfoDisplay.style.display = 'none';
                             return;
                         }
                         
-                        currentStatusMessage.textContent = 'Reproduzindo...'; // Status final antes do loop de atualização
+                        currentStatusMessage.textContent = 'Reproduzindo...';
                         setupPlayerEvents(elem); 
                         controls.style.visibility = 'visible';
-                        torrentInputArea.style.display = 'none'; 
+                        magnetUriInput.value = '';
                     });
                 } else {
                     currentStatusMessage.textContent = 'Nenhum arquivo de vídeo encontrado no torrent.';
-                    torrentInputArea.style.display = 'block';
                     torrentInfoDisplay.style.display = 'none';
                 }
                 
-                // Eventos de progresso e done do torrent - Agora manipulados pelo updateTorrentInfo
+                // Eventos do torrent
                 torrent.on('download', updateTorrentInfo);
                 torrent.on('upload', updateTorrentInfo);
-                torrent.on('wire', updateTorrentInfo); // Atualiza contagem de peers
-                torrent.on('done', () => {
-                    // Garante que o status seja atualizado para 100% e 'Download completo'
-                    updateTorrentInfo();
-                });
+                torrent.on('wire', updateTorrentInfo);
+                torrent.on('done', updateTorrentInfo);
 
             }).on('error', (err) => {
                 console.error('Erro no WebTorrent:', err);
-                currentStatusMessage.textContent = `Erro: ${err.message}. Verifique o Magnet Link.`;
-                torrentInputArea.style.display = 'block';
+                currentStatusMessage.textContent = `Erro: ${err.message}. Verifique a origem.`;
                 torrentInfoDisplay.style.display = 'flex';
-                // Garante que o nome do arquivo volte a N/A
                 fileNameDisplay.textContent = 'Erro de Carregamento';
                 currentTorrent = null;
             });
+        }
+        
+        // =================================================================
+        // # CONFIGURAÇÃO DE EVENTOS DO PLAYER
+        // =================================================================
+        function setupPlayerEvents(nativeVideo) {
+            if (videoElement) {
+                // Remove listeners do vídeo anterior para evitar duplicação
+                // (O WebTorrent renderTo já limpa a maioria, mas a variável global precisa ser resetada)
+            }
+            videoElement = nativeVideo;
+
+            // Configuração dos Listeners do Player
+            playPauseButton.onclick = togglePlay;
+            nativeVideo.onclick = togglePlay;
+            nativeVideo.onplay = updatePlayPauseIcon;
+            nativeVideo.onpause = updatePlayPauseIcon;
+            nativeVideo.ontimeupdate = updateProgress;
+            nativeVideo.onprogress = updateProgress; // Atualiza o buffer
+            nativeVideo.onloadedmetadata = () => {
+                setVolume(volumeSlider.value); 
+                updateProgress();
+            };
+            document.getElementById('mute-btn').onclick = () => {
+                videoElement.muted = !videoElement.muted;
+                setVolume(videoElement.volume);
+            };
+            volumeSlider.oninput = (e) => setVolume(parseFloat(e.target.value));
+            document.getElementById('fullscreen-btn').onclick = toggleFullscreen;
+            document.addEventListener('fullscreenchange', () => {
+                document.getElementById('fullscreen-icon').textContent = document.fullscreenElement ? 'fullscreen_exit' : 'fullscreen';
+            });
+            document.getElementById('progress-bar-container').onclick = (e) => {
+                const duration = videoElement.duration;
+                if (isNaN(duration) || duration <= 0) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                videoElement.currentTime = duration * (clickX / rect.width);
+            };
+            
+            // Lógica de esconder/mostrar os controles
+            playerContainer.classList.add('show-controls');
+            let controlsTimeout;
+            const handleMouseMove = () => {
+                playerContainer.classList.add('show-controls');
+                clearTimeout(controlsTimeout);
+                if (!videoElement.paused) {
+                    controlsTimeout = setTimeout(() => {
+                        playerContainer.classList.remove('show-controls');
+                    }, 3000);
+                }
+            };
+            playerContainer.onmousemove = handleMouseMove;
+            playerContainer.onmouseleave = () => { if (!videoElement.paused) { playerContainer.classList.remove('show-controls'); } };
+            playerContainer.onmouseenter = () => { playerContainer.classList.add('show-controls'); };
+            nativeVideo.onpause = () => { playerContainer.classList.add('show-controls'); };
+            
+            // Garante que o loop de info do torrent só rode se for um torrent
+            if (currentTorrent) {
+                 setInterval(updateTorrentInfo, 1000);
+            }
         }
         
         // =================================================================
@@ -642,30 +866,76 @@
         // =================================================================
 
         window.onload = function () {
-            // Oculta tudo que não for o input
             controls.style.visibility = 'hidden'; 
             torrentInfoDisplay.style.display = 'none';
+            initialInputArea.classList.remove('hidden');
 
-            // Evento para o botão de carregar
+            // --- Eventos de Carregamento ---
+
+            // 1. Magnet URI
             loadButton.addEventListener('click', () => {
                 const magnetURI = magnetUriInput.value.trim();
                 if (magnetURI) {
-                    loadTorrent(magnetURI);
+                    addFileToPlaylist(magnetURI, 'torrent');
                 } else {
                     currentStatusMessage.textContent = 'Por favor, insira um Magnet URI válido.';
                     torrentInfoDisplay.style.display = 'flex';
-                    setTimeout(() => updateTorrentInfo(), 2000); // Limpa o status após 2s se não houver carregamento
+                    setTimeout(() => torrentInfoDisplay.style.display = 'none', 3000); 
                 }
             });
-            
-            // Também permite carregar ao pressionar Enter no input
             magnetUriInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    loadButton.click();
-                }
+                if (e.key === 'Enter') { loadButton.click(); }
             });
 
-            // Atalhos de teclado
+            // 2. Seleção de Arquivo (Input File)
+            fileUploadInput.addEventListener('change', (e) => {
+                Array.from(e.target.files).forEach(file => {
+                    const type = file.name.endsWith('.torrent') ? 'torrent' : 'local';
+                    addFileToPlaylist(file, type);
+                });
+                e.target.value = '';
+            });
+            
+            // 3. Drag and Drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                fileUploadSection.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (eventName === 'dragenter' || eventName === 'dragover') {
+                        fileUploadSection.classList.add('drag-over');
+                    } else if (eventName === 'dragleave' || eventName === 'drop') {
+                        fileUploadSection.classList.remove('drag-over');
+                    }
+                }, false);
+            });
+
+            fileUploadSection.addEventListener('drop', (e) => {
+                Array.from(e.dataTransfer.files).forEach(file => {
+                    const type = file.name.endsWith('.torrent') ? 'torrent' : 
+                                 file.type.startsWith('video/') ? 'local' : 
+                                 null;
+                    if (type) {
+                        addFileToPlaylist(file, type);
+                    } else {
+                        currentStatusMessage.textContent = 'Formato de arquivo inválido. Apenas .torrent ou vídeos.';
+                        torrentInfoDisplay.style.display = 'flex';
+                        setTimeout(() => torrentInfoDisplay.style.display = 'none', 3000);
+                    }
+                });
+            }, false);
+            
+            // --- Eventos da Playlist ---
+            
+            playlistToggleButton.addEventListener('click', () => {
+                playlistContainer.classList.toggle('open');
+            });
+
+            playlistCloseButton.addEventListener('click', () => {
+                playlistContainer.classList.remove('open');
+            });
+
+
+            // --- Atalhos de teclado (Garantindo que videoElement exista) ---
             document.addEventListener('keydown', (e) => {
                 if (!videoElement) return; 
                 
@@ -673,63 +943,16 @@
                 if (isInputFocused) return;
                 
                 switch (e.key) {
-                    case ' ': 
-                    case 'k': 
-                        e.preventDefault(); 
-                        togglePlay(); 
-                        break;
-                    
-                    case 'j': 
-                        e.preventDefault(); 
-                        seekRelative(-10); 
-                        break;
-                    
-                    case 'l': 
-                        e.preventDefault(); 
-                        seekRelative(10); 
-                        break;
-                    
-                    case 'm': 
-                        e.preventDefault(); 
-                        toggleMute(); 
-                        break;
-                    
-                    case 'f': 
-                        e.preventDefault(); 
-                        toggleFullscreen(); 
-                        break;
-                    
-                    case 'ArrowUp': 
-                        e.preventDefault(); 
-                        const newVolUp = Math.min(1, videoElement.volume + 0.05); 
-                        setVolume(newVolUp); 
-                        volumeSlider.value = newVolUp; 
-                        break;
-                    
-                    case 'ArrowDown': 
-                        e.preventDefault(); 
-                        const newVolDown = Math.max(0, videoElement.volume - 0.05); 
-                        setVolume(newVolDown); 
-                        volumeSlider.value = newVolDown; 
-                        break;
-                    
-                    case 'ArrowLeft': 
-                        e.preventDefault(); 
-                        seekRelative(-5); 
-                        break;
-                    
-                    case 'ArrowRight': 
-                        e.preventDefault(); 
-                        seekRelative(5); 
-                        break;
-                    
-                    default: 
-                        if (e.key >= '0' && e.key <= '9') { 
-                            e.preventDefault(); 
-                            const percentage = parseInt(e.key) / 10;
-                            videoElement.currentTime = videoElement.duration * percentage;
-                        } 
-                        break;
+                    case ' ': case 'k': e.preventDefault(); togglePlay(); break;
+                    case 'j': e.preventDefault(); seekRelative(-10); break;
+                    case 'l': e.preventDefault(); seekRelative(10); break;
+                    case 'm': e.preventDefault(); videoElement.muted = !videoElement.muted; setVolume(videoElement.volume); break; 
+                    case 'f': e.preventDefault(); toggleFullscreen(); break;
+                    case 'ArrowUp': e.preventDefault(); const newVolUp = Math.min(1, videoElement.volume + 0.05); setVolume(newVolUp); volumeSlider.value = newVolUp; break;
+                    case 'ArrowDown': e.preventDefault(); const newVolDown = Math.max(0, videoElement.volume - 0.05); setVolume(newVolDown); volumeSlider.value = newVolDown; break;
+                    case 'ArrowLeft': e.preventDefault(); seekRelative(-5); break;
+                    case 'ArrowRight': e.preventDefault(); seekRelative(5); break;
+                    default: if (e.key >= '0' && e.key <= '9') { e.preventDefault(); const percentage = parseInt(e.key) / 10; videoElement.currentTime = videoElement.duration * percentage; } break;
                 }
             });
         }

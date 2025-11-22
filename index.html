@@ -66,7 +66,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.7);
-            z-index: 1000; /* Acima de tudo */
+            z-index: 1000; /* Prioridade base: Overlay escura */
             display: none;
         }
 
@@ -78,7 +78,7 @@
             border-radius: 12px;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
             max-width: 300px;
-            z-index: 1001;
+            z-index: 1001; /* Prioridade do Balão: Acima da Overlay (1000) */
             border: 2px solid #06b6d4; /* neon-cyan */
             transition: all 0.3s ease;
         }
@@ -91,7 +91,7 @@
             border-style: solid;
         }
 
-        /* Setas do Balão (Ajustado para o balão ficar em cima dos elementos) */
+        /* Setas do Balão */
         .balloon-top::before {
             border-width: 10px;
             border-color: #06b6d4 transparent transparent transparent;
@@ -127,7 +127,7 @@
         /* Efeito de destaque no elemento alvo */
         .pulse-target {
             position: relative;
-            z-index: 1002 !important; /* Garante que o alvo esteja acima da sobreposição */
+            z-index: 1002 !important; /* Prioridade do Alvo: Acima do Balão (1001) */
             border-radius: 0.75rem; /* rounded-xl */
         }
         .pulse-target::after {
@@ -468,13 +468,13 @@
                 element: document.getElementById('magnetInput').parentElement.parentElement, // Painel do Magnet Link
                 title: "4. Carregar Magnet Link",
                 text: "Cole um **Magnet Link** ou o **hash Info** aqui para iniciar o download/stream via WebTorrent diretamente.",
-                position: 'top' // Alterado para 'top' para ficar em cima (mais visível)
+                position: 'top' // Balão acima para destacar o painel
             },
             { 
                 element: document.getElementById('dropZone'), 
                 title: "5. Upload Local ou Pasta",
                 text: "Use o arrastar e soltar (Drag & Drop) ou clique nos botões para carregar vídeos locais ou pastas inteiras (que serão tratadas como playlist).",
-                position: 'top' // Alterado para 'top' para ficar em cima (mais visível)
+                position: 'top' // Balão acima para destacar a zona de upload
             },
             { 
                 element: document.getElementById('playerContainer'), 
@@ -507,8 +507,8 @@
 
             if (element) {
                 // Armazena e define o novo z-index (1002 para ficar acima da overlay)
+                // Usamos !important no CSS para garantir que ele esteja acima, mas definimos o valor aqui também.
                 originalZIndices.set(element, element.style.zIndex);
-                element.style.zIndex = 1002;
                 element.classList.add('pulse-target');
             }
         }
@@ -533,7 +533,7 @@
                 left = targetRect.left + targetRect.width / 2 + scrollX - balloon.offsetWidth / 2;
                 balloon.classList.add('balloon-bottom');
             } else if (position === 'top') {
-                // Balão acima do alvo (usado para Magnet Link e Upload Local)
+                // Balão acima do alvo
                 top = targetRect.top - balloon.offsetHeight - 20 + scrollY;
                 left = targetRect.left + targetRect.width / 2 + scrollX - balloon.offsetWidth / 2;
                 balloon.classList.add('balloon-top');
@@ -569,7 +569,6 @@
             const step = tutorialSteps[index];
 
             // 1. Centraliza o elemento alvo na tela antes de posicionar o balão.
-            // O 'block: center' resolve o problema de o elemento estar fora da dimensão da página.
             step.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
             
             // Atualiza o conteúdo do balão
@@ -592,17 +591,9 @@
         }
 
         function startTutorial() {
-            // Verifica se o player está minimizado/escondido (ex: em telas muito pequenas, o player pode demorar a carregar)
-            if (video.readyState < 2) {
-                // Pausa para dar tempo de carregar
-                setTimeout(() => {
-                    tutorialOverlay.style.display = 'block';
-                    showStep(0);
-                }, 100); 
-            } else {
-                tutorialOverlay.style.display = 'block';
-                showStep(0);
-            }
+            // Garante que o tutorial inicie apenas se o DOM estiver pronto
+            tutorialOverlay.style.display = 'block';
+            showStep(0);
         }
 
         function nextStep() {
@@ -613,6 +604,7 @@
             tutorialOverlay.style.display = 'none';
             highlightElement(null); // Remove o destaque do último elemento
             currentTutorialStep = 0; // Reseta para o próximo início
+            alert("✨ Tutorial concluído! Divirta-se!");
         }
 
         // FIM FUNÇÕES DE CONTROLE DO TUTORIAL
@@ -790,7 +782,9 @@
                     defaultButton.classList.remove('text-gray-300');
                 }
             }
+            showTimeIndicator(`${speed.toFixed(2)}x`);
         }
+        setPlaybackSpeed(1, null); // Garante que 1x esteja destacado ao carregar
 
         // DETECTAR FAIXAS DE ÁUDIO
         video.onloadedmetadata = () => {
@@ -949,6 +943,14 @@
             
             loading.classList.remove('hidden');
             
+            // Limpa o torrent anterior, se houver
+            if(currentTorrent) {
+                currentTorrent.destroy();
+                currentTorrent = null;
+                clearInterval(updateInterval);
+                document.getElementById('torrentStats').classList.add('hidden');
+            }
+
             client.add(uri, (torrent) => {
                 currentTorrent = torrent;
                 const file = torrent.files.find(f => isVideo(f.name));
@@ -1088,13 +1090,11 @@
                     e.preventDefault();
                     let newSpeedForward = Math.min(2, video.playbackRate + 0.25);
                     setPlaybackSpeed(newSpeedForward, null);
-                    showTimeIndicator(`${newSpeedForward.toFixed(2)}x`);
                     break;
                 case '<': // Retroceder velocidade
                     e.preventDefault();
                     let newSpeedBackward = Math.max(0.5, video.playbackRate - 0.25);
                     setPlaybackSpeed(newSpeedBackward, null);
-                    showTimeIndicator(`${newSpeedBackward.toFixed(2)}x`);
                     break;
             }
         });

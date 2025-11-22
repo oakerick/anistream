@@ -61,6 +61,40 @@
 </head>
 <body class="flex flex-col items-center min-h-screen pb-20">
 
+    <div id="tutorialModal" class="hidden fixed top-0 left-0 w-full h-full z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center">
+        <div class="glass-panel w-full max-w-lg p-6 rounded-2xl shadow-2xl relative">
+            <h3 class="text-2xl font-bold text-neon-cyan mb-3 flex items-center gap-2">
+                <span class="material-icons">school</span> Guia Rápido & Atalhos
+            </h3>
+            <p class="text-gray-300 mb-4 text-sm">Acesse o conteúdo por **Magnet Link** ou **Upload Local** (arquivos e pastas).</p>
+            
+            <div class="grid grid-cols-2 gap-4 text-xs font-mono">
+                <div class="p-3 bg-white/5 rounded-lg">
+                    <p class="font-bold text-neon-purple mb-1">Controles</p>
+                    <ul class="space-y-1 text-gray-400">
+                        <li><span class="text-white font-bold">Espaço / K</span>: Play/Pause</li>
+                        <li><span class="text-white font-bold">F</span>: Tela Cheia</li>
+                        <li><span class="text-white font-bold">M</span>: Mudo</li>
+                        <li><span class="text-white font-bold">C</span>: Legendas On/Off</li>
+                    </ul>
+                </div>
+                <div class="p-3 bg-white/5 rounded-lg">
+                    <p class="font-bold text-neon-purple mb-1">Navegação</p>
+                    <ul class="space-y-1 text-gray-400">
+                        <li><span class="text-white font-bold">← / J</span>: Voltar 10s</li>
+                        <li><span class="text-white font-bold">→ / L</span>: Avançar 10s</li>
+                        <li><span class="text-white font-bold">N / P</span>: Próximo/Vídeo Anterior</li>
+                        <li><span class="text-white font-bold">Up/Down</span>: Volume</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <button id="closeTutorial" class="mt-6 w-full py-2 bg-neon-cyan hover:bg-cyan-600 rounded-lg text-black font-bold text-sm transition">
+                Entendi, Fechar
+            </button>
+        </div>
+    </div>
+    
     <header class="w-full max-w-7xl p-6 flex justify-between items-center">
         <div class="flex items-center gap-3 select-none cursor-pointer" onclick="location.reload()">
             <span class="material-icons text-4xl text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">movie_filter</span>
@@ -84,21 +118,22 @@
             <div class="flex-1 relative w-full flex items-center">
                 <span class="material-icons text-neon-purple text-xl absolute left-3">auto_awesome</span>
                 <input type="text" id="aiSearchInput" 
-                       class="w-full bg-[#0f172a]/50 text-white placeholder-gray-500 pl-10 pr-[85px] py-3 rounded-lg outline-none border border-transparent focus:border-neon-purple/50 transition-colors"
+                       class="w-full bg-[#0f172a]/50 text-white placeholder-gray-500 pl-10 pr-[45px] py-3 rounded-lg outline-none border border-transparent focus:border-neon-purple/50 transition-colors"
                        placeholder="O que vamos assistir hoje? (Ex: Oppenheimer 4K)" autocomplete="off">
 
-                <div class="absolute right-2 flex gap-1 z-10">
+                <div class="absolute right-2 z-10">
                     <button id="micBtn" class="p-1 text-gray-400 hover:text-neon-cyan transition rounded-full hover:bg-white/10" title="Pesquisa por Voz">
                         <span class="material-icons text-lg">mic</span>
-                    </button>
-                    <button id="keyboardBtn" class="p-1 text-gray-400 hover:text-neon-purple transition rounded-full hover:bg-white/10" title="Teclado Virtual">
-                        <span class="material-icons text-lg">keyboard</span>
                     </button>
                 </div>
             </div>
 
             <button onclick="performSmartSearch()" class="w-full md:w-auto px-6 py-3 rounded-lg bg-gradient-to-r from-neon-purple to-indigo-600 hover:from-indigo-500 hover:to-neon-purple text-white font-bold text-sm tracking-wider transition-all shadow-lg">
                 BUSCAR
+            </button>
+            
+            <button id="tutorialBtn" class="text-gray-400 hover:text-neon-cyan transition p-3 rounded-lg" title="Mostrar Tutorial / Atalhos">
+                 <span class="material-icons text-lg">info</span>
             </button>
 
             <div id="aiLoadingBar" class="absolute bottom-0 left-0 h-1 bg-neon-cyan transition-all duration-[2000ms] ease-out w-0"></div>
@@ -108,7 +143,6 @@
             <span class="animate-pulse">Inicializando busca neural...</span>
         </div>
     </section>
----
 
     <div class="w-full max-w-4xl px-4 flex flex-col lg:flex-row gap-6 items-start">
         
@@ -277,7 +311,7 @@
                 </div>
             </div>
         </div>
----
+
         <div id="playlistPanel" class="w-full lg:w-80 hidden flex-col gap-2">
             <div class="glass-panel rounded-xl flex flex-col h-[500px] lg:h-[600px] sticky top-4">
                 <div class="p-3 border-b border-white/5 bg-black/20 rounded-t-xl flex justify-between items-center">
@@ -322,10 +356,32 @@
         const nextVideoBtn = document.getElementById('nextVideoBtn');
         const prevVideoBtn = document.getElementById('prevVideoBtn');
 
-        // NOVAS REFERÊNCIAS PARA BUSCA POR VOZ/TECLADO
+        // NOVAS REFERÊNCIAS PARA BUSCA POR VOZ/TUTORIAL
         const aiSearchInput = document.getElementById('aiSearchInput');
         const micBtn = document.getElementById('micBtn');
-        const keyboardBtn = document.getElementById('keyboardBtn');
+        const tutorialBtn = document.getElementById('tutorialBtn');
+        const tutorialModal = document.getElementById('tutorialModal');
+        const closeTutorial = document.getElementById('closeTutorial');
+
+
+        // LÓGICA DO TUTORIAL
+        tutorialBtn.onclick = () => {
+            tutorialModal.classList.remove('hidden');
+            tutorialModal.classList.add('flex');
+        };
+        
+        closeTutorial.onclick = () => {
+            tutorialModal.classList.add('hidden');
+            tutorialModal.classList.remove('flex');
+        };
+        
+        // Fechar ao clicar fora do modal
+        tutorialModal.onclick = (e) => {
+            if (e.target.id === 'tutorialModal') {
+                tutorialModal.classList.add('hidden');
+                tutorialModal.classList.remove('flex');
+            }
+        };
 
 
         // LEGENDAS
@@ -539,7 +595,7 @@
             }
         }
 
-        // PESQUISA POR VOZ (ADICIONADO)
+        // PESQUISA POR VOZ
         function startVoiceSearch() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
@@ -563,13 +619,10 @@
             recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript;
                 aiSearchInput.value = transcript;
-                // Opcional: Inicia a busca automaticamente após o resultado
-                // performSmartSearch();
             };
 
             recognition.onerror = (event) => {
                 console.error('Speech recognition error', event.error);
-                // alert(`Erro de Reconhecimento de Voz: ${event.error}. Tente novamente.`);
                 resetMicButton(originalPlaceholder);
             };
 
@@ -584,12 +637,8 @@
             }
         }
 
-        // ADICIONA EVENT LISTENERS PARA OS NOVOS BOTÕES
+        // ADICIONA EVENT LISTENERS PARA OS BOTÕES
         micBtn.onclick = startVoiceSearch;
-        keyboardBtn.onclick = () => {
-             aiSearchInput.focus();
-             // Em dispositivos móveis, focar no input geralmente abre o teclado virtual.
-        };
 
 
         // BUSCA

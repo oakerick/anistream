@@ -122,38 +122,30 @@
                     <p class="text-neon-cyan text-xs font-bold tracking-widest animate-pulse">CARREGANDO</p>
                 </div>
 
-                <!-- CONTROLES CUSTOMIZADOS -->
                 <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-40">
-                    <!-- Progress Bar -->
                     <div class="w-full mb-3 group/progress cursor-pointer relative h-1 hover:h-2 transition-all" id="progressBar">
                         <div class="absolute inset-0 bg-gray-700/50 rounded-full"></div>
                         <div id="playBar" class="absolute top-0 left-0 h-full bg-neon-cyan rounded-full w-0"></div>
                     </div>
                     
-                    <!-- Controles -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <!-- Anterior -->
                             <button id="prevVideoBtn" class="text-gray-400 hover:text-white transition" title="Vídeo Anterior">
                                 <span class="material-icons text-lg">skip_previous</span>
                             </button>
                             
-                            <!-- Voltar 10s -->
                             <button id="rewind10Btn" class="text-gray-400 hover:text-white transition" title="Voltar 10 segundos">
                                 <span class="material-icons text-lg">replay_10</span>
                             </button>
                             
-                            <!-- Play/Pause -->
                             <button id="playPauseBtn" class="text-white hover:scale-110 transition">
                                 <span class="material-icons text-2xl">play_arrow</span>
                             </button>
                             
-                            <!-- Avançar 10s -->
                             <button id="forward10Btn" class="text-gray-400 hover:text-white transition" title="Avançar 10 segundos">
                                 <span class="material-icons text-lg">forward_10</span>
                             </button>
                             
-                            <!-- Próximo -->
                             <button id="nextVideoBtn" class="text-gray-400 hover:text-white transition" title="Próximo Vídeo">
                                 <span class="material-icons text-lg">skip_next</span>
                             </button>
@@ -168,15 +160,12 @@
                         </div>
                         
                         <div class="flex items-center gap-2">
-                            <!-- Botão de Configurações -->
                             <div class="relative">
                                 <button id="settingsBtn" class="text-gray-300 hover:text-white transition">
                                     <span class="material-icons text-lg">settings</span>
                                 </button>
                                 
-                                <!-- Menu de Configurações -->
                                 <div id="settingsMenu" class="hidden absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl min-w-[280px] overflow-hidden">
-                                    <!-- Legendas -->
                                     <div class="p-3 border-b border-white/10">
                                         <div class="flex items-center justify-between mb-2">
                                             <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2">
@@ -204,12 +193,10 @@
                                             </div>
                                             
                                             <div id="onlineSubList" class="max-h-32 overflow-y-auto hidden space-y-1 pt-2 border-t border-white/5">
-                                                <!-- Legendas online aparecerão aqui -->
-                                            </div>
+                                                </div>
                                         </div>
                                     </div>
                                     
-                                    <!-- Áudio -->
                                     <div class="p-3 border-b border-white/10">
                                         <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2 mb-2">
                                             <span class="material-icons text-sm text-neon-purple">audiotrack</span>
@@ -220,20 +207,19 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Velocidade -->
                                     <div class="p-3">
                                         <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2 mb-2">
                                             <span class="material-icons text-sm text-green-400">speed</span>
                                             Velocidade
                                         </span>
                                         <div class="grid grid-cols-4 gap-1">
-                                            <button onclick="setPlaybackSpeed(0.5)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">0.5x</button>
-                                            <button onclick="setPlaybackSpeed(0.75)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">0.75x</button>
-                                            <button onclick="setPlaybackSpeed(1)" class="px-2 py-1 text-xs text-white bg-neon-cyan/20 rounded">1x</button>
-                                            <button onclick="setPlaybackSpeed(1.25)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.25x</button>
-                                            <button onclick="setPlaybackSpeed(1.5)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.5x</button>
-                                            <button onclick="setPlaybackSpeed(1.75)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.75x</button>
-                                            <button onclick="setPlaybackSpeed(2)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">2x</button>
+                                            <button onclick="setPlaybackSpeed(0.5, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">0.5x</button>
+                                            <button onclick="setPlaybackSpeed(0.75, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">0.75x</button>
+                                            <button onclick="setPlaybackSpeed(1, event)" class="px-2 py-1 text-xs text-white bg-neon-cyan/20 rounded">1x</button>
+                                            <button onclick="setPlaybackSpeed(1.25, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.25x</button>
+                                            <button onclick="setPlaybackSpeed(1.5, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.5x</button>
+                                            <button onclick="setPlaybackSpeed(1.75, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.75x</button>
+                                            <button onclick="setPlaybackSpeed(2, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">2x</button>
                                         </div>
                                     </div>
                                 </div>
@@ -319,6 +305,13 @@
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsMenu = document.getElementById('settingsMenu');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
+        
+        // NOVAS REFERÊNCIAS
+        const rewind10Btn = document.getElementById('rewind10Btn');
+        const forward10Btn = document.getElementById('forward10Btn');
+        const nextVideoBtn = document.getElementById('nextVideoBtn'); // Adicionado
+        const prevVideoBtn = document.getElementById('prevVideoBtn'); // Adicionado
+
 
         // LEGENDAS
         const subtitlesToggle = document.getElementById('subtitlesToggle');
@@ -327,6 +320,26 @@
         const subtitleFileInput = document.getElementById('subtitleFileInput');
         const searchSubBtn = document.getElementById('searchSubBtn');
         const onlineSubList = document.getElementById('onlineSubList');
+
+        // FUNÇÃO DE FEEDBACK VISUAL PARA TEMPO E VOLUME (Melhoria)
+        let indicatorTimeout = null;
+        function showTimeIndicator(text) {
+            let indicator = document.getElementById('tempIndicator');
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'tempIndicator';
+                indicator.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg text-lg font-bold text-white opacity-0 transition-opacity z-50 pointer-events-none';
+                document.getElementById('playerContainer').appendChild(indicator);
+            }
+
+            indicator.innerText = text;
+            indicator.style.opacity = '1';
+            
+            clearTimeout(indicatorTimeout);
+            indicatorTimeout = setTimeout(() => {
+                indicator.style.opacity = '0';
+            }, 500);
+        }
 
         // CONTROLES DO PLAYER
         playPauseBtn.onclick = () => {
@@ -346,7 +359,22 @@
             volumeBtn.innerHTML = video.muted ? 
                 '<span class="material-icons text-sm">volume_off</span>' : 
                 '<span class="material-icons text-sm">volume_up</span>';
+            showTimeIndicator(video.muted ? 'Mudo' : `Vol: ${Math.round(video.volume * 100)}%`);
         };
+        
+        rewind10Btn.onclick = () => {
+            video.currentTime = Math.max(0, video.currentTime - 10);
+            showTimeIndicator('-10s');
+        };
+
+        forward10Btn.onclick = () => {
+            video.currentTime = Math.min(video.duration, video.currentTime + 10);
+            showTimeIndicator('+10s');
+        };
+
+        prevVideoBtn.onclick = () => playItem(currentIndex - 1);
+        nextVideoBtn.onclick = () => playItem(currentIndex + 1);
+
 
         video.ontimeupdate = () => {
             if(video.duration) {
@@ -442,8 +470,8 @@
             `).join('');
         };
 
-        // VELOCIDADE
-        function setPlaybackSpeed(speed) {
+        // VELOCIDADE (Ajustado para receber o event corretamente)
+        function setPlaybackSpeed(speed, event) {
             video.playbackRate = speed;
             
             // Atualiza visual
@@ -452,8 +480,13 @@
                 btn.classList.add('text-gray-300');
             });
             
-            event.target.classList.add('bg-neon-cyan/20', 'text-white');
-            event.target.classList.remove('text-gray-300');
+            if (event && event.target) {
+                event.target.classList.add('bg-neon-cyan/20', 'text-white');
+                event.target.classList.remove('text-gray-300');
+            } else {
+                // Caso seja chamado por atalho, atualiza 1x (padrão)
+                document.querySelector('[onclick="setPlaybackSpeed(1, event)"]').classList.add('bg-neon-cyan/20', 'text-white');
+            }
         }
 
         // DETECTAR FAIXAS DE ÁUDIO
@@ -694,7 +727,7 @@
             }
         };
 
-        // ATALHOS DE TECLADO
+        // ATALHOS DE TECLADO (Corrigido para usar as funções de clique)
         document.addEventListener('keydown', (e) => {
             // Ignora se está digitando em algum input
             if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -706,22 +739,14 @@
                     playPauseBtn.click();
                     break;
                 case 'ArrowLeft':
-                    e.preventDefault();
-                    rewind10Btn.click();
-                    break;
-                case 'ArrowRight':
-                    e.preventDefault();
-                    forward10Btn.click();
-                    break;
                 case 'j':
                     e.preventDefault();
-                    video.currentTime = Math.max(0, video.currentTime - 10);
-                    showTimeIndicator('-10s');
+                    rewind10Btn.click(); // Chama a função de retroceder 10s
                     break;
+                case 'ArrowRight':
                 case 'l':
                     e.preventDefault();
-                    video.currentTime = Math.min(video.duration, video.currentTime + 10);
-                    showTimeIndicator('+10s');
+                    forward10Btn.click(); // Chama a função de avançar 10s
                     break;
                 case 'ArrowUp':
                     e.preventDefault();
@@ -755,6 +780,18 @@
                 case 'C':
                     e.preventDefault();
                     subtitlesToggle.click();
+                    break;
+                case '>': // Avançar velocidade
+                    e.preventDefault();
+                    let newSpeedForward = Math.min(2, video.playbackRate + 0.25);
+                    setPlaybackSpeed(newSpeedForward, null);
+                    showTimeIndicator(`${newSpeedForward.toFixed(2)}x`);
+                    break;
+                case '<': // Retroceder velocidade
+                    e.preventDefault();
+                    let newSpeedBackward = Math.max(0.5, video.playbackRate - 0.25);
+                    setPlaybackSpeed(newSpeedBackward, null);
+                    showTimeIndicator(`${newSpeedBackward.toFixed(2)}x`);
                     break;
             }
         });

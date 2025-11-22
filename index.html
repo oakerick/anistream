@@ -158,14 +158,12 @@
             <div class="flex justify-between items-center text-xs mb-3">
                 <span id="stepCounter" class="text-gray-400 font-mono">1/6</span>
                 <div class="flex gap-2">
-                    <button onclick="endTutorial()" class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded transition">
-                        Finalizar
-                    </button>
                     <button onclick="nextStep()" id="nextStepBtn" class="px-3 py-1 bg-neon-purple hover:bg-purple-600 text-white font-bold rounded transition">
                         Próximo <span class="material-icons text-sm ml-1 align-middle">arrow_forward</span>
                     </button>
                 </div>
             </div>
+            
             <h4 class="font-bold text-lg mb-2 text-neon-cyan">Título do Passo</h4>
             <p id="tutorialText" class="text-sm">Texto do tutorial.</p>
         </div>
@@ -479,9 +477,8 @@
             { 
                 element: document.getElementById('playerContainer'), 
                 title: "6. Player e Controles (Fim)",
-                // ALTERAÇÃO: Texto encurtado
                 text: "O vídeo será reproduzido aqui. Use a barra inferior para Play/Pause, volume, tela cheia e acesse legendas/áudio no ícone de engrenagem.",
-                position: 'top'
+                position: 'right' // ALTERADO: Mudança de 'top' para 'right'
             }
         ];
         
@@ -573,10 +570,22 @@
             
             // Atualiza o botão do último passo
             if (index === tutorialSteps.length - 1) {
+                // O único botão se torna 'Finalizar'
                 nextStepBtn.innerHTML = 'Finalizar <span class="material-icons text-sm ml-1 align-middle">done</span>';
             } else {
+                // Se for um passo intermediário, o botão chama nextStep() e diz 'Próximo'
                 nextStepBtn.innerHTML = 'Próximo <span class="material-icons text-sm ml-1 align-middle">arrow_forward</span>';
+                // Garante que o botão use a função endTutorial() no último passo
+                nextStepBtn.onclick = nextStep;
             }
+
+            // Para o último passo, o nextStep() precisa chamar endTutorial()
+            if (index === tutorialSteps.length - 1) {
+                nextStepBtn.onclick = endTutorial;
+            } else {
+                nextStepBtn.onclick = nextStep;
+            }
+
 
             // 2. Destaque e Posicionamento (com delay para esperar a rolagem suave terminar)
             highlightElement(step.element);

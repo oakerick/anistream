@@ -76,7 +76,8 @@
                 <select id="searchMode" class="w-full md:w-48 bg-[#0f172a] text-gray-300 text-xs font-bold uppercase tracking-wide py-3 px-4 rounded-lg border border-gray-700 outline-none appearance-none cursor-pointer hover:text-white transition">
                     <option value="torrent">🌊 Torrent (Best)</option>
                     <option value="direct">📂 Cloud Direct</option>
-                    <option value="stream">📺 Web Stream / IPTV</option> </select>
+                    <option value="stream">📺 Web Stream / IPTV</option>
+                </select>
                 <span class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">expand_more</span>
             </div>
 
@@ -99,7 +100,7 @@
         </div>
     </section>
 
-    <div class="w-full max-w-7xl px-4 flex flex-col lg:flex-row gap-6 items-start">
+    <div class="w-full max-w-4xl px-4 flex flex-col lg:flex-row gap-6 items-start">
         
         <div class="flex-1 w-full min-w-0 flex flex-col gap-4">
             
@@ -235,9 +236,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="glass-panel p-4 rounded-xl">
                     <div class="flex items-center gap-2 mb-2 text-neon-purple font-bold text-sm">
-                        <span class="material-icons text-sm">bolt</span> Magnet Link / Stream Direto </div>
+                        <span class="material-icons text-sm">bolt</span> Magnet Link / Stream Direto
+                    </div>
                     <div class="flex gap-2">
-                        <input type="text" id="magnetInput" placeholder="magnet:?xt=... ou link IPTV (.m3u8)" class="neon-input w-full rounded px-3 py-2 text-xs text-white"> <button id="loadMagnetBtn" class="bg-neon-purple hover:bg-purple-600 text-white px-3 rounded transition"><span class="material-icons text-sm">play_arrow</span></button>
+                        <input type="text" id="magnetInput" placeholder="magnet:?xt=... ou link IPTV (.m3u8)" class="neon-input w-full rounded px-3 py-2 text-xs text-white">
+                        <button id="loadMagnetBtn" class="bg-neon-purple hover:bg-purple-600 text-white px-3 rounded transition"><span class="material-icons text-sm">play_arrow</span></button>
                     </div>
                 </div>
 
@@ -318,7 +321,7 @@
         const searchSubBtn = document.getElementById('searchSubBtn');
         const onlineSubList = document.getElementById('onlineSubList');
 
-        // FUNÇÃO DE FEEDBACK VISUAL PARA TEMPO E VOLUME (Melhoria)
+        // FUNÇÃO DE FEEDBACK VISUAL PARA TEMPO E VOLUME
         let indicatorTimeout = null;
         function showTimeIndicator(text) {
             let indicator = document.getElementById('tempIndicator');
@@ -554,7 +557,7 @@
                     q = `"${query}" (site:mega.nz OR site:drive.google.com) (mp4 OR mkv)`;
                 } else if(mode === 'torrent') {
                     q = `"${query}" (1080p OR 4K) (BluRay OR WEB-DL) ${year} -cam -ts (magnet OR torrent)`;
-                } else { // mode === 'stream' (Atualizado para buscar IPTV)
+                } else { // mode === 'stream' (Busca IPTV)
                     q = `"${query}" (site:pastebin.com OR site:github.com) (m3u8 OR m3u OR iptv) (list OR playlist) filetype:txt OR filetype:m3u OR filetype:m3u8`;
                 }
 
@@ -568,18 +571,23 @@
             if(e.key === 'Enter') performSmartSearch(); 
         });
 
-        // VERIFICAR SE É VÍDEO
-        function isVideo(name) {
-            const exts = ['mp4','mkv','webm','avi','mov','wmv','flv','m4v','mpg','mpeg','ts','m2ts','3gp','vob','ogv','divx'];
+        // VERIFICAR SE É MÍDIA (VÍDEO OU ÁUDIO) - ATUALIZADO
+        function isMedia(name) {
+            const exts = [
+                // Vídeo
+                'mp4','mkv','webm','avi','mov','wmv','flv','m4v','mpg','mpeg','ts','m2ts','3gp','vob','ogv','divx',
+                // Áudio (para reprodução pelo elemento <video> como áudio-only)
+                'mp3','ogg','wav','flac','aac','m4a', 'opus'
+            ];
             const ext = name.split('.').pop().toLowerCase();
             return exts.includes(ext);
         }
 
-        // PROCESSAR ARQUIVOS
+        // PROCESSAR ARQUIVOS - ATUALIZADO PARA USAR isMedia
         function processFiles(files) {
             const all = Array.from(files);
             const torrents = all.filter(f => f.name.endsWith('.torrent'));
-            const videos = all.filter(f => isVideo(f.name));
+            const mediaFiles = all.filter(f => isMedia(f.name)); // Usando isMedia
             
             if(torrents.length > 0) {
                 const reader = new FileReader();
@@ -588,12 +596,12 @@
                 return;
             }
             
-            if(videos.length === 0) {
-                alert("❌ Nenhum vídeo encontrado!\n\nFormatos: MP4, MKV, AVI, MOV, WebM, etc.");
+            if(mediaFiles.length === 0) {
+                alert("❌ Nenhuma mídia (vídeo/áudio) encontrada!\n\nFormatos suportados: MP4, MKV, MP3, FLAC, etc."); // Msg Atualizada
                 return;
             }
 
-            playlist = videos.sort((a, b) => 
+            playlist = mediaFiles.sort((a, b) => 
                 a.name.localeCompare(b.name, undefined, { numeric: true })
             );
             
@@ -697,11 +705,11 @@
                 // Lógica para Magnet Link (WebTorrent)
                 client.add(trimmedUri, (torrent) => {
                     currentTorrent = torrent;
-                    const file = torrent.files.find(f => isVideo(f.name));
+                    const file = torrent.files.find(f => isMedia(f.name)); // Usando isMedia
                     
                     if(!file) {
                         loading.classList.add('hidden');
-                        alert("❌ Nenhum vídeo no torrent");
+                        alert("❌ Nenhuma mídia no torrent");
                         return;
                     }
 
@@ -781,7 +789,7 @@
             }
         };
 
-        // ATALHOS DE TECLADO (Corrigido para usar as funções de clique)
+        // ATALHOS DE TECLADO
         document.addEventListener('keydown', (e) => {
             // Ignora se está digitando em algum input
             if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -795,12 +803,12 @@
                 case 'ArrowLeft':
                 case 'j':
                     e.preventDefault();
-                    rewind10Btn.click(); // Chama a função de retroceder 10s
+                    rewind10Btn.click();
                     break;
                 case 'ArrowRight':
                 case 'l':
                     e.preventDefault();
-                    forward10Btn.click(); // Chama a função de avançar 10s
+                    forward10Btn.click();
                     break;
                 case 'ArrowUp':
                     e.preventDefault();

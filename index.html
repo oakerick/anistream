@@ -57,9 +57,67 @@
             transition: all 0.3s ease;
         }
         .neon-input:focus { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); outline: none; }
+        
+        /* Estilos para o balão flutuante do Tour */
+        #tourBalloon {
+            z-index: 5000; /* Acima de tudo */
+            background: rgba(30, 41, 59, 0.95); /* glass-panel background */
+            backdrop-filter: blur(10px);
+            border: 1px solid #06b6d4; /* Neon-cyan border */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        /* Flecha do balão (A seta sempre aponta para o elemento realçado) */
+        #tourBalloon::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+
+        #tourBalloon[data-placement="bottom"]::after {
+            border-width: 0 10px 10px 10px;
+            border-color: transparent transparent #06b6d4 transparent; /* Pointer pointing up */
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #tourBalloon[data-placement="top"]::after {
+            border-width: 10px 10px 0 10px;
+            border-color: #06b6d4 transparent transparent transparent; /* Pointer pointing down */
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #tourBalloon[data-placement="right"]::after {
+            border-width: 10px 10px 10px 0;
+            border-color: transparent #06b6d4 transparent transparent; /* Pointer pointing left */
+            top: 50%;
+            left: -10px;
+            transform: translateY(-50%);
+        }
     </style>
 </head>
 <body class="flex flex-col items-center min-h-screen pb-20">
+
+    <div id="tourBalloon" class="fixed text-white hidden" style="width: 300px;">
+        <h4 id="tourTitle" class="text-neon-cyan font-bold text-lg mb-1">Título</h4>
+        <p id="tourContent" class="text-sm text-gray-300 mb-4">Conteúdo...</p>
+        <div class="flex justify-between items-center text-xs">
+            <span id="tourProgress" class="font-mono text-gray-400">1/5</span>
+            <div class="space-x-2">
+                <button id="tourSkip" class="text-gray-400 hover:text-white transition">Pular</button>
+                <button id="tourPrev" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded transition disabled:opacity-50" disabled>Anterior</button>
+                <button id="tourNext" class="bg-neon-cyan hover:bg-cyan-600 text-black font-bold px-3 py-1 rounded transition">Próximo</button>
+            </div>
+        </div>
+    </div>
 
     <div id="tutorialModal" class="hidden fixed top-0 left-0 w-full h-full z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center">
         <div class="glass-panel w-full max-w-lg p-6 rounded-2xl shadow-2xl relative">
@@ -106,7 +164,7 @@
 
     <section class="w-full max-w-4xl px-4 mb-6 relative z-50">
         <div class="glass-panel rounded-xl p-1 flex flex-col md:flex-row gap-2 items-center shadow-2xl relative overflow-hidden">
-            <div class="relative w-full md:w-auto">
+            <div class="relative w-full md:w-auto" id="searchModeContainer">
                 <select id="searchMode" class="w-full md:w-48 bg-[#0f172a] text-gray-300 text-xs font-bold uppercase tracking-wide py-3 px-4 rounded-lg border border-gray-700 outline-none appearance-none cursor-pointer hover:text-white transition">
                     <option value="torrent">🌊 Torrent (Best)</option>
                     <option value="direct">📂 Cloud Direct</option>
@@ -132,7 +190,7 @@
                 BUSCAR
             </button>
             
-            <button id="tutorialBtn" class="text-gray-400 hover:text-neon-cyan transition p-3 rounded-lg" title="Mostrar Tutorial / Atalhos">
+            <button id="shortcutsBtn" class="text-gray-400 hover:text-neon-cyan transition p-3 rounded-lg" title="Mostrar Atalhos e Guia">
                  <span class="material-icons text-lg">info</span>
             </button>
 
@@ -359,17 +417,36 @@
         // NOVAS REFERÊNCIAS PARA BUSCA POR VOZ/TUTORIAL
         const aiSearchInput = document.getElementById('aiSearchInput');
         const micBtn = document.getElementById('micBtn');
-        const tutorialBtn = document.getElementById('tutorialBtn');
+        const shortcutsBtn = document.getElementById('shortcutsBtn'); // Antigo tutorialBtn
         const tutorialModal = document.getElementById('tutorialModal');
         const closeTutorial = document.getElementById('closeTutorial');
+        
+        // NOVAS REFERÊNCIAS PARA O TOUR
+        const tourBalloon = document.getElementById('tourBalloon');
+        const tourTitle = document.getElementById('tourTitle');
+        const tourContent = document.getElementById('tourContent');
+        const tourProgress = document.getElementById('tourProgress');
+        const tourSkip = document.getElementById('tourSkip');
+        const tourPrev = document.getElementById('tourPrev');
+        const tourNext = document.getElementById('tourNext');
+        
+        let currentStep = -1;
+        const tourSteps = [
+            { id: 'searchModeContainer', title: '1. Modo de Busca', content: 'Selecione o tipo de pesquisa: Torrent (melhor), Link Direto (Cloud) ou Stream (IPTV/M3U8).', placement: 'bottom' },
+            { id: 'aiSearchInput', title: '2. Pesquisa Inteligente', content: 'Digite o nome do filme/série aqui. A busca é feita no Google, otimizada para encontrar links.', placement: 'bottom' },
+            { id: 'micBtn', title: '3. Pesquisa por Voz', content: 'Use seu microfone para digitar o termo de busca sem precisar do teclado.', placement: 'right' },
+            { id: 'loadMagnetBtn', title: '4. Links Diretos', content: 'Cole um Magnet Link ou um link de Stream Direto (.m3u8) e clique no Play para carregar.', placement: 'top' },
+            { id: 'dropZone', title: '5. Upload Local', content: 'Arraste e solte arquivos ou pastas de mídia aqui para reproduzir diretamente no player.', placement: 'top' },
+            { id: 'playerContainer', title: '6. O Player', content: 'Seu vídeo será reproduzido aqui. Use os atalhos de teclado (botão "info" ao lado) para controle rápido!', placement: 'bottom' }
+        ];
 
-
-        // LÓGICA DO TUTORIAL
-        tutorialBtn.onclick = () => {
+        // LÓGICA DO TUTORIAL/ATALHOS (Modal)
+        shortcutsBtn.onclick = () => {
+             // O botão "info" abre o modal de atalhos/tutorial, conforme a última solicitação.
             tutorialModal.classList.remove('hidden');
             tutorialModal.classList.add('flex');
         };
-        
+
         closeTutorial.onclick = () => {
             tutorialModal.classList.add('hidden');
             tutorialModal.classList.remove('flex');
@@ -378,10 +455,163 @@
         // Fechar ao clicar fora do modal
         tutorialModal.onclick = (e) => {
             if (e.target.id === 'tutorialModal') {
-                tutorialModal.classList.add('hidden');
-                tutorialModal.classList.remove('flex');
+                closeTutorial.click();
             }
         };
+
+        // LÓGICA DO TOUR GUIADO
+        // Função para posicionar o balão
+        function positionBalloon(target, balloon, placement) {
+            const targetRect = target.getBoundingClientRect();
+            const balloonRect = balloon.getBoundingClientRect();
+            
+            let top, left;
+
+            if (placement === 'bottom') {
+                top = targetRect.bottom + 15;
+                left = targetRect.left + (targetRect.width / 2) - (balloonRect.width / 2);
+            } else if (placement === 'top') {
+                top = targetRect.top - balloonRect.height - 15;
+                left = targetRect.left + (targetRect.width / 2) - (balloonRect.width / 2);
+            } else if (placement === 'right') {
+                top = targetRect.top + (targetRect.height / 2) - (balloonRect.height / 2);
+                left = targetRect.right + 15;
+            } else if (placement === 'left') {
+                top = targetRect.top + (targetRect.height / 2) - (balloonRect.height / 2);
+                left = targetRect.left - balloonRect.width - 15;
+            }
+            
+            // Ajustar para evitar que saia da tela
+            left = Math.max(10, Math.min(left, window.innerWidth - balloonRect.width - 10));
+            top = Math.max(10, Math.min(top, window.innerHeight - balloonRect.height - 10));
+            
+            // Se a seta for horizontal, ajusta o top para compensar o balão.
+            if (placement === 'right' || placement === 'left') {
+                 // Ajusta a posição vertical da seta para estar no meio do target
+                const arrowOffset = targetRect.top + (targetRect.height / 2) - top;
+                balloon.style.setProperty('--arrow-v-offset', `${arrowOffset}px`); // Propriedade customizada para o CSS
+                
+                // Precisamos de CSS para ajustar a posição da flecha
+                // Uma solução simples aqui é garantir que a flecha esteja sempre centralizada no lado correto. 
+                // Como não podemos injetar estilos customizados para cada balão, manteremos a flecha centralizada (o que já fazemos)
+            }
+
+
+            balloon.style.top = `${top}px`;
+            balloon.style.left = `${left}px`;
+            balloon.setAttribute('data-placement', placement);
+        }
+
+        function showStep(index) {
+            if (index < 0 || index >= tourSteps.length) {
+                skipTour();
+                return;
+            }
+
+            currentStep = index;
+            const step = tourSteps[currentStep];
+            const target = document.getElementById(step.id);
+
+            if (!target) {
+                console.error(`Tour: Target element #${step.id} not found.`);
+                skipTour();
+                return;
+            }
+            
+            // Remove highlight from previous step
+            tourSteps.forEach(s => {
+                const t = document.getElementById(s.id);
+                if (t) {
+                    t.style.boxShadow = '';
+                    t.style.zIndex = '';
+                    t.style.transition = '';
+                }
+            });
+
+            // Highlight current target
+            target.style.zIndex = '5001';
+            target.style.boxShadow = '0 0 20px 5px rgba(6, 182, 212, 0.6)';
+            target.style.transition = 'box-shadow 0.5s ease-in-out';
+            
+            // Scroll to target
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            tourTitle.innerText = step.title;
+            tourContent.innerText = step.content;
+            tourProgress.innerText = `${currentStep + 1}/${tourSteps.length}`;
+
+            tourPrev.disabled = currentStep === 0;
+            tourNext.innerText = currentStep === tourSteps.length - 1 ? 'Concluir' : 'Próximo';
+
+            tourBalloon.classList.remove('hidden');
+            
+            // Give time for scroll and element rendering before positioning
+            setTimeout(() => {
+                positionBalloon(target, tourBalloon, step.placement || 'bottom');
+            }, 300);
+        }
+
+        function nextStep() {
+            if (currentStep < tourSteps.length - 1) {
+                showStep(currentStep + 1);
+            } else {
+                skipTour();
+                alert('🎉 Tour concluído! Divirta-se usando o OakCine!');
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                showStep(currentStep - 1);
+            }
+        }
+
+        function skipTour() {
+            tourBalloon.classList.add('hidden');
+            // Remove all z-index/shadows
+            tourSteps.forEach(step => {
+                const target = document.getElementById(step.id);
+                if (target) {
+                    target.style.zIndex = '';
+                    target.style.boxShadow = '';
+                    target.style.transition = '';
+                }
+            });
+            currentStep = -1;
+        }
+
+        tourNext.onclick = nextStep;
+        tourPrev.onclick = prevStep;
+        tourSkip.onclick = skipTour;
+        
+        // Função que cria o Prompt Flutuante inicial
+        function initializeTourPrompt() {
+            const initialPrompt = document.createElement('div');
+            initialPrompt.id = 'initialTourPrompt';
+            initialPrompt.className = 'fixed top-1/2 right-4 transform -translate-y-1/2 p-4 glass-panel rounded-xl shadow-2xl z-50 text-center flex flex-col gap-2 transition-all duration-500';
+            initialPrompt.innerHTML = `
+                <p class="text-sm font-bold text-white">Novo por aqui?</p>
+                <button id="startTourNow" class="bg-neon-cyan hover:bg-cyan-600 text-black font-bold text-xs py-2 px-4 rounded transition">
+                    ▶️ Iniciar Tour Rápido
+                </button>
+                <button id="hideTourPrompt" class="text-gray-400 hover:text-white text-[10px] underline">
+                    Não, obrigado.
+                </button>
+            `;
+            document.body.appendChild(initialPrompt);
+
+            document.getElementById('startTourNow').onclick = () => {
+                initialPrompt.remove();
+                showStep(0);
+            };
+            
+            document.getElementById('hideTourPrompt').onclick = () => {
+                initialPrompt.remove();
+            };
+        }
+
+        // Chama o prompt de inicialização do tour
+        window.onload = initializeTourPrompt;
 
 
         // LEGENDAS

@@ -91,7 +91,7 @@
             border-style: solid;
         }
 
-        /* Setas do Balão */
+        /* Setas do Balão (Ajustado para o balão ficar em cima dos elementos) */
         .balloon-top::before {
             border-width: 10px;
             border-color: #06b6d4 transparent transparent transparent;
@@ -127,7 +127,8 @@
         /* Efeito de destaque no elemento alvo */
         .pulse-target {
             position: relative;
-            z-index: 1002; /* Garante que o alvo esteja acima da sobreposição */
+            z-index: 1002 !important; /* Garante que o alvo esteja acima da sobreposição */
+            border-radius: 0.75rem; /* rounded-xl */
         }
         .pulse-target::after {
             content: '';
@@ -467,13 +468,13 @@
                 element: document.getElementById('magnetInput').parentElement.parentElement, // Painel do Magnet Link
                 title: "4. Carregar Magnet Link",
                 text: "Cole um **Magnet Link** ou o **hash Info** aqui para iniciar o download/stream via WebTorrent diretamente.",
-                position: 'bottom'
+                position: 'top' // Alterado para 'top' para ficar em cima (mais visível)
             },
             { 
                 element: document.getElementById('dropZone'), 
                 title: "5. Upload Local ou Pasta",
                 text: "Use o arrastar e soltar (Drag & Drop) ou clique nos botões para carregar vídeos locais ou pastas inteiras (que serão tratadas como playlist).",
-                position: 'bottom'
+                position: 'top' // Alterado para 'top' para ficar em cima (mais visível)
             },
             { 
                 element: document.getElementById('playerContainer'), 
@@ -498,13 +499,14 @@
                 prevElement.classList.remove('pulse-target');
                 // Restaura o z-index original se ele foi alterado
                 if (originalZIndices.has(prevElement)) {
-                    prevElement.style.zIndex = originalZIndices.get(prevElement);
+                    // Se o z-index original era vazio ou 'auto', ele é removido
+                    prevElement.style.zIndex = originalZIndices.get(prevElement) || ''; 
                     originalZIndices.delete(prevElement);
                 }
             }
 
             if (element) {
-                // Armazena e define o novo z-index
+                // Armazena e define o novo z-index (1002 para ficar acima da overlay)
                 originalZIndices.set(element, element.style.zIndex);
                 element.style.zIndex = 1002;
                 element.classList.add('pulse-target');
@@ -521,29 +523,36 @@
             // Posições base
             let top = 0;
             let left = 0;
+            // Coordenadas absolutas de rolagem
             const scrollX = window.scrollX || window.pageXOffset;
             const scrollY = window.scrollY || window.pageYOffset;
             
             if (position === 'bottom') {
+                // Balão abaixo do alvo
                 top = targetRect.bottom + 20 + scrollY;
                 left = targetRect.left + targetRect.width / 2 + scrollX - balloon.offsetWidth / 2;
                 balloon.classList.add('balloon-bottom');
             } else if (position === 'top') {
+                // Balão acima do alvo (usado para Magnet Link e Upload Local)
                 top = targetRect.top - balloon.offsetHeight - 20 + scrollY;
                 left = targetRect.left + targetRect.width / 2 + scrollX - balloon.offsetWidth / 2;
                 balloon.classList.add('balloon-top');
             } else if (position === 'left') {
+                // Balão à esquerda do alvo
                 top = targetRect.top + targetRect.height / 2 + scrollY - balloon.offsetHeight / 2;
                 left = targetRect.left - balloon.offsetWidth - 20 + scrollX;
                 balloon.classList.add('balloon-left');
             } else if (position === 'right') {
+                // Balão à direita do alvo
                 top = targetRect.top + targetRect.height / 2 + scrollY - balloon.offsetHeight / 2;
                 left = targetRect.right + 20 + scrollX;
                 balloon.classList.add('balloon-right');
             }
             
-            // Ajuste para não sair da tela (garantido que o balão fique a pelo menos 20px da borda do viewport)
+            // Ajuste para não sair da tela (garante que o balão fique a pelo menos 20px da borda do viewport)
+            // Ajuste horizontal
             left = Math.max(20 + scrollX, Math.min(left, window.innerWidth - balloon.offsetWidth - 20 + scrollX));
+            // Ajuste vertical (evita que o balão fique cortado pelo topo)
             top = Math.max(20 + scrollY, top);
 
             balloon.style.top = `${top}px`;
@@ -560,6 +569,7 @@
             const step = tutorialSteps[index];
 
             // 1. Centraliza o elemento alvo na tela antes de posicionar o balão.
+            // O 'block: center' resolve o problema de o elemento estar fora da dimensão da página.
             step.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
             
             // Atualiza o conteúdo do balão
@@ -574,7 +584,7 @@
                 nextStepBtn.innerHTML = 'Próximo <span class="material-icons text-sm ml-1 align-middle">arrow_forward</span>';
             }
 
-            // 2. Destaque e Posicionamento (com delay para esperar a rolagem)
+            // 2. Destaque e Posicionamento (com delay para esperar a rolagem suave terminar)
             highlightElement(step.element);
             setTimeout(() => {
                 positionBalloon(step.element, tutorialBalloon, step.position);
@@ -582,8 +592,17 @@
         }
 
         function startTutorial() {
-            tutorialOverlay.style.display = 'block';
-            showStep(0);
+            // Verifica se o player está minimizado/escondido (ex: em telas muito pequenas, o player pode demorar a carregar)
+            if (video.readyState < 2) {
+                // Pausa para dar tempo de carregar
+                setTimeout(() => {
+                    tutorialOverlay.style.display = 'block';
+                    showStep(0);
+                }, 100); 
+            } else {
+                tutorialOverlay.style.display = 'block';
+                showStep(0);
+            }
         }
 
         function nextStep() {
@@ -594,7 +613,6 @@
             tutorialOverlay.style.display = 'none';
             highlightElement(null); // Remove o destaque do último elemento
             currentTutorialStep = 0; // Reseta para o próximo início
-            alert("✨ Tutorial concluído! Divirta-se!");
         }
 
         // FIM FUNÇÕES DE CONTROLE DO TUTORIAL
@@ -1009,3 +1027,77 @@
         video.onended = () => {
             if(currentIndex < playlist.length - 1) {
                 playItem(currentIndex + 1);
+            }
+        };
+
+        // ATALHOS DE TECLADO (Corrigido para usar as funções de clique)
+        document.addEventListener('keydown', (e) => {
+            // Ignora se está digitando em algum input OU se o tutorial estiver ativo
+            if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || tutorialOverlay.style.display === 'block') return;
+            
+            switch(e.key) {
+                case ' ':
+                case 'k':
+                    e.preventDefault();
+                    playPauseBtn.click();
+                    break;
+                case 'ArrowLeft':
+                case 'j':
+                    e.preventDefault();
+                    rewind10Btn.click(); // Chama a função de retroceder 10s
+                    break;
+                case 'ArrowRight':
+                case 'l':
+                    e.preventDefault();
+                    forward10Btn.click(); // Chama a função de avançar 10s
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    video.volume = Math.min(1, video.volume + 0.1);
+                    showTimeIndicator(`Vol: ${Math.round(video.volume * 100)}%`);
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    video.volume = Math.max(0, video.volume - 0.1);
+                    showTimeIndicator(`Vol: ${Math.round(video.volume * 100)}%`);
+                    break;
+                case 'm':
+                    e.preventDefault();
+                    volumeBtn.click();
+                    break;
+                case 'f':
+                    e.preventDefault();
+                    fullscreenBtn.click();
+                    break;
+                case 'n':
+                case 'N':
+                    e.preventDefault();
+                    if(playlist.length > 0) nextVideoBtn.click();
+                    break;
+                case 'p':
+                case 'P':
+                    e.preventDefault();
+                    if(playlist.length > 0) prevVideoBtn.click();
+                    break;
+                case 'c':
+                case 'C':
+                    e.preventDefault();
+                    subtitlesToggle.click();
+                    break;
+                case '>': // Avançar velocidade
+                    e.preventDefault();
+                    let newSpeedForward = Math.min(2, video.playbackRate + 0.25);
+                    setPlaybackSpeed(newSpeedForward, null);
+                    showTimeIndicator(`${newSpeedForward.toFixed(2)}x`);
+                    break;
+                case '<': // Retroceder velocidade
+                    e.preventDefault();
+                    let newSpeedBackward = Math.max(0.5, video.playbackRate - 0.25);
+                    setPlaybackSpeed(newSpeedBackward, null);
+                    showTimeIndicator(`${newSpeedBackward.toFixed(2)}x`);
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>

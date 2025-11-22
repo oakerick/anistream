@@ -84,8 +84,17 @@
             <div class="flex-1 relative w-full flex items-center">
                 <span class="material-icons text-neon-purple text-xl absolute left-3">auto_awesome</span>
                 <input type="text" id="aiSearchInput" 
-                       class="w-full bg-[#0f172a]/50 text-white placeholder-gray-500 px-10 py-3 rounded-lg outline-none border border-transparent focus:border-neon-purple/50 transition-colors"
+                       class="w-full bg-[#0f172a]/50 text-white placeholder-gray-500 pl-10 pr-[85px] py-3 rounded-lg outline-none border border-transparent focus:border-neon-purple/50 transition-colors"
                        placeholder="O que vamos assistir hoje? (Ex: Oppenheimer 4K)" autocomplete="off">
+
+                <div class="absolute right-2 flex gap-1 z-10">
+                    <button id="micBtn" class="p-1 text-gray-400 hover:text-neon-cyan transition rounded-full hover:bg-white/10" title="Pesquisa por Voz">
+                        <span class="material-icons text-lg">mic</span>
+                    </button>
+                    <button id="keyboardBtn" class="p-1 text-gray-400 hover:text-neon-purple transition rounded-full hover:bg-white/10" title="Teclado Virtual">
+                        <span class="material-icons text-lg">keyboard</span>
+                    </button>
+                </div>
             </div>
 
             <button onclick="performSmartSearch()" class="w-full md:w-auto px-6 py-3 rounded-lg bg-gradient-to-r from-neon-purple to-indigo-600 hover:from-indigo-500 hover:to-neon-purple text-white font-bold text-sm tracking-wider transition-all shadow-lg">
@@ -99,6 +108,7 @@
             <span class="animate-pulse">Inicializando busca neural...</span>
         </div>
     </section>
+---
 
     <div class="w-full max-w-4xl px-4 flex flex-col lg:flex-row gap-6 items-start">
         
@@ -267,7 +277,7 @@
                 </div>
             </div>
         </div>
-
+---
         <div id="playlistPanel" class="w-full lg:w-80 hidden flex-col gap-2">
             <div class="glass-panel rounded-xl flex flex-col h-[500px] lg:h-[600px] sticky top-4">
                 <div class="p-3 border-b border-white/5 bg-black/20 rounded-t-xl flex justify-between items-center">
@@ -311,6 +321,11 @@
         const forward10Btn = document.getElementById('forward10Btn');
         const nextVideoBtn = document.getElementById('nextVideoBtn');
         const prevVideoBtn = document.getElementById('prevVideoBtn');
+
+        // NOVAS REFERÊNCIAS PARA BUSCA POR VOZ/TECLADO
+        const aiSearchInput = document.getElementById('aiSearchInput');
+        const micBtn = document.getElementById('micBtn');
+        const keyboardBtn = document.getElementById('keyboardBtn');
 
 
         // LEGENDAS
@@ -524,9 +539,62 @@
             }
         }
 
+        // PESQUISA POR VOZ (ADICIONADO)
+        function startVoiceSearch() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("❌ Seu navegador não suporta Pesquisa por Voz.");
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'pt-BR'; // Define o idioma para Português
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            const originalPlaceholder = aiSearchInput.placeholder;
+
+            micBtn.innerHTML = '<span class="material-icons text-lg text-red-500 animate-pulse">mic</span>';
+            micBtn.classList.add('bg-white/10');
+            aiSearchInput.placeholder = "Fale agora...";
+
+            recognition.start();
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                aiSearchInput.value = transcript;
+                // Opcional: Inicia a busca automaticamente após o resultado
+                // performSmartSearch();
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                // alert(`Erro de Reconhecimento de Voz: ${event.error}. Tente novamente.`);
+                resetMicButton(originalPlaceholder);
+            };
+
+            recognition.onend = () => {
+                resetMicButton(originalPlaceholder);
+            };
+            
+            function resetMicButton(placeholder) {
+                micBtn.innerHTML = '<span class="material-icons text-lg">mic</span>';
+                micBtn.classList.remove('bg-white/10');
+                aiSearchInput.placeholder = placeholder;
+            }
+        }
+
+        // ADICIONA EVENT LISTENERS PARA OS NOVOS BOTÕES
+        micBtn.onclick = startVoiceSearch;
+        keyboardBtn.onclick = () => {
+             aiSearchInput.focus();
+             // Em dispositivos móveis, focar no input geralmente abre o teclado virtual.
+        };
+
+
         // BUSCA
         function performSmartSearch() {
-            const query = document.getElementById('aiSearchInput').value.trim();
+            const query = aiSearchInput.value.trim();
             const mode = document.getElementById('searchMode').value;
             
             if(!query) {
@@ -567,11 +635,11 @@
             }, 1800);
         }
 
-        document.getElementById('aiSearchInput').addEventListener('keydown', (e) => { 
+        aiSearchInput.addEventListener('keydown', (e) => { 
             if(e.key === 'Enter') performSmartSearch(); 
         });
 
-        // VERIFICAR SE É MÍDIA (VÍDEO OU ÁUDIO) - ATUALIZADO
+        // VERIFICAR SE É MÍDIA (VÍDEO OU ÁUDIO)
         function isMedia(name) {
             const exts = [
                 // Vídeo
@@ -583,11 +651,11 @@
             return exts.includes(ext);
         }
 
-        // PROCESSAR ARQUIVOS - ATUALIZADO PARA USAR isMedia
+        // PROCESSAR ARQUIVOS
         function processFiles(files) {
             const all = Array.from(files);
             const torrents = all.filter(f => f.name.endsWith('.torrent'));
-            const mediaFiles = all.filter(f => isMedia(f.name)); // Usando isMedia
+            const mediaFiles = all.filter(f => isMedia(f.name)); 
             
             if(torrents.length > 0) {
                 const reader = new FileReader();
@@ -597,7 +665,7 @@
             }
             
             if(mediaFiles.length === 0) {
-                alert("❌ Nenhuma mídia (vídeo/áudio) encontrada!\n\nFormatos suportados: MP4, MKV, MP3, FLAC, etc."); // Msg Atualizada
+                alert("❌ Nenhuma mídia (vídeo/áudio) encontrada!\n\nFormatos suportados: MP4, MKV, MP3, FLAC, etc.");
                 return;
             }
 
@@ -651,7 +719,7 @@
             };
         }
 
-        // MAGNET/STREAM (Atualizado para suportar streams HTTP/S)
+        // MAGNET/STREAM
         function loadMagnet(uri) {
             const trimmedUri = uri.trim();
             if(!trimmedUri) return;
@@ -705,7 +773,7 @@
                 // Lógica para Magnet Link (WebTorrent)
                 client.add(trimmedUri, (torrent) => {
                     currentTorrent = torrent;
-                    const file = torrent.files.find(f => isMedia(f.name)); // Usando isMedia
+                    const file = torrent.files.find(f => isMedia(f.name)); 
                     
                     if(!file) {
                         loading.classList.add('hidden');

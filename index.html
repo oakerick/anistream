@@ -480,13 +480,13 @@
                 element: document.getElementById('playerContainer'), 
                 title: "6. Player de Vídeo",
                 text: "Aqui o vídeo será reproduzido. Ele suporta a maioria dos formatos e possui todos os controles essenciais (legenda, áudio, velocidade).",
-                position: 'right'
+                position: 'top' // Balão aparece acima do player
             },
             { 
                 element: document.getElementById('settingsBtn'), 
                 title: "7. Configurações Avançadas",
                 text: "Acesse as opções de legenda (Upload local ou Busca online), faixas de áudio e controle de velocidade de reprodução.",
-                position: 'top'
+                position: 'top' // ALTERADO: Balão aparece acima do settingsBtn/player
             }
         ];
         
@@ -1090,11 +1090,13 @@
                     e.preventDefault();
                     let newSpeedForward = Math.min(2, video.playbackRate + 0.25);
                     setPlaybackSpeed(newSpeedForward, null);
+                    showTimeIndicator(`${newSpeedForward.toFixed(2)}x`);
                     break;
                 case '<': // Retroceder velocidade
                     e.preventDefault();
                     let newSpeedBackward = Math.max(0.5, video.playbackRate - 0.25);
                     setPlaybackSpeed(newSpeedBackward, null);
+                    showTimeIndicator(`${newSpeedBackward.toFixed(2)}x`);
                     break;
             }
         });

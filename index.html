@@ -1,41 +1,332 @@
-<div class="p-3 border-b border-white/10">
-    <div class="flex items-center justify-between mb-2">
-        <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2">
-            <span class="material-icons text-sm text-neon-cyan">subtitles</span>
-            Legendas
-        </span>
-        <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" id="subtitlesToggle" class="sr-only peer">
-            <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-cyan"></div>
-        </label>
-    </div>
-    
-    <div id="subtitleOptions" class="space-y-3 hidden">
-        <div>
-            <label class="block text-xs font-medium text-gray-400 mb-1">Idioma de Busca</label>
-            <select id="subtitleLanguage" class="w-full bg-black/50 text-white text-xs py-2 px-3 rounded border border-white/10 outline-none">
-                <option value="por" selected>Português (BR)</option>
-                <option value="eng">Inglês</option>
-                <option value="spa">Espanhol</option>
-                <option value="fre">Francês</option>
-                <option value="ger">Alemão</option>
-                <option value="oth">Outro Idioma...</option>
-            </select>
-        </div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <style>
+        /* ... (estilos existentes) ... */
 
-        <input type="file" id="subtitleFileInput" accept=".srt,.vtt,.ass" class="hidden">
-        
-        <button id="searchSubBtn" class="w-full text-left px-3 py-2 text-xs text-neon-cyan bg-neon-cyan/10 hover:bg-neon-cyan/20 rounded transition flex items-center gap-2 font-bold justify-center">
-            <span class="material-icons text-sm">auto_awesome</span>
-            Buscar Legenda Online Inteligente
-        </button>
+        /* Estilos do Overlay do Tutorial */
+        #tutorialOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            display: none; /* Inicia oculto */
+        }
 
-        <button id="uploadSubBtn" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-white/5 rounded transition flex items-center gap-2">
-            <span class="material-icons text-sm">upload_file</span>
-            Carregar Legenda Local (.srt, .vtt)
-        </button>
-        
-        <div id="onlineSubList" class="max-h-32 overflow-y-auto hidden space-y-1 pt-2 border-t border-white/5">
+        #tutorialBox {
+            position: absolute;
+            background: #1e293b; /* gray-800/60 */
+            border: 2px solid #a855f7; /* neon-purple */
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 1rem;
+            width: 300px;
+            box-shadow: 0 0 40px rgba(168, 85, 247, 0.4);
+            color: #f1f5f9;
+            z-index: 10001;
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Destaque para o elemento atual */
+        .tutorial-highlight {
+            position: relative;
+            z-index: 10001; /* Garante que o alvo esteja acima do overlay */
+            box-shadow: 0 0 10px 5px #06b6d4; /* neon-cyan glow */
+            border-radius: 0.75rem;
+            pointer-events: auto !important; /* Permite interações se necessário */
+        }
+
+        /* Setinha do balão */
+        #tutorialBox::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+
+        /* Posições da seta */
+        .arrow-top::before {
+            border-width: 0 10px 10px 10px;
+            border-color: transparent transparent #a855f7 transparent;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%) rotate(180deg);
+        }
+
+        .arrow-bottom::before {
+            border-width: 10px 10px 0 10px;
+            border-color: #a855f7 transparent transparent transparent;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .arrow-left::before {
+            border-width: 10px 10px 10px 0;
+            border-color: transparent #a855f7 transparent transparent;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%) rotate(180deg);
+        }
+
+        .arrow-right::before {
+            border-width: 10px 0 10px 10px;
+            border-color: transparent transparent transparent #a855f7;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+    </style>
+</head>
+<body class="flex flex-col items-center min-h-screen pb-20">
+
+    <header class="w-full max-w-7xl p-6 flex justify-between items-center">
+        <div class="flex items-center gap-3 select-none cursor-pointer" onclick="location.reload()">
+            <span class="material-icons text-4xl text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">movie_filter</span>
+            <div>
+                <h1 class="text-3xl font-black tracking-tighter text-white">Oak<span class="text-neon-cyan">Cine</span></h1>
             </div>
+        </div>
+        <button id="startTutorialBtn" class="px-3 py-1 text-sm rounded bg-indigo-500 hover:bg-indigo-600 text-white font-medium transition flex items-center gap-1">
+            <span class="material-icons text-base">school</span> Tutorial
+        </button>
+        
+    </header>
+
+    <div id="tutorialOverlay">
+        <div id="tutorialBox">
+            <h3 class="text-lg font-bold mb-2 text-neon-cyan">Guia Rápido: OakCine</h3>
+            <p id="tutorialText" class="text-sm mb-4"></p>
+            <div class="flex justify-between items-center pt-2 border-t border-white/10">
+                <p id="tutorialCounter" class="text-xs text-gray-400 font-mono"></p>
+                <div class="flex gap-2">
+                    <button id="tutorialPrevBtn" onclick="prevTutorialStep()" class="px-3 py-1 text-xs rounded bg-white/10 hover:bg-white/20 text-white transition disabled:opacity-50">Anterior</button>
+                    <button id="tutorialNextBtn" onclick="nextTutorialStep()" class="px-3 py-1 text-xs rounded bg-neon-purple hover:bg-purple-600 text-white font-bold transition">Próximo</button>
+                    <button id="tutorialEndBtn" onclick="endTutorial()" class="px-3 py-1 text-xs rounded bg-red-600 hover:bg-red-700 text-white transition">Finalizar</button>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
+    <script>
+        // ... (código JavaScript existente) ...
+        
+        // --- NOVO CÓDIGO DO TUTORIAL ---
+
+        const tutorialOverlay = document.getElementById('tutorialOverlay');
+        const tutorialBox = document.getElementById('tutorialBox');
+        const tutorialText = document.getElementById('tutorialText');
+        const tutorialCounter = document.getElementById('tutorialCounter');
+        const tutorialPrevBtn = document.getElementById('tutorialPrevBtn');
+        const tutorialNextBtn = document.getElementById('tutorialNextBtn');
+        const startTutorialBtn = document.getElementById('startTutorialBtn');
+
+        let currentTutorialStep = 0;
+
+        // Definição dos passos
+        const tutorialSteps = [
+            { 
+                id: 'aiSearchInput', 
+                text: "Use este campo para sua **Busca AI**. Digite o nome do filme/série (ex: *Oppenheimer 4K*). O sistema fará uma busca otimizada.", 
+                position: 'bottom', 
+                padding: 16 
+            },
+            { 
+                id: 'searchMode', 
+                text: "Aqui você define o **Modo de Busca**. 'Torrent' é o mais recomendado, buscando por magnet links otimizados.", 
+                position: 'bottom', 
+                padding: 16 
+            },
+            { 
+                id: 'playerContainer', 
+                text: "Este é o **Player de Vídeo**. Ele suporta torrents (WebTorrent), arquivos locais e links diretos, com controles avançados.", 
+                position: 'bottom', 
+                padding: 24 
+            },
+            { 
+                id: 'progressBar', 
+                text: "Controles de **Mídia**. Clique e arraste para navegar pelo vídeo ou use as setas do teclado (J/L).", 
+                position: 'top', 
+                padding: 24 
+            },
+            { 
+                id: 'settingsBtn', 
+                text: "Abra **Configurações** para Legendas, Faixas de Áudio e controle de Velocidade de Reprodução (> / < do teclado).", 
+                position: 'left', 
+                padding: 16 
+            },
+            { 
+                id: 'magnetInput', 
+                text: "Cole um **Magnet Link** (torrent) diretamente aqui e clique em Play para iniciar o streaming sem download.", 
+                position: 'bottom', 
+                padding: 16 
+            },
+            { 
+                id: 'dropZone', 
+                text: "Arraste e solte **Arquivos Locais** (vídeos ou pastas com vários vídeos) para criar uma Playlist e reproduzir instantaneamente.", 
+                position: 'bottom', 
+                padding: 16 
+            },
+            { 
+                id: 'playlistPanel', 
+                text: "Quando você carrega uma pasta ou busca com sucesso, a **Playlist** aparece aqui para alternar entre os vídeos.", 
+                position: 'left', 
+                padding: 16 
+            },
+            { 
+                id: 'startTutorialBtn', // Passo final
+                text: "Pronto! Agora você está livre para explorar o OakCine. Lembre-se que o player também suporta **atalhos de teclado** (Espaço, F, M, J, L, N, P, etc).", 
+                position: 'bottom', 
+                padding: 16
+            },
+        ];
+
+        // Função para iniciar o tutorial
+        startTutorialBtn.onclick = () => {
+            currentTutorialStep = 0;
+            tutorialOverlay.style.display = 'block';
+            updateTutorialUI();
+            // Desativa o scroll durante o tutorial
+            document.body.style.overflow = 'hidden'; 
+        };
+
+        // Função para finalizar o tutorial
+        function endTutorial() {
+            tutorialOverlay.style.display = 'none';
+            removeHighlight();
+            // Reativa o scroll
+            document.body.style.overflow = '';
+        }
+
+        // Função para avançar o passo
+        function nextTutorialStep() {
+            if (currentTutorialStep < tutorialSteps.length - 1) {
+                currentTutorialStep++;
+                updateTutorialUI();
+            } else {
+                endTutorial();
+            }
+        }
+
+        // Função para retroceder o passo
+        function prevTutorialStep() {
+            if (currentTutorialStep > 0) {
+                currentTutorialStep--;
+                updateTutorialUI();
+            }
+        }
+
+        // Remove a classe de destaque de todos os elementos
+        function removeHighlight() {
+            document.querySelectorAll('.tutorial-highlight').forEach(el => {
+                el.classList.remove('tutorial-highlight');
+            });
+            // Remove as classes de seta
+            tutorialBox.classList.remove('arrow-top', 'arrow-bottom', 'arrow-left', 'arrow-right');
+        }
+
+        // Atualiza a UI do tutorial para o passo atual
+        function updateTutorialUI() {
+            const step = tutorialSteps[currentTutorialStep];
+            const targetElement = document.getElementById(step.id);
+            
+            removeHighlight();
+
+            if (!targetElement) {
+                console.error(`Elemento alvo não encontrado para o passo ${currentTutorialStep}: ${step.id}`);
+                // Avança automaticamente se o elemento não for encontrado
+                return nextTutorialStep(); 
+            }
+
+            // Destaque do alvo
+            targetElement.classList.add('tutorial-highlight');
+
+            // Conteúdo do balão
+            tutorialText.innerHTML = step.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            tutorialCounter.innerText = `Passo ${currentTutorialStep + 1} de ${tutorialSteps.length}`;
+            
+            // Controle dos botões
+            tutorialPrevBtn.disabled = currentTutorialStep === 0;
+            tutorialNextBtn.innerText = (currentTutorialStep === tutorialSteps.length - 1) ? 'Entendi' : 'Próximo';
+
+            // Posição e seta
+            const targetRect = targetElement.getBoundingClientRect();
+            const boxWidth = 300;
+            const padding = step.padding || 16; 
+            
+            let top, left;
+
+            // Lógica de posicionamento do balão e da seta
+            switch (step.position) {
+                case 'top':
+                    // Balão abaixo do alvo, seta para cima (arrow-bottom)
+                    top = targetRect.bottom + padding + window.scrollY;
+                    left = targetRect.left + (targetRect.width / 2) - (boxWidth / 2);
+                    tutorialBox.classList.add('arrow-bottom');
+                    break;
+                case 'bottom':
+                    // Balão acima do alvo, seta para baixo (arrow-top)
+                    top = targetRect.top - tutorialBox.offsetHeight - padding + window.scrollY;
+                    if (top < 0) { // Se não couber em cima, tenta embaixo
+                        top = targetRect.bottom + padding + window.scrollY;
+                        tutorialBox.classList.remove('arrow-top');
+                        tutorialBox.classList.add('arrow-bottom');
+                    } else {
+                        tutorialBox.classList.add('arrow-top');
+                    }
+                    left = targetRect.left + (targetRect.width / 2) - (boxWidth / 2);
+                    break;
+                case 'left':
+                    // Balão à direita, seta para a esquerda (arrow-right)
+                    left = targetRect.right + padding;
+                    top = targetRect.top + (targetRect.height / 2) - (tutorialBox.offsetHeight / 2) + window.scrollY;
+                    tutorialBox.classList.add('arrow-right');
+                    break;
+                case 'right':
+                    // Balão à esquerda, seta para a direita (arrow-left)
+                    left = targetRect.left - boxWidth - padding;
+                    top = targetRect.top + (targetRect.height / 2) - (tutorialBox.offsetHeight / 2) + window.scrollY;
+                    tutorialBox.classList.add('arrow-left');
+                    break;
+                default:
+                    // Padrão: Centralizado na tela (para o primeiro/último passo se necessário)
+                    top = (window.innerHeight / 2) - (tutorialBox.offsetHeight / 2) + window.scrollY;
+                    left = (window.innerWidth / 2) - (boxWidth / 2);
+                    removeHighlight(); // Remove destaque para centralizado
+                    break;
+            }
+
+            // Ajuste de margens para evitar que o balão saia da tela
+            left = Math.max(10, Math.min(left, window.innerWidth - boxWidth - 10));
+
+            // Aplica as posições ao balão
+            tutorialBox.style.top = `${top}px`;
+            tutorialBox.style.left = `${left}px`;
+
+            // Garante que o alvo esteja visível (rolagem)
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Adiciona um listener para recalcular a posição ao redimensionar a tela
+        window.addEventListener('resize', () => {
+            if (tutorialOverlay.style.display !== 'none') {
+                updateTutorialUI();
+            }
+        });
+
+        // Tenta iniciar o tutorial automaticamente na primeira visita (opcional: usar localStorage)
+        window.onload = () => {
+            // Verifica se é a primeira visita (exemplo simples sem localStorage)
+            // startTutorialBtn.click();
+        };
+
+        // --- FIM DO NOVO CÓDIGO DO TUTORIAL ---
+
+        // ... (resto do código JavaScript existente) ...
+
+    </script>
+</body>
+</html>

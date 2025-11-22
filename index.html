@@ -173,7 +173,7 @@
                 </div>
 
                 <div id="dropZone" class="glass-panel p-4 rounded-xl border border-dashed border-gray-600 hover:border-neon-cyan cursor-pointer transition group relative">
-                    <input type="file" id="fileInput" class="hidden" accept="video/*,.torrent" multiple>
+                    <input type="file" id="fileInput" class="hidden" accept="video/*,audio/*,.torrent,.mp4,.mkv,.avi,.mov,.wmv,.flv,.webm,.m4v,.mpg,.mpeg,.3gp,.ts,.m2ts,.vob,.ogv,.ogg,.mp3,.wav,.flac,.aac" multiple>
                     <input type="file" id="folderInput" class="hidden" webkitdirectory directory multiple>
                     
                     <div class="text-center z-10 relative">
@@ -280,12 +280,33 @@
             if(e.key === 'Enter') performSmartSearch(); 
         });
 
-        // PLAYLIST
+        // PLAYLIST - ACEITA TODOS OS FORMATOS DE VÍDEO
         function handleFiles(files) {
             const allFiles = Array.from(files);
-            const torrentFiles = allFiles.filter(f => f.name.toLowerCase().endsWith('.torrent'));
-            const videoFiles = allFiles.filter(f => /\.(mp4|mkv|webm|ogg|mov|m4v|avi)$/i.test(f.name));
             
+            // Lista completa de extensões de vídeo suportadas
+            const videoExtensions = [
+                // Formatos principais
+                'mp4', 'mkv', 'webm', 'avi', 'mov', 'wmv', 'flv', 'm4v',
+                // MPEG variants
+                'mpg', 'mpeg', 'mpe', 'm2v', 'm4p', 'm2ts', 'mts', 'ts',
+                // Outros formatos
+                '3gp', '3g2', 'vob', 'ogv', 'ogg', 'drc', 'gifv', 'mng',
+                'qt', 'yuv', 'rm', 'rmvb', 'asf', 'amv', 'mp2', 'mpe',
+                'mpv', 'm2v', 'svi', '3gpp', '3gpp2', 'mxf', 'roq', 'nsv',
+                'f4v', 'f4p', 'f4a', 'f4b', 'divx'
+            ];
+            
+            // Filtra torrents separadamente
+            const torrentFiles = allFiles.filter(f => f.name.toLowerCase().endsWith('.torrent'));
+            
+            // Filtra arquivos de vídeo com regex otimizado
+            const videoFiles = allFiles.filter(f => {
+                const ext = f.name.split('.').pop().toLowerCase();
+                return videoExtensions.includes(ext);
+            });
+            
+            // Se tem .torrent, carrega via WebTorrent
             if (torrentFiles.length > 0) {
                 const reader = new FileReader();
                 reader.onload = (e) => loadMagnet(e.target.result);
@@ -293,22 +314,29 @@
                 return;
             }
             
+            // Validação: se não tem vídeos
             if (videoFiles.length === 0) {
-                alert("❌ Nenhum vídeo encontrado!\n\nFormatos aceitos: MP4, MKV, WebM, OGG, MOV, M4V, AVI");
+                alert("❌ Nenhum arquivo de vídeo encontrado!\n\n✅ Formatos suportados:\nMP4, MKV, AVI, MOV, WMV, FLV, WebM, M4V, MPG, MPEG, 3GP, TS, VOB, OGV, e muitos outros!");
                 return;
             }
 
+            // Ordena naturalmente (1, 2, 10 ao invés de 1, 10, 2)
             playlist = videoFiles.sort((a, b) => 
                 a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
             );
             
+            // Limpa estado anterior
             resetAll();
             
+            // Mostra painel da playlist
             document.getElementById('playlistPanel').classList.remove('hidden');
             document.getElementById('playlistPanel').classList.add('flex');
             document.getElementById('playlistCount').innerText = playlist.length;
             
+            // Renderiza lista visual
             renderPlaylistUI();
+            
+            // CORREÇÃO: Carrega e REPRODUZ automaticamente o primeiro vídeo
             loadPlaylistItem(0);
         }
 
@@ -329,72 +357,118 @@
         function loadPlaylistItem(index) {
             if (index < 0 || index >= playlist.length) return;
             
+            // Limpa intervalos anteriores (evita memory leak)
             if(updateInterval) {
                 clearInterval(updateInterval);
                 updateInterval = null;
             }
             
+            // Atualiza índice atual
             currentPlaylistIndex = index;
+            
+            // Re-renderiza playlist com novo destaque
             renderPlaylistUI();
             
+            // Scroll automático para o item ativo
             const item = document.getElementById(`item-${index}`);
             if(item) item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
+            // Cria URL do arquivo e reproduz
             const file = playlist[index];
             const url = URL.createObjectURL(file);
+            
+            // Chama função que configura e INICIA o vídeo
             playVideoSource(url, file.name);
         }
 
         function playVideoSource(src, name) {
             setLoading(true);
+            
+            // Configura nova fonte de vídeo
             video.src = src;
             video.load();
             
+            // Mostra info do arquivo atual
             document.getElementById('mediaInfo').classList.remove('hidden');
             document.getElementById('infoFilename').innerText = name;
             document.getElementById('torrentStats').classList.add('hidden');
 
+            // Quando o vídeo estiver pronto
             video.oncanplay = () => {
                 setLoading(false);
+                
+                // Esconde placeholder
                 placeholder.classList.add('hidden');
-                video.play().catch(() => {
-                    centerPlayBtn.classList.remove('hidden');
-                });
+                
+                // CORREÇÃO: Tenta reproduzir automaticamente
+                const playPromise = video.play();
+                
+                // Se autoplay falhar (política do browser), mostra botão central
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then(() => {
+                            // Autoplay funcionou! Esconde botão central
+                            centerPlayBtn.classList.add('hidden');
+                        })
+                        .catch(() => {
+                            // Autoplay bloqueado, mostra botão play
+                            centerPlayBtn.classList.remove('hidden');
+                        });
+                }
+                
+                // Remove listener para evitar execuções múltiplas
                 video.oncanplay = null;
             };
         }
 
-        // TORRENT
+        // TORRENT & MAGNET LINK - ACEITA TODOS OS FORMATOS
         function loadMagnet(uri) {
             if(!uri) return;
+            
+            // Limpa tudo antes de começar
             resetAll();
             setLoading(true);
 
+            // Adiciona torrent/magnet ao cliente WebTorrent
             client.add(uri, (torrent) => {
                 currentTorrent = torrent;
-                const file = torrent.files.find(f => /\.(mp4|mkv|webm|ogg)$/i.test(f.name));
                 
-                if(!file) { 
+                // Lista expandida de extensões de vídeo
+                const videoExtensions = ['mp4','mkv','webm','avi','mov','wmv','flv','m4v','mpg','mpeg','mpe','m2v','m2ts','mts','ts','3gp','3g2','vob','ogv','ogg','divx'];
+                
+                // Busca primeiro arquivo de vídeo no torrent
+                const videoFile = torrent.files.find(f => {
+                    const ext = f.name.split('.').pop().toLowerCase();
+                    return videoExtensions.includes(ext);
+                });
+                
+                if(!videoFile) { 
                     setLoading(false); 
-                    alert("❌ Nenhum vídeo encontrado neste torrent"); 
+                    alert("❌ Nenhum arquivo de vídeo encontrado neste torrent\n\n✅ Formatos suportados: MP4, MKV, AVI, MOV, WebM, e muitos outros!"); 
                     return;
                 }
 
-                file.renderTo(video, { autoplay: true }, (err) => {
+                // CORREÇÃO: Renderiza vídeo no player com autoplay
+                videoFile.renderTo(video, { autoplay: true }, (err) => {
                     if(err) {
                         setLoading(false);
                         alert("❌ Erro ao carregar: " + err.message);
                         return;
                     }
                     
+                    // Remove loading e placeholder
                     setLoading(false);
                     placeholder.classList.add('hidden');
+                    
+                    // Mostra informações do arquivo
                     document.getElementById('mediaInfo').classList.remove('hidden');
-                    document.getElementById('infoFilename').innerText = file.name;
+                    document.getElementById('infoFilename').innerText = videoFile.name;
                     document.getElementById('torrentStats').classList.remove('hidden');
                     
+                    // Inicia monitoramento de velocidade/peers
                     updateInterval = setInterval(() => {
-                        document.getElementById('infoDown').innerText = (torrent.downloadSpeed / 1024 / 1024).toFixed(2) + ' MB/s';
+                        const speedMB = (torrent.downloadSpeed / 1024 / 1024).toFixed(2);
+                        document.getElementById('infoDown').innerText = speedMB + ' MB/s';
                         document.getElementById('infoPeers').innerText = torrent.numPeers;
                     }, 1000);
                 });

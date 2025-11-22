@@ -156,7 +156,7 @@
     <div id="tutorialOverlay" class="tutorial-overlay">
         <div id="tutorialBalloon" class="tutorial-balloon">
             <div class="flex justify-between items-center text-xs mb-3">
-                <span id="stepCounter" class="text-gray-400 font-mono">1/6</span>
+                <span id="stepCounter" class="text-gray-400 font-mono">1/5</span>
                 <div class="flex gap-2">
                     <button onclick="nextStep()" id="nextStepBtn" class="px-3 py-1 bg-neon-purple hover:bg-purple-600 text-white font-bold rounded transition">
                         Próximo <span class="material-icons text-sm ml-1 align-middle">arrow_forward</span>
@@ -442,7 +442,7 @@
         const nextStepBtn = document.getElementById('nextStepBtn');
 
 
-        // DEFINIÇÃO DOS PASSOS DO TUTORIAL (6 PASSOS)
+        // DEFINIÇÃO DOS PASSOS DO TUTORIAL (AGORA 5 PASSOS)
         const tutorialSteps = [
             { 
                 element: document.getElementById('searchMode'), 
@@ -470,16 +470,11 @@
             },
             { 
                 element: document.getElementById('dropZone'), 
-                title: "5. Upload Local ou Pasta",
+                title: "5. Upload Local ou Pasta (Fim)",
                 text: "Use o arrastar e soltar (Drag & Drop) ou clique nos botões para carregar vídeos locais ou pastas inteiras (que serão tratadas como playlist).",
                 position: 'top'
-            },
-            { 
-                element: document.getElementById('playerContainer'), 
-                title: "6. Player e Controles (Fim)",
-                text: "O vídeo será reproduzido aqui. Use a barra inferior para Play/Pause, volume, tela cheia e acesse legendas/áudio no ícone de engrenagem.",
-                position: 'right' // ALTERADO: Mudança de 'top' para 'right'
             }
+            // A Etapa 6 foi removida.
         ];
         
         // FUNÇÕES DE CONTROLE DO TUTORIAL
@@ -575,8 +570,6 @@
             } else {
                 // Se for um passo intermediário, o botão chama nextStep() e diz 'Próximo'
                 nextStepBtn.innerHTML = 'Próximo <span class="material-icons text-sm ml-1 align-middle">arrow_forward</span>';
-                // Garante que o botão use a função endTutorial() no último passo
-                nextStepBtn.onclick = nextStep;
             }
 
             // Para o último passo, o nextStep() precisa chamar endTutorial()

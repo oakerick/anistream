@@ -175,9 +175,13 @@
                 <h1 class="text-3xl font-black tracking-tighter text-white">Oak<span class="text-neon-cyan">Cine</span></h1>
             </div>
         </div>
-        <button onclick="startTutorial()" class="px-4 py-2 text-xs font-bold text-neon-cyan border border-neon-cyan rounded-lg hover:bg-neon-cyan/20 transition">
-            <span class="material-icons text-sm mr-1 align-middle">help_outline</span> INICIAR TOUR
-        </button>
+        
+        <div class="flex items-center gap-4"> 
+            
+            <button onclick="startTutorial()" class="px-4 py-2 text-xs font-bold text-neon-cyan border border-neon-cyan rounded-lg hover:bg-neon-cyan/20 transition">
+                <span class="material-icons text-sm mr-1 align-middle">help_outline</span> INICIAR TOUR
+            </button>
+        </div>
     </header>
 
     <section class="w-full max-w-4xl px-4 mb-6 relative z-50">
@@ -346,10 +350,10 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="glass-panel p-4 rounded-xl">
                     <div class="flex items-center gap-2 mb-2 text-neon-purple font-bold text-sm">
-                        <span class="material-icons text-sm">bolt</span> Magnet Link
+                        <span class="material-icons text-sm">bolt</span> Magnet Link / Stream Direto
                     </div>
                     <div class="flex gap-2">
-                        <input type="text" id="magnetInput" placeholder="magnet:?xt=..." class="neon-input w-full rounded px-3 py-2 text-xs text-white">
+                        <input type="text" id="magnetInput" placeholder="magnet:?xt=... ou link IPTV (.m3u8)" class="neon-input w-full rounded px-3 py-2 text-xs text-white">
                         <button id="loadMagnetBtn" class="bg-neon-purple hover:bg-purple-600 text-white px-3 rounded transition"><span class="material-icons text-sm">play_arrow</span></button>
                     </div>
                 </div>
@@ -464,8 +468,8 @@
             },
             { 
                 element: document.getElementById('magnetInput').parentElement.parentElement,
-                title: "4. Carregar Magnet Link",
-                text: "Cole um **Magnet Link** ou o **hash Info** aqui para iniciar o download/stream via WebTorrent diretamente.",
+                title: "4. Carregar Magnet Link ou Stream",
+                text: "Cole um **Magnet Link** ou um **link direto de stream/IPTV** (ex: `.m3u8`) aqui para iniciar a reprodução.",
                 position: 'top'
             },
             { 
@@ -474,7 +478,6 @@
                 text: "Use o arrastar e soltar (Drag & Drop) ou clique nos botões para carregar vídeos locais ou pastas inteiras (que serão tratadas como playlist).",
                 position: 'top'
             }
-            // A Etapa 6 foi removida.
         ];
         
         // FUNÇÕES DE CONTROLE DO TUTORIAL
@@ -494,7 +497,6 @@
 
             if (element) {
                 // Armazena e define o novo z-index (1002 para ficar acima da overlay)
-                // Usamos !important no CSS para garantir que ele esteja acima, mas definimos o valor aqui também.
                 originalZIndices.set(element, element.style.zIndex);
                 element.classList.add('pulse-target');
             }
@@ -605,7 +607,6 @@
         }
 
         // FIM FUNÇÕES DE CONTROLE DO TUTORIAL
-
 
         // FUNÇÃO DE FEEDBACK VISUAL PARA TEMPO E VOLUME (Melhoria)
         let indicatorTimeout = null;
@@ -934,50 +935,91 @@
             };
         }
 
-        // MAGNET
+        // MAGNET/STREAM
         function loadMagnet(uri) {
-            if(!uri) return;
+            const trimmedUri = uri.trim();
+            if(!trimmedUri) return;
             
             loading.classList.remove('hidden');
             
-            // Limpa o torrent anterior, se houver
+            // 1. Limpa o torrent anterior, se houver
             if(currentTorrent) {
                 currentTorrent.destroy();
                 currentTorrent = null;
                 clearInterval(updateInterval);
                 document.getElementById('torrentStats').classList.add('hidden');
             }
+            
+            // Reseta a src do vídeo para limpar o player
+            video.src = '';
+            
+            const isMagnet = trimmedUri.startsWith('magnet:?');
+            const isDirectStream = trimmedUri.startsWith('http://') || trimmedUri.startsWith('https://');
 
-            client.add(uri, (torrent) => {
-                currentTorrent = torrent;
-                const file = torrent.files.find(f => isVideo(f.name));
+            if (isDirectStream) {
+                // Carregar link de IPTV/Stream Direto
+                currentVideoName = trimmedUri;
                 
-                if(!file) {
-                    loading.classList.add('hidden');
-                    alert("❌ Nenhum vídeo no torrent");
-                    return;
-                }
+                video.src = trimmedUri;
+                video.load();
+                
+                document.getElementById('mediaInfo').classList.remove('hidden');
+                // Exibe uma parte do link para feedback
+                document.getElementById('infoFilename').innerText = "STREAM: " + trimmedUri.split('/').pop().substring(0, 50) + '...';
+                document.getElementById('torrentStats').classList.add('hidden');
 
-                file.renderTo(video, { autoplay: true }, (err) => {
-                    if(err) {
-                        loading.classList.add('hidden');
-                        alert("❌ Erro: " + err.message);
-                        return;
-                    }
-                    
+                // Garante que o placeholder seja escondido e o vídeo tente reproduzir
+                video.onloadeddata = () => {
                     loading.classList.add('hidden');
                     placeholder.style.display = 'none';
+                    video.play().catch(e => {
+                        alert("Erro ao iniciar a stream: " + e.message + "\nVerifique o link ou se ele requer um CORS proxy.");
+                        loading.classList.add('hidden');
+                    });
+                };
+                // Caso a stream falhe rapidamente
+                video.onerror = (e) => {
+                    loading.classList.add('hidden');
+                    alert("Erro ao carregar o vídeo ou stream. Verifique se o link é válido ou se há problemas de CORS.");
+                    console.error("Video Error:", e);
+                };
+
+            } else if (isMagnet) {
+                // Lógica para Magnet Link (WebTorrent)
+                client.add(trimmedUri, (torrent) => {
+                    currentTorrent = torrent;
+                    const file = torrent.files.find(f => isVideo(f.name));
                     
-                    document.getElementById('mediaInfo').classList.remove('hidden');
-                    document.getElementById('infoFilename').innerText = file.name;
-                    document.getElementById('torrentStats').classList.remove('hidden');
-                    
-                    updateInterval = setInterval(() => {
-                        document.getElementById('infoDown').innerText = (torrent.downloadSpeed / 1024 / 1024).toFixed(2) + ' MB/s';
-                        document.getElementById('infoPeers').innerText = torrent.numPeers;
-                    }, 1000);
+                    if(!file) {
+                        loading.classList.add('hidden');
+                        alert("❌ Nenhum vídeo no torrent");
+                        return;
+                    }
+
+                    file.renderTo(video, { autoplay: true }, (err) => {
+                        if(err) {
+                            loading.classList.add('hidden');
+                            alert("❌ Erro: " + err.message);
+                            return;
+                        }
+                        
+                        loading.classList.add('hidden');
+                        placeholder.style.display = 'none';
+                        
+                        document.getElementById('mediaInfo').classList.remove('hidden');
+                        document.getElementById('infoFilename').innerText = file.name;
+                        document.getElementById('torrentStats').classList.remove('hidden');
+                        
+                        updateInterval = setInterval(() => {
+                            document.getElementById('infoDown').innerText = (torrent.downloadSpeed / 1024 / 1024).toFixed(2) + ' MB/s';
+                            document.getElementById('infoPeers').innerText = torrent.numPeers;
+                        }, 1000);
+                    });
                 });
-            });
+            } else {
+                loading.classList.add('hidden');
+                alert("⚠️ Por favor, insira um link 'magnet:' válido ou um link de stream HTTP/S (ex: .m3u8, .mp4).");
+            }
         }
 
         document.getElementById('loadMagnetBtn').onclick = () => {

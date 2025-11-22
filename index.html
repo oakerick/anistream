@@ -401,8 +401,8 @@
         let currentIndex = -1;
         let updateInterval = null;
         let currentVideoName = '';
-        let currentTutorialStep = 0; // NOVO: Controla o passo do tutorial
-        let originalZIndices = new Map(); // NOVO: Para restaurar z-index
+        let currentTutorialStep = 0;
+        let originalZIndices = new Map();
 
         const video = document.getElementById('nativeVideo');
         const placeholder = document.getElementById('videoPlaceholder');
@@ -434,7 +434,7 @@
         const searchSubBtn = document.getElementById('searchSubBtn');
         const onlineSubList = document.getElementById('onlineSubList');
         
-        // NOVO: ELEMENTOS DO TUTORIAL
+        // ELEMENTOS DO TUTORIAL
         const tutorialOverlay = document.getElementById('tutorialOverlay');
         const tutorialBalloon = document.getElementById('tutorialBalloon');
         const tutorialText = document.getElementById('tutorialText');
@@ -442,7 +442,7 @@
         const nextStepBtn = document.getElementById('nextStepBtn');
 
 
-        // NOVO: DEFINIÇÃO DOS PASSOS DO TUTORIAL
+        // DEFINIÇÃO DOS PASSOS DO TUTORIAL
         const tutorialSteps = [
             { 
                 element: document.getElementById('searchMode'), 
@@ -488,7 +488,7 @@
             }
         ];
         
-        // NOVO: FUNÇÕES DE CONTROLE DO TUTORIAL
+        // FUNÇÕES DE CONTROLE DO TUTORIAL
 
         function highlightElement(element) {
             // Remove destaque do passo anterior
@@ -511,6 +511,7 @@
         }
 
         function positionBalloon(target, balloon, position) {
+            // Calcula a posição do balão APÓS o elemento alvo ter sido rolado para a tela.
             const targetRect = target.getBoundingClientRect();
             
             // Limpa as classes de seta
@@ -540,15 +541,15 @@
                 balloon.classList.add('balloon-right');
             }
             
-            // Ajuste para não sair da tela (simples)
+            // Ajuste para não sair da tela (garantido que o balão fique a pelo menos 20px da borda do viewport)
             left = Math.max(20 + scrollX, Math.min(left, window.innerWidth - balloon.offsetWidth - 20 + scrollX));
             top = Math.max(20 + scrollY, top);
 
             balloon.style.top = `${top}px`;
             balloon.style.left = `${left}px`;
             
-            // Rola para garantir que o alvo e o balão estejam visíveis
-            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // REMOVIDO: target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // A rolagem foi movida para showStep para estabilizar a visualização antes do cálculo da posição.
         }
 
         function showStep(index) {
@@ -559,6 +560,9 @@
 
             currentTutorialStep = index;
             const step = tutorialSteps[index];
+
+            // NOVO: Rola primeiro para garantir que o alvo esteja visível e centralizado
+            step.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
             
             // Atualiza o conteúdo do balão
             document.getElementById('tutorialBalloon').querySelector('h4').innerText = step.title;
@@ -572,12 +576,11 @@
                 nextStepBtn.innerHTML = 'Próximo <span class="material-icons text-sm ml-1 align-middle">arrow_forward</span>';
             }
 
-            // Destaque e Posicionamento
+            // Destaque e Posicionamento. Adicionado delay maior para esperar a rolagem suave.
             highlightElement(step.element);
-            // Precisa de um pequeno delay para o DOM calcular o offsetWidth/Height do balão
             setTimeout(() => {
                 positionBalloon(step.element, tutorialBalloon, step.position);
-            }, 50);
+            }, 300); // 300ms de atraso para a rolagem suave terminar
         }
 
         function startTutorial() {
@@ -596,7 +599,7 @@
             alert("✨ Tutorial concluído! Divirta-se!");
         }
 
-        // FIM NOVO: FUNÇÕES DE CONTROLE DO TUTORIAL
+        // FIM FUNÇÕES DE CONTROLE DO TUTORIAL
 
 
         // FUNÇÃO DE FEEDBACK VISUAL PARA TEMPO E VOLUME (Melhoria)

@@ -57,10 +57,102 @@
             transition: all 0.3s ease;
         }
         .neon-input:focus { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); outline: none; }
+        
+        /* Estilos para o balão flutuante do Tour */
+        #tourBalloon {
+            z-index: 5000; /* Acima de tudo */
+            background: rgba(30, 41, 59, 0.95); /* glass-panel background */
+            backdrop-filter: blur(10px);
+            border: 1px solid #06b6d4; /* Neon-cyan border */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        /* Flecha do balão (A seta sempre aponta para o elemento realçado) */
+        #tourBalloon::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+
+        #tourBalloon[data-placement="bottom"]::after {
+            border-width: 0 10px 10px 10px;
+            border-color: transparent transparent #06b6d4 transparent; /* Pointer pointing up */
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #tourBalloon[data-placement="top"]::after {
+            border-width: 10px 10px 0 10px;
+            border-color: #06b6d4 transparent transparent transparent; /* Pointer pointing down */
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #tourBalloon[data-placement="right"]::after {
+            border-width: 10px 10px 10px 0;
+            border-color: transparent #06b6d4 transparent transparent; /* Pointer pointing left */
+            top: 50%;
+            left: -10px;
+            transform: translateY(-50%);
+        }
     </style>
 </head>
 <body class="flex flex-col items-center min-h-screen pb-20">
 
+    <div id="tourBalloon" class="fixed text-white hidden" style="width: 300px;">
+        <h4 id="tourTitle" class="text-neon-cyan font-bold text-lg mb-1">Título</h4>
+        <p id="tourContent" class="text-sm text-gray-300 mb-4">Conteúdo...</p>
+        <div class="flex justify-between items-center text-xs">
+            <span id="tourProgress" class="font-mono text-gray-400">1/5</span>
+            <div class="space-x-2">
+                <button id="tourSkip" class="text-gray-400 hover:text-white transition">Pular</button>
+                <button id="tourPrev" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded transition disabled:opacity-50" disabled>Anterior</button>
+                <button id="tourNext" class="bg-neon-cyan hover:bg-cyan-600 text-black font-bold px-3 py-1 rounded transition">Próximo</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tutorialModal" class="hidden fixed top-0 left-0 w-full h-full z-[9999] bg-black/80 backdrop-blur-sm items-center justify-center">
+        <div class="glass-panel w-full max-w-lg p-6 rounded-2xl shadow-2xl relative">
+            <h3 class="text-2xl font-bold text-neon-cyan mb-3 flex items-center gap-2">
+                <span class="material-icons">school</span> Guia Rápido & Atalhos
+            </h3>
+            <p class="text-gray-300 mb-4 text-sm">Acesse o conteúdo por **Magnet Link** ou **Upload Local** (arquivos e pastas).</p>
+            
+            <div class="grid grid-cols-2 gap-4 text-xs font-mono">
+                <div class="p-3 bg-white/5 rounded-lg">
+                    <p class="font-bold text-neon-purple mb-1">Controles</p>
+                    <ul class="space-y-1 text-gray-400">
+                        <li><span class="text-white font-bold">Espaço / K</span>: Play/Pause</li>
+                        <li><span class="text-white font-bold">F</span>: Tela Cheia</li>
+                        <li><span class="text-white font-bold">M</span>: Mudo</li>
+                        <li><span class="text-white font-bold">C</span>: Legendas On/Off</li>
+                    </ul>
+                </div>
+                <div class="p-3 bg-white/5 rounded-lg">
+                    <p class="font-bold text-neon-purple mb-1">Navegação</p>
+                    <ul class="space-y-1 text-gray-400">
+                        <li><span class="text-white font-bold">← / J</span>: Voltar 10s</li>
+                        <li><span class="text-white font-bold">→ / L</span>: Avançar 10s</li>
+                        <li><span class="text-white font-bold">N / P</span>: Próximo/Vídeo Anterior</li>
+                        <li><span class="text-white font-bold">Up/Down</span>: Volume</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <button id="closeTutorial" class="mt-6 w-full py-2 bg-neon-cyan hover:bg-cyan-600 rounded-lg text-black font-bold text-sm transition">
+                Entendi, Fechar
+            </button>
+        </div>
+    </div>
+    
     <header class="w-full max-w-7xl p-6 flex justify-between items-center">
         <div class="flex items-center gap-3 select-none cursor-pointer" onclick="location.reload()">
             <span class="material-icons text-4xl text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">movie_filter</span>
@@ -72,11 +164,11 @@
 
     <section class="w-full max-w-4xl px-4 mb-6 relative z-50">
         <div class="glass-panel rounded-xl p-1 flex flex-col md:flex-row gap-2 items-center shadow-2xl relative overflow-hidden">
-            <div class="relative w-full md:w-auto">
+            <div class="relative w-full md:w-auto" id="searchModeContainer">
                 <select id="searchMode" class="w-full md:w-48 bg-[#0f172a] text-gray-300 text-xs font-bold uppercase tracking-wide py-3 px-4 rounded-lg border border-gray-700 outline-none appearance-none cursor-pointer hover:text-white transition">
                     <option value="torrent">🌊 Torrent (Best)</option>
                     <option value="direct">📂 Cloud Direct</option>
-                    <option value="stream">📺 Web Stream</option>
+                    <option value="stream">📺 Web Stream / IPTV</option>
                 </select>
                 <span class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">expand_more</span>
             </div>
@@ -84,12 +176,22 @@
             <div class="flex-1 relative w-full flex items-center">
                 <span class="material-icons text-neon-purple text-xl absolute left-3">auto_awesome</span>
                 <input type="text" id="aiSearchInput" 
-                       class="w-full bg-[#0f172a]/50 text-white placeholder-gray-500 px-10 py-3 rounded-lg outline-none border border-transparent focus:border-neon-purple/50 transition-colors"
+                       class="w-full bg-[#0f172a]/50 text-white placeholder-gray-500 pl-10 pr-[45px] py-3 rounded-lg outline-none border border-transparent focus:border-neon-purple/50 transition-colors"
                        placeholder="O que vamos assistir hoje? (Ex: Oppenheimer 4K)" autocomplete="off">
+
+                <div class="absolute right-2 z-10">
+                    <button id="micBtn" class="p-1 text-gray-400 hover:text-neon-cyan transition rounded-full hover:bg-white/10" title="Pesquisa por Voz">
+                        <span class="material-icons text-lg">mic</span>
+                    </button>
+                </div>
             </div>
 
             <button onclick="performSmartSearch()" class="w-full md:w-auto px-6 py-3 rounded-lg bg-gradient-to-r from-neon-purple to-indigo-600 hover:from-indigo-500 hover:to-neon-purple text-white font-bold text-sm tracking-wider transition-all shadow-lg">
                 BUSCAR
+            </button>
+            
+            <button id="shortcutsBtn" class="text-gray-400 hover:text-neon-cyan transition p-3 rounded-lg" title="Mostrar Atalhos e Guia">
+                 <span class="material-icons text-lg">info</span>
             </button>
 
             <div id="aiLoadingBar" class="absolute bottom-0 left-0 h-1 bg-neon-cyan transition-all duration-[2000ms] ease-out w-0"></div>
@@ -100,7 +202,7 @@
         </div>
     </section>
 
-    <div class="w-full max-w-7xl px-4 flex flex-col lg:flex-row gap-6 items-start">
+    <div class="w-full max-w-4xl px-4 flex flex-col lg:flex-row gap-6 items-start">
         
         <div class="flex-1 w-full min-w-0 flex flex-col gap-4">
             
@@ -236,10 +338,10 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="glass-panel p-4 rounded-xl">
                     <div class="flex items-center gap-2 mb-2 text-neon-purple font-bold text-sm">
-                        <span class="material-icons text-sm">bolt</span> Magnet Link
+                        <span class="material-icons text-sm">bolt</span> Magnet Link / Stream Direto
                     </div>
                     <div class="flex gap-2">
-                        <input type="text" id="magnetInput" placeholder="magnet:?xt=..." class="neon-input w-full rounded px-3 py-2 text-xs text-white">
+                        <input type="text" id="magnetInput" placeholder="magnet:?xt=... ou link IPTV (.m3u8)" class="neon-input w-full rounded px-3 py-2 text-xs text-white">
                         <button id="loadMagnetBtn" class="bg-neon-purple hover:bg-purple-600 text-white px-3 rounded transition"><span class="material-icons text-sm">play_arrow</span></button>
                     </div>
                 </div>
@@ -309,8 +411,207 @@
         // NOVAS REFERÊNCIAS
         const rewind10Btn = document.getElementById('rewind10Btn');
         const forward10Btn = document.getElementById('forward10Btn');
-        const nextVideoBtn = document.getElementById('nextVideoBtn'); // Adicionado
-        const prevVideoBtn = document.getElementById('prevVideoBtn'); // Adicionado
+        const nextVideoBtn = document.getElementById('nextVideoBtn');
+        const prevVideoBtn = document.getElementById('prevVideoBtn');
+
+        // NOVAS REFERÊNCIAS PARA BUSCA POR VOZ/TUTORIAL
+        const aiSearchInput = document.getElementById('aiSearchInput');
+        const micBtn = document.getElementById('micBtn');
+        const shortcutsBtn = document.getElementById('shortcutsBtn'); // Antigo tutorialBtn
+        const tutorialModal = document.getElementById('tutorialModal');
+        const closeTutorial = document.getElementById('closeTutorial');
+        
+        // NOVAS REFERÊNCIAS PARA O TOUR
+        const tourBalloon = document.getElementById('tourBalloon');
+        const tourTitle = document.getElementById('tourTitle');
+        const tourContent = document.getElementById('tourContent');
+        const tourProgress = document.getElementById('tourProgress');
+        const tourSkip = document.getElementById('tourSkip');
+        const tourPrev = document.getElementById('tourPrev');
+        const tourNext = document.getElementById('tourNext');
+        
+        let currentStep = -1;
+        const tourSteps = [
+            { id: 'searchModeContainer', title: '1. Modo de Busca', content: 'Selecione o tipo de pesquisa: Torrent (melhor), Link Direto (Cloud) ou Stream (IPTV/M3U8).', placement: 'bottom' },
+            { id: 'aiSearchInput', title: '2. Pesquisa Inteligente', content: 'Digite o nome do filme/série aqui. A busca é feita no Google, otimizada para encontrar links.', placement: 'bottom' },
+            { id: 'micBtn', title: '3. Pesquisa por Voz', content: 'Use seu microfone para digitar o termo de busca sem precisar do teclado.', placement: 'right' },
+            { id: 'loadMagnetBtn', title: '4. Links Diretos', content: 'Cole um Magnet Link ou um link de Stream Direto (.m3u8) e clique no Play para carregar.', placement: 'top' },
+            { id: 'dropZone', title: '5. Upload Local', content: 'Arraste e solte arquivos ou pastas de mídia aqui para reproduzir diretamente no player.', placement: 'top' },
+            { id: 'playerContainer', title: '6. O Player', content: 'Seu vídeo será reproduzido aqui. Use os atalhos de teclado (botão "info" ao lado) para controle rápido!', placement: 'bottom' }
+        ];
+
+        // LÓGICA DO TUTORIAL/ATALHOS (Modal)
+        shortcutsBtn.onclick = () => {
+             // O botão "info" abre o modal de atalhos/tutorial, conforme a última solicitação.
+            tutorialModal.classList.remove('hidden');
+            tutorialModal.classList.add('flex');
+        };
+
+        closeTutorial.onclick = () => {
+            tutorialModal.classList.add('hidden');
+            tutorialModal.classList.remove('flex');
+        };
+        
+        // Fechar ao clicar fora do modal
+        tutorialModal.onclick = (e) => {
+            if (e.target.id === 'tutorialModal') {
+                closeTutorial.click();
+            }
+        };
+
+        // LÓGICA DO TOUR GUIADO
+        // Função para posicionar o balão
+        function positionBalloon(target, balloon, placement) {
+            const targetRect = target.getBoundingClientRect();
+            const balloonRect = balloon.getBoundingClientRect();
+            
+            let top, left;
+
+            if (placement === 'bottom') {
+                top = targetRect.bottom + 15;
+                left = targetRect.left + (targetRect.width / 2) - (balloonRect.width / 2);
+            } else if (placement === 'top') {
+                top = targetRect.top - balloonRect.height - 15;
+                left = targetRect.left + (targetRect.width / 2) - (balloonRect.width / 2);
+            } else if (placement === 'right') {
+                top = targetRect.top + (targetRect.height / 2) - (balloonRect.height / 2);
+                left = targetRect.right + 15;
+            } else if (placement === 'left') {
+                top = targetRect.top + (targetRect.height / 2) - (balloonRect.height / 2);
+                left = targetRect.left - balloonRect.width - 15;
+            }
+            
+            // Ajustar para evitar que saia da tela
+            left = Math.max(10, Math.min(left, window.innerWidth - balloonRect.width - 10));
+            top = Math.max(10, Math.min(top, window.innerHeight - balloonRect.height - 10));
+            
+            // Se a seta for horizontal, ajusta o top para compensar o balão.
+            if (placement === 'right' || placement === 'left') {
+                 // Ajusta a posição vertical da seta para estar no meio do target
+                const arrowOffset = targetRect.top + (targetRect.height / 2) - top;
+                balloon.style.setProperty('--arrow-v-offset', `${arrowOffset}px`); // Propriedade customizada para o CSS
+                
+                // Precisamos de CSS para ajustar a posição da flecha
+                // Uma solução simples aqui é garantir que a flecha esteja sempre centralizada no lado correto. 
+                // Como não podemos injetar estilos customizados para cada balão, manteremos a flecha centralizada (o que já fazemos)
+            }
+
+
+            balloon.style.top = `${top}px`;
+            balloon.style.left = `${left}px`;
+            balloon.setAttribute('data-placement', placement);
+        }
+
+        function showStep(index) {
+            if (index < 0 || index >= tourSteps.length) {
+                skipTour();
+                return;
+            }
+
+            currentStep = index;
+            const step = tourSteps[currentStep];
+            const target = document.getElementById(step.id);
+
+            if (!target) {
+                console.error(`Tour: Target element #${step.id} not found.`);
+                skipTour();
+                return;
+            }
+            
+            // Remove highlight from previous step
+            tourSteps.forEach(s => {
+                const t = document.getElementById(s.id);
+                if (t) {
+                    t.style.boxShadow = '';
+                    t.style.zIndex = '';
+                    t.style.transition = '';
+                }
+            });
+
+            // Highlight current target
+            target.style.zIndex = '5001';
+            target.style.boxShadow = '0 0 20px 5px rgba(6, 182, 212, 0.6)';
+            target.style.transition = 'box-shadow 0.5s ease-in-out';
+            
+            // Scroll to target
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            tourTitle.innerText = step.title;
+            tourContent.innerText = step.content;
+            tourProgress.innerText = `${currentStep + 1}/${tourSteps.length}`;
+
+            tourPrev.disabled = currentStep === 0;
+            tourNext.innerText = currentStep === tourSteps.length - 1 ? 'Concluir' : 'Próximo';
+
+            tourBalloon.classList.remove('hidden');
+            
+            // Give time for scroll and element rendering before positioning
+            setTimeout(() => {
+                positionBalloon(target, tourBalloon, step.placement || 'bottom');
+            }, 300);
+        }
+
+        function nextStep() {
+            if (currentStep < tourSteps.length - 1) {
+                showStep(currentStep + 1);
+            } else {
+                skipTour();
+                alert('🎉 Tour concluído! Divirta-se usando o OakCine!');
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                showStep(currentStep - 1);
+            }
+        }
+
+        function skipTour() {
+            tourBalloon.classList.add('hidden');
+            // Remove all z-index/shadows
+            tourSteps.forEach(step => {
+                const target = document.getElementById(step.id);
+                if (target) {
+                    target.style.zIndex = '';
+                    target.style.boxShadow = '';
+                    target.style.transition = '';
+                }
+            });
+            currentStep = -1;
+        }
+
+        tourNext.onclick = nextStep;
+        tourPrev.onclick = prevStep;
+        tourSkip.onclick = skipTour;
+        
+        // Função que cria o Prompt Flutuante inicial
+        function initializeTourPrompt() {
+            const initialPrompt = document.createElement('div');
+            initialPrompt.id = 'initialTourPrompt';
+            initialPrompt.className = 'fixed top-1/2 right-4 transform -translate-y-1/2 p-4 glass-panel rounded-xl shadow-2xl z-50 text-center flex flex-col gap-2 transition-all duration-500';
+            initialPrompt.innerHTML = `
+                <p class="text-sm font-bold text-white">Novo por aqui?</p>
+                <button id="startTourNow" class="bg-neon-cyan hover:bg-cyan-600 text-black font-bold text-xs py-2 px-4 rounded transition">
+                    ▶️ Iniciar Tour Rápido
+                </button>
+                <button id="hideTourPrompt" class="text-gray-400 hover:text-white text-[10px] underline">
+                    Não, obrigado.
+                </button>
+            `;
+            document.body.appendChild(initialPrompt);
+
+            document.getElementById('startTourNow').onclick = () => {
+                initialPrompt.remove();
+                showStep(0);
+            };
+            
+            document.getElementById('hideTourPrompt').onclick = () => {
+                initialPrompt.remove();
+            };
+        }
+
+        // Chama o prompt de inicialização do tour
+        window.onload = initializeTourPrompt;
 
 
         // LEGENDAS
@@ -321,7 +622,7 @@
         const searchSubBtn = document.getElementById('searchSubBtn');
         const onlineSubList = document.getElementById('onlineSubList');
 
-        // FUNÇÃO DE FEEDBACK VISUAL PARA TEMPO E VOLUME (Melhoria)
+        // FUNÇÃO DE FEEDBACK VISUAL PARA TEMPO E VOLUME
         let indicatorTimeout = null;
         function showTimeIndicator(text) {
             let indicator = document.getElementById('tempIndicator');
@@ -480,7 +781,7 @@
                 btn.classList.add('text-gray-300');
             });
             
-            if (event && event.target) {
+            if (event && event.target && event.target.tagName === 'BUTTON') {
                 event.target.classList.add('bg-neon-cyan/20', 'text-white');
                 event.target.classList.remove('text-gray-300');
             } else {
@@ -505,9 +806,6 @@
                         ${track.label || `Faixa ${i + 1}`} ${track.language ? `(${track.language})` : ''}
                     </button>
                 `).join('');
-                
-                // FIX AQUI: Garante que a primeira faixa seja habilitada no player
-                selectAudioTrack(0); 
             } else {
                 audioTracks.innerHTML = '<div class="px-3 py-2 text-gray-500">Faixa Principal</div>';
             }
@@ -516,7 +814,6 @@
         function selectAudioTrack(index) {
             if(video.audioTracks) {
                 Array.from(video.audioTracks).forEach((track, i) => {
-                    // A propriedade 'enabled' é usada para selecionar a faixa de áudio
                     track.enabled = i === index;
                 });
                 
@@ -528,9 +825,55 @@
             }
         }
 
+        // PESQUISA POR VOZ
+        function startVoiceSearch() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("❌ Seu navegador não suporta Pesquisa por Voz.");
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'pt-BR'; // Define o idioma para Português
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            const originalPlaceholder = aiSearchInput.placeholder;
+
+            micBtn.innerHTML = '<span class="material-icons text-lg text-red-500 animate-pulse">mic</span>';
+            micBtn.classList.add('bg-white/10');
+            aiSearchInput.placeholder = "Fale agora...";
+
+            recognition.start();
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                aiSearchInput.value = transcript;
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                resetMicButton(originalPlaceholder);
+            };
+
+            recognition.onend = () => {
+                resetMicButton(originalPlaceholder);
+            };
+            
+            function resetMicButton(placeholder) {
+                micBtn.innerHTML = '<span class="material-icons text-lg">mic</span>';
+                micBtn.classList.remove('bg-white/10');
+                aiSearchInput.placeholder = placeholder;
+            }
+        }
+
+        // ADICIONA EVENT LISTENERS PARA OS BOTÕES
+        micBtn.onclick = startVoiceSearch;
+
+
         // BUSCA
         function performSmartSearch() {
-            const query = document.getElementById('aiSearchInput').value.trim();
+            const query = aiSearchInput.value.trim();
             const mode = document.getElementById('searchMode').value;
             
             if(!query) {
@@ -561,8 +904,8 @@
                     q = `"${query}" (site:mega.nz OR site:drive.google.com) (mp4 OR mkv)`;
                 } else if(mode === 'torrent') {
                     q = `"${query}" (1080p OR 4K) (BluRay OR WEB-DL) ${year} -cam -ts (magnet OR torrent)`;
-                } else {
-                    q = `"${query}" assistir online ${year} legendado`;
+                } else { // mode === 'stream' (Busca IPTV)
+                    q = `"${query}" (site:pastebin.com OR site:github.com) (m3u8 OR m3u OR iptv) (list OR playlist) filetype:txt OR filetype:m3u OR filetype:m3u8`;
                 }
 
                 feedback.classList.add('hidden');
@@ -571,17 +914,16 @@
             }, 1800);
         }
 
-        document.getElementById('aiSearchInput').addEventListener('keydown', (e) => { 
+        aiSearchInput.addEventListener('keydown', (e) => { 
             if(e.key === 'Enter') performSmartSearch(); 
         });
 
-        // VERIFICAR SE É VÍDEO
-        function isVideo(name) {
-            // Ampliado para incluir formatos de áudio também, já que o player é genérico
+        // VERIFICAR SE É MÍDIA (VÍDEO OU ÁUDIO)
+        function isMedia(name) {
             const exts = [
                 // Vídeo
                 'mp4','mkv','webm','avi','mov','wmv','flv','m4v','mpg','mpeg','ts','m2ts','3gp','vob','ogv','divx',
-                // Áudio (para WebTorrent/Local)
+                // Áudio (para reprodução pelo elemento <video> como áudio-only)
                 'mp3','ogg','wav','flac','aac','m4a', 'opus'
             ];
             const ext = name.split('.').pop().toLowerCase();
@@ -592,8 +934,7 @@
         function processFiles(files) {
             const all = Array.from(files);
             const torrents = all.filter(f => f.name.endsWith('.torrent'));
-            // Usando isVideo para filtrar mídias (vídeo e áudio)
-            const mediaFiles = all.filter(f => isVideo(f.name));
+            const mediaFiles = all.filter(f => isMedia(f.name)); 
             
             if(torrents.length > 0) {
                 const reader = new FileReader();
@@ -603,7 +944,7 @@
             }
             
             if(mediaFiles.length === 0) {
-                alert("❌ Nenhuma mídia (vídeo/áudio) encontrada!\n\nFormatos: MP4, MKV, MP3, FLAC, etc.");
+                alert("❌ Nenhuma mídia (vídeo/áudio) encontrada!\n\nFormatos suportados: MP4, MKV, MP3, FLAC, etc.");
                 return;
             }
 
@@ -657,13 +998,14 @@
             };
         }
 
-        // MAGNET
+        // MAGNET/STREAM
         function loadMagnet(uri) {
-            if(!uri) return;
+            const trimmedUri = uri.trim();
+            if(!trimmedUri) return;
             
             loading.classList.remove('hidden');
             
-            // Limpa o torrent anterior, se houver
+            // 1. Limpa o torrent anterior, se houver
             if(currentTorrent) {
                 currentTorrent.destroy();
                 currentTorrent = null;
@@ -671,24 +1013,26 @@
                 document.getElementById('torrentStats').classList.add('hidden');
             }
             
-            video.src = ''; // Limpa o player antes de adicionar o novo torrent/stream
-
-            const trimmedUri = uri.trim();
+            // Reseta a src do vídeo para limpar o player
+            video.src = '';
+            
             const isMagnet = trimmedUri.startsWith('magnet:?');
+            // Links que começam com http ou https são tratados como streams diretos/IPTV
             const isDirectStream = trimmedUri.startsWith('http://') || trimmedUri.startsWith('https://');
 
-
             if (isDirectStream) {
-                // Lógica para Stream Direto/IPTV (sem WebTorrent)
+                // Carregar link de IPTV/Stream Direto
                 currentVideoName = trimmedUri;
                 
                 video.src = trimmedUri;
                 video.load();
                 
                 document.getElementById('mediaInfo').classList.remove('hidden');
+                // Exibe uma parte do link para feedback
                 document.getElementById('infoFilename').innerText = "STREAM: " + trimmedUri.split('/').pop().substring(0, 50) + '...';
                 document.getElementById('torrentStats').classList.add('hidden');
-                
+
+                // Garante que o placeholder seja escondido e o vídeo tente reproduzir
                 video.onloadeddata = () => {
                     loading.classList.add('hidden');
                     placeholder.style.display = 'none';
@@ -697,6 +1041,7 @@
                         loading.classList.add('hidden');
                     });
                 };
+                // Caso a stream falhe rapidamente
                 video.onerror = (e) => {
                     loading.classList.add('hidden');
                     alert("Erro ao carregar o vídeo ou stream. Verifique se o link é válido ou se há problemas de CORS.");
@@ -705,10 +1050,9 @@
 
             } else if (isMagnet) {
                 // Lógica para Magnet Link (WebTorrent)
-                client.add(uri, (torrent) => {
+                client.add(trimmedUri, (torrent) => {
                     currentTorrent = torrent;
-                    // Procura por arquivo de vídeo ou áudio
-                    const file = torrent.files.find(f => isVideo(f.name)); 
+                    const file = torrent.files.find(f => isMedia(f.name)); 
                     
                     if(!file) {
                         loading.classList.add('hidden');
@@ -737,10 +1081,11 @@
                     });
                 });
             } else {
-                 loading.classList.add('hidden');
+                loading.classList.add('hidden');
                 alert("⚠️ Por favor, insira um link 'magnet:' válido ou um link de stream HTTP/S (ex: .m3u8, .mp4).");
             }
         }
+
 
         document.getElementById('loadMagnetBtn').onclick = () => {
             const uri = document.getElementById('magnetInput').value.trim();
@@ -791,7 +1136,7 @@
             }
         };
 
-        // ATALHOS DE TECLADO (Corrigido para usar as funções de clique)
+        // ATALHOS DE TECLADO
         document.addEventListener('keydown', (e) => {
             // Ignora se está digitando em algum input
             if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -805,12 +1150,12 @@
                 case 'ArrowLeft':
                 case 'j':
                     e.preventDefault();
-                    rewind10Btn.click(); // Chama a função de retroceder 10s
+                    rewind10Btn.click();
                     break;
                 case 'ArrowRight':
                 case 'l':
                     e.preventDefault();
-                    forward10Btn.click(); // Chama a função de avançar 10s
+                    forward10Btn.click();
                     break;
                 case 'ArrowUp':
                     e.preventDefault();

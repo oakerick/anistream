@@ -158,7 +158,7 @@
             <h4 class="font-bold text-lg mb-2 text-neon-cyan">Título do Passo</h4>
             <p id="tutorialText" class="text-sm mb-4">Texto do tutorial.</p>
             <div class="flex justify-between items-center text-xs">
-                <span id="stepCounter" class="text-gray-400 font-mono">1/5</span>
+                <span id="stepCounter" class="text-gray-400 font-mono">1/6</span>
                 <div class="flex gap-2">
                     <button onclick="endTutorial()" class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded transition">
                         Finalizar
@@ -212,7 +212,7 @@
         </div>
     </section>
 
-    <div class="w-full max-w-5xl px-4 flex flex-col lg:flex-row gap-6 items-start">
+    <div class="w-full max-w-4xl px-4 flex flex-col lg:flex-row gap-6 items-start">
         
         <div class="flex-1 w-full min-w-0 flex flex-col gap-4">
             
@@ -444,13 +444,13 @@
         const nextStepBtn = document.getElementById('nextStepBtn');
 
 
-        // DEFINIÇÃO DOS PASSOS DO TUTORIAL
+        // DEFINIÇÃO DOS PASSOS DO TUTORIAL (6 PASSOS)
         const tutorialSteps = [
             { 
                 element: document.getElementById('searchMode'), 
                 title: "1. Modo de Busca",
                 text: "Selecione como deseja obter o conteúdo: **Torrent** (melhor qualidade, via P2P), **Cloud Direct** (busca links diretos) ou **Web Stream** (busca por players online).",
-                position: 'bottom' // Posição do balão em relação ao elemento alvo
+                position: 'bottom'
             },
             { 
                 element: document.getElementById('aiSearchInput'), 
@@ -465,28 +465,22 @@
                 position: 'right'
             },
             { 
-                element: document.getElementById('magnetInput').parentElement.parentElement, // Painel do Magnet Link
+                element: document.getElementById('magnetInput').parentElement.parentElement,
                 title: "4. Carregar Magnet Link",
                 text: "Cole um **Magnet Link** ou o **hash Info** aqui para iniciar o download/stream via WebTorrent diretamente.",
-                position: 'top' // Balão acima para destacar o painel
+                position: 'top'
             },
             { 
                 element: document.getElementById('dropZone'), 
                 title: "5. Upload Local ou Pasta",
                 text: "Use o arrastar e soltar (Drag & Drop) ou clique nos botões para carregar vídeos locais ou pastas inteiras (que serão tratadas como playlist).",
-                position: 'top' // Balão acima para destacar a zona de upload
+                position: 'top'
             },
             { 
                 element: document.getElementById('playerContainer'), 
-                title: "6. Player de Vídeo",
-                text: "Aqui o vídeo será reproduzido. Ele suporta a maioria dos formatos e possui todos os controles essenciais (legenda, áudio, velocidade).",
-                position: 'top' // Balão aparece acima do player
-            },
-            { 
-                element: document.getElementById('settingsBtn'), 
-                title: "7. Configurações Avançadas",
-                text: "Acesse as opções de legenda (Upload local ou Busca online), faixas de áudio e controle de velocidade de reprodução.",
-                position: 'top' // Balão aparece acima do settingsBtn/player
+                title: "6. Player e Controles (Fim)", // Nova etapa final
+                text: "Aqui o vídeo será reproduzido. Use os controles na barra inferior (o ícone de engrenagem dá acesso a legendas, áudio e velocidade) e atalhos de teclado (espaço, setas, F).",
+                position: 'top'
             }
         ];
         

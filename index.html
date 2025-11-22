@@ -104,8 +104,10 @@
         
         <div class="flex-1 w-full min-w-0 flex flex-col gap-4">
             
-            <div id="playerContainer" class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
-                <video id="nativeVideo" class="w-full h-full object-contain bg-black" controls></video>
+            <div id="playerContainer" class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800 group">
+                <video id="nativeVideo" class="w-full h-full object-contain bg-black" crossorigin="anonymous">
+                    <track kind="subtitles" id="subtitleTrack" default>
+                </video>
                 
                 <div id="videoPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 z-20">
                     <div class="p-5 rounded-full bg-white/5 mb-4 animate-pulse">
@@ -118,6 +120,130 @@
                 <div id="loadingOverlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-30 hidden">
                     <div class="w-12 h-12 border-4 border-neon-cyan border-t-transparent rounded-full animate-spin mb-3"></div>
                     <p class="text-neon-cyan text-xs font-bold tracking-widest animate-pulse">CARREGANDO</p>
+                </div>
+
+                <!-- CONTROLES CUSTOMIZADOS -->
+                <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-40">
+                    <!-- Progress Bar -->
+                    <div class="w-full mb-3 group/progress cursor-pointer relative h-1 hover:h-2 transition-all" id="progressBar">
+                        <div class="absolute inset-0 bg-gray-700/50 rounded-full"></div>
+                        <div id="playBar" class="absolute top-0 left-0 h-full bg-neon-cyan rounded-full w-0"></div>
+                    </div>
+                    
+                    <!-- Controles -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <!-- Anterior -->
+                            <button id="prevVideoBtn" class="text-gray-400 hover:text-white transition" title="Vídeo Anterior">
+                                <span class="material-icons text-lg">skip_previous</span>
+                            </button>
+                            
+                            <!-- Voltar 10s -->
+                            <button id="rewind10Btn" class="text-gray-400 hover:text-white transition" title="Voltar 10 segundos">
+                                <span class="material-icons text-lg">replay_10</span>
+                            </button>
+                            
+                            <!-- Play/Pause -->
+                            <button id="playPauseBtn" class="text-white hover:scale-110 transition">
+                                <span class="material-icons text-2xl">play_arrow</span>
+                            </button>
+                            
+                            <!-- Avançar 10s -->
+                            <button id="forward10Btn" class="text-gray-400 hover:text-white transition" title="Avançar 10 segundos">
+                                <span class="material-icons text-lg">forward_10</span>
+                            </button>
+                            
+                            <!-- Próximo -->
+                            <button id="nextVideoBtn" class="text-gray-400 hover:text-white transition" title="Próximo Vídeo">
+                                <span class="material-icons text-lg">skip_next</span>
+                            </button>
+                            
+                            <div class="h-4 w-px bg-gray-600 mx-1"></div>
+                            
+                            <button id="volumeBtn" class="text-gray-300 hover:text-white transition">
+                                <span class="material-icons text-sm">volume_up</span>
+                            </button>
+                            
+                            <span id="timeDisplay" class="text-[10px] font-mono text-gray-400">0:00 / 0:00</span>
+                        </div>
+                        
+                        <div class="flex items-center gap-2">
+                            <!-- Botão de Configurações -->
+                            <div class="relative">
+                                <button id="settingsBtn" class="text-gray-300 hover:text-white transition">
+                                    <span class="material-icons text-lg">settings</span>
+                                </button>
+                                
+                                <!-- Menu de Configurações -->
+                                <div id="settingsMenu" class="hidden absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl min-w-[280px] overflow-hidden">
+                                    <!-- Legendas -->
+                                    <div class="p-3 border-b border-white/10">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2">
+                                                <span class="material-icons text-sm text-neon-cyan">subtitles</span>
+                                                Legendas
+                                            </span>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" id="subtitlesToggle" class="sr-only peer">
+                                                <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-cyan"></div>
+                                            </label>
+                                        </div>
+                                        
+                                        <div id="subtitleOptions" class="space-y-1 hidden">
+                                            <input type="file" id="subtitleFileInput" accept=".srt,.vtt,.ass" class="hidden">
+                                            <button id="uploadSubBtn" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-white/5 rounded transition flex items-center gap-2">
+                                                <span class="material-icons text-sm">upload_file</span>
+                                                Carregar Legenda Local (.srt, .vtt)
+                                            </button>
+                                            
+                                            <div class="relative">
+                                                <button id="searchSubBtn" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-white/5 rounded transition flex items-center gap-2">
+                                                    <span class="material-icons text-sm">search</span>
+                                                    Buscar Legendas Online
+                                                </button>
+                                            </div>
+                                            
+                                            <div id="onlineSubList" class="max-h-32 overflow-y-auto hidden space-y-1 pt-2 border-t border-white/5">
+                                                <!-- Legendas online aparecerão aqui -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Áudio -->
+                                    <div class="p-3 border-b border-white/10">
+                                        <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2 mb-2">
+                                            <span class="material-icons text-sm text-neon-purple">audiotrack</span>
+                                            Áudio
+                                        </span>
+                                        <div id="audioTracks" class="text-xs text-gray-400">
+                                            <div class="px-3 py-2 text-gray-500">Faixa Principal</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Velocidade -->
+                                    <div class="p-3">
+                                        <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2 mb-2">
+                                            <span class="material-icons text-sm text-green-400">speed</span>
+                                            Velocidade
+                                        </span>
+                                        <div class="grid grid-cols-4 gap-1">
+                                            <button onclick="setPlaybackSpeed(0.5)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">0.5x</button>
+                                            <button onclick="setPlaybackSpeed(0.75)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">0.75x</button>
+                                            <button onclick="setPlaybackSpeed(1)" class="px-2 py-1 text-xs text-white bg-neon-cyan/20 rounded">1x</button>
+                                            <button onclick="setPlaybackSpeed(1.25)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.25x</button>
+                                            <button onclick="setPlaybackSpeed(1.5)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.5x</button>
+                                            <button onclick="setPlaybackSpeed(1.75)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.75x</button>
+                                            <button onclick="setPlaybackSpeed(2)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">2x</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button id="fullscreenBtn" class="text-gray-300 hover:text-white transition">
+                                <span class="material-icons text-lg">fullscreen</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -177,10 +303,187 @@
         let playlist = [];
         let currentIndex = -1;
         let updateInterval = null;
+        let currentVideoName = '';
 
         const video = document.getElementById('nativeVideo');
         const placeholder = document.getElementById('videoPlaceholder');
         const loading = document.getElementById('loadingOverlay');
+        const subtitleTrack = document.getElementById('subtitleTrack');
+
+        // CONTROLES CUSTOMIZADOS
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const volumeBtn = document.getElementById('volumeBtn');
+        const progressBar = document.getElementById('progressBar');
+        const playBar = document.getElementById('playBar');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsMenu = document.getElementById('settingsMenu');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+        // LEGENDAS
+        const subtitlesToggle = document.getElementById('subtitlesToggle');
+        const subtitleOptions = document.getElementById('subtitleOptions');
+        const uploadSubBtn = document.getElementById('uploadSubBtn');
+        const subtitleFileInput = document.getElementById('subtitleFileInput');
+        const searchSubBtn = document.getElementById('searchSubBtn');
+        const onlineSubList = document.getElementById('onlineSubList');
+
+        // CONTROLES DO PLAYER
+        playPauseBtn.onclick = () => {
+            if(video.paused) {
+                video.play();
+                playPauseBtn.innerHTML = '<span class="material-icons text-2xl">pause</span>';
+            } else {
+                video.pause();
+                playPauseBtn.innerHTML = '<span class="material-icons text-2xl">play_arrow</span>';
+            }
+        };
+
+        video.onclick = () => playPauseBtn.click();
+
+        volumeBtn.onclick = () => {
+            video.muted = !video.muted;
+            volumeBtn.innerHTML = video.muted ? 
+                '<span class="material-icons text-sm">volume_off</span>' : 
+                '<span class="material-icons text-sm">volume_up</span>';
+        };
+
+        video.ontimeupdate = () => {
+            if(video.duration) {
+                const pct = (video.currentTime / video.duration) * 100;
+                playBar.style.width = pct + '%';
+                
+                const fmt = (s) => {
+                    const m = Math.floor(s / 60);
+                    const sec = Math.floor(s % 60);
+                    return `${m}:${sec.toString().padStart(2, '0')}`;
+                };
+                
+                timeDisplay.innerText = fmt(video.currentTime) + " / " + fmt(video.duration);
+            }
+        };
+
+        progressBar.onclick = (e) => {
+            const rect = progressBar.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            video.currentTime = pos * video.duration;
+        };
+
+        fullscreenBtn.onclick = () => {
+            if(!document.fullscreenElement) {
+                document.getElementById('playerContainer').requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        };
+
+        // MENU DE CONFIGURAÇÕES
+        settingsBtn.onclick = (e) => {
+            e.stopPropagation();
+            settingsMenu.classList.toggle('hidden');
+        };
+
+        document.onclick = (e) => {
+            if(!settingsMenu.contains(e.target) && e.target !== settingsBtn) {
+                settingsMenu.classList.add('hidden');
+            }
+        };
+
+        // LEGENDAS
+        subtitlesToggle.onchange = () => {
+            const enabled = subtitlesToggle.checked;
+            subtitleOptions.classList.toggle('hidden', !enabled);
+            
+            if(video.textTracks[0]) {
+                video.textTracks[0].mode = enabled ? 'showing' : 'hidden';
+            }
+        };
+
+        uploadSubBtn.onclick = () => {
+            subtitleFileInput.click();
+        };
+
+        subtitleFileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            
+            const url = URL.createObjectURL(file);
+            subtitleTrack.src = url;
+            video.textTracks[0].mode = 'showing';
+            subtitlesToggle.checked = true;
+            
+            alert("✅ Legenda carregada com sucesso!");
+        };
+
+        searchSubBtn.onclick = async () => {
+            if(!currentVideoName) {
+                alert("⚠️ Nenhum vídeo em reprodução");
+                return;
+            }
+            
+            onlineSubList.innerHTML = '<div class="px-3 py-2 text-xs text-gray-500">🔍 Buscando legendas...</div>';
+            onlineSubList.classList.remove('hidden');
+            
+            // Extrai nome limpo do arquivo
+            const cleanName = currentVideoName.replace(/\.[^/.]+$/, "").replace(/[._]/g, ' ');
+            
+            // Sugestões de sites de legendas
+            const sites = [
+                { name: 'OpenSubtitles', url: `https://www.opensubtitles.org/en/search/sublanguageid-por/moviename-${encodeURIComponent(cleanName)}` },
+                { name: 'Legendas.tv', url: `https://legendas.tv/busca/${encodeURIComponent(cleanName)}` },
+                { name: 'Subdivx', url: `https://www.subdivx.com/index.php?buscar=${encodeURIComponent(cleanName)}` }
+            ];
+            
+            onlineSubList.innerHTML = sites.map(site => `
+                <a href="${site.url}" target="_blank" class="block px-3 py-2 text-xs text-neon-cyan hover:bg-white/10 rounded transition flex items-center justify-between">
+                    <span>${site.name}</span>
+                    <span class="material-icons text-xs">open_in_new</span>
+                </a>
+            `).join('');
+        };
+
+        // VELOCIDADE
+        function setPlaybackSpeed(speed) {
+            video.playbackRate = speed;
+            
+            // Atualiza visual
+            document.querySelectorAll('#settingsMenu button').forEach(btn => {
+                btn.classList.remove('bg-neon-cyan/20', 'text-white');
+                btn.classList.add('text-gray-300');
+            });
+            
+            event.target.classList.add('bg-neon-cyan/20', 'text-white');
+            event.target.classList.remove('text-gray-300');
+        }
+
+        // DETECTAR FAIXAS DE ÁUDIO
+        video.onloadedmetadata = () => {
+            const audioTracks = document.getElementById('audioTracks');
+            
+            if(video.audioTracks && video.audioTracks.length > 0) {
+                audioTracks.innerHTML = Array.from(video.audioTracks).map((track, i) => `
+                    <button onclick="selectAudioTrack(${i})" class="w-full text-left px-3 py-2 text-xs hover:bg-white/5 rounded transition ${i === 0 ? 'text-neon-cyan' : 'text-gray-300'}">
+                        ${track.label || `Faixa ${i + 1}`} ${track.language ? `(${track.language})` : ''}
+                    </button>
+                `).join('');
+            } else {
+                audioTracks.innerHTML = '<div class="px-3 py-2 text-gray-500">Faixa Principal</div>';
+            }
+        };
+
+        function selectAudioTrack(index) {
+            if(video.audioTracks) {
+                Array.from(video.audioTracks).forEach((track, i) => {
+                    track.enabled = i === index;
+                });
+                
+                // Atualiza visual
+                document.querySelectorAll('#audioTracks button').forEach((btn, i) => {
+                    btn.classList.toggle('text-neon-cyan', i === index);
+                    btn.classList.toggle('text-gray-300', i !== index);
+                });
+            }
+        }
 
         // BUSCA
         function performSmartSearch() {
@@ -287,6 +590,7 @@
             updatePlaylistUI();
             
             const file = playlist[index];
+            currentVideoName = file.name;
             const url = URL.createObjectURL(file);
             
             loading.classList.remove('hidden');
@@ -389,6 +693,71 @@
                 playItem(currentIndex + 1);
             }
         };
+
+        // ATALHOS DE TECLADO
+        document.addEventListener('keydown', (e) => {
+            // Ignora se está digitando em algum input
+            if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            switch(e.key) {
+                case ' ':
+                case 'k':
+                    e.preventDefault();
+                    playPauseBtn.click();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    rewind10Btn.click();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    forward10Btn.click();
+                    break;
+                case 'j':
+                    e.preventDefault();
+                    video.currentTime = Math.max(0, video.currentTime - 10);
+                    showTimeIndicator('-10s');
+                    break;
+                case 'l':
+                    e.preventDefault();
+                    video.currentTime = Math.min(video.duration, video.currentTime + 10);
+                    showTimeIndicator('+10s');
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    video.volume = Math.min(1, video.volume + 0.1);
+                    showTimeIndicator(`Vol: ${Math.round(video.volume * 100)}%`);
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    video.volume = Math.max(0, video.volume - 0.1);
+                    showTimeIndicator(`Vol: ${Math.round(video.volume * 100)}%`);
+                    break;
+                case 'm':
+                    e.preventDefault();
+                    volumeBtn.click();
+                    break;
+                case 'f':
+                    e.preventDefault();
+                    fullscreenBtn.click();
+                    break;
+                case 'n':
+                case 'N':
+                    e.preventDefault();
+                    if(playlist.length > 0) nextVideoBtn.click();
+                    break;
+                case 'p':
+                case 'P':
+                    e.preventDefault();
+                    if(playlist.length > 0) prevVideoBtn.click();
+                    break;
+                case 'c':
+                case 'C':
+                    e.preventDefault();
+                    subtitlesToggle.click();
+                    break;
+            }
+        });
     </script>
 </body>
 </html>

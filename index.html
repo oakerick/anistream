@@ -57,10 +57,118 @@
             transition: all 0.3s ease;
         }
         .neon-input:focus { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); outline: none; }
+
+        /* ESTILOS DO TUTORIAL */
+        .tutorial-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000; /* Acima de tudo */
+            display: none;
+        }
+
+        .tutorial-balloon {
+            position: absolute;
+            background: #1e293b; /* slate-800 */
+            color: #f1f5f9; /* slate-100 */
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+            max-width: 300px;
+            z-index: 1001;
+            border: 2px solid #06b6d4; /* neon-cyan */
+            transition: all 0.3s ease;
+        }
+
+        .tutorial-balloon::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+
+        /* Setas do Balão (Exemplo: Seta para baixo/bottom) */
+        .balloon-top::before {
+            border-width: 10px;
+            border-color: #06b6d4 transparent transparent transparent;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .balloon-bottom::before {
+            border-width: 10px;
+            border-color: transparent transparent #06b6d4 transparent;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .balloon-left::before {
+            border-width: 10px;
+            border-color: transparent transparent transparent #06b6d4;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .balloon-right::before {
+            border-width: 10px;
+            border-color: transparent #06b6d4 transparent transparent;
+            left: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* Efeito de destaque no elemento alvo */
+        .pulse-target {
+            position: relative;
+            z-index: 1002; /* Garante que o alvo esteja acima da sobreposição */
+        }
+        .pulse-target::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            border: 3px solid #a855f7; /* neon-purple */
+            border-radius: inherit;
+            pointer-events: none;
+            animation: pulse 1.5s infinite;
+            z-index: 1001;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(168, 85, 247, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
+        }
     </style>
 </head>
 <body class="flex flex-col items-center min-h-screen pb-20">
 
+    <div id="tutorialOverlay" class="tutorial-overlay">
+        <div id="tutorialBalloon" class="tutorial-balloon">
+            <h4 class="font-bold text-lg mb-2 text-neon-cyan">Título do Passo</h4>
+            <p id="tutorialText" class="text-sm mb-4">Texto do tutorial.</p>
+            <div class="flex justify-between items-center text-xs">
+                <span id="stepCounter" class="text-gray-400 font-mono">1/5</span>
+                <div class="flex gap-2">
+                    <button onclick="endTutorial()" class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded transition">
+                        Finalizar
+                    </button>
+                    <button onclick="nextStep()" id="nextStepBtn" class="px-3 py-1 bg-neon-purple hover:bg-purple-600 text-white font-bold rounded transition">
+                        Próximo <span class="material-icons text-sm ml-1 align-middle">arrow_forward</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <header class="w-full max-w-7xl p-6 flex justify-between items-center">
         <div class="flex items-center gap-3 select-none cursor-pointer" onclick="location.reload()">
             <span class="material-icons text-4xl text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">movie_filter</span>
@@ -68,10 +176,13 @@
                 <h1 class="text-3xl font-black tracking-tighter text-white">Oak<span class="text-neon-cyan">Cine</span></h1>
             </div>
         </div>
-    </header>
+        <button onclick="startTutorial()" class="px-4 py-2 text-xs font-bold text-neon-cyan border border-neon-cyan rounded-lg hover:bg-neon-cyan/20 transition">
+            <span class="material-icons text-sm mr-1 align-middle">help_outline</span> INICIAR TOUR
+        </button>
+        </header>
 
     <section class="w-full max-w-4xl px-4 mb-6 relative z-50">
-        <div class="glass-panel rounded-xl p-1 flex flex-col md:flex-row gap-2 items-center shadow-2xl relative overflow-hidden">
+        <div id="smartSearchPanel" class="glass-panel rounded-xl p-1 flex flex-col md:flex-row gap-2 items-center shadow-2xl relative overflow-hidden">
             <div class="relative w-full md:w-auto">
                 <select id="searchMode" class="w-full md:w-48 bg-[#0f172a] text-gray-300 text-xs font-bold uppercase tracking-wide py-3 px-4 rounded-lg border border-gray-700 outline-none appearance-none cursor-pointer hover:text-white transition">
                     <option value="torrent">🌊 Torrent (Best)</option>
@@ -88,7 +199,7 @@
                        placeholder="O que vamos assistir hoje? (Ex: Oppenheimer 4K)" autocomplete="off">
             </div>
 
-            <button onclick="performSmartSearch()" class="w-full md:w-auto px-6 py-3 rounded-lg bg-gradient-to-r from-neon-purple to-indigo-600 hover:from-indigo-500 hover:to-neon-purple text-white font-bold text-sm tracking-wider transition-all shadow-lg">
+            <button onclick="performSmartSearch()" id="searchButton" class="w-full md:w-auto px-6 py-3 rounded-lg bg-gradient-to-r from-neon-purple to-indigo-600 hover:from-indigo-500 hover:to-neon-purple text-white font-bold text-sm tracking-wider transition-all shadow-lg">
                 BUSCAR
             </button>
 
@@ -290,6 +401,8 @@
         let currentIndex = -1;
         let updateInterval = null;
         let currentVideoName = '';
+        let currentTutorialStep = 0; // NOVO: Controla o passo do tutorial
+        let originalZIndices = new Map(); // NOVO: Para restaurar z-index
 
         const video = document.getElementById('nativeVideo');
         const placeholder = document.getElementById('videoPlaceholder');
@@ -309,8 +422,8 @@
         // NOVAS REFERÊNCIAS
         const rewind10Btn = document.getElementById('rewind10Btn');
         const forward10Btn = document.getElementById('forward10Btn');
-        const nextVideoBtn = document.getElementById('nextVideoBtn'); // Adicionado
-        const prevVideoBtn = document.getElementById('prevVideoBtn'); // Adicionado
+        const nextVideoBtn = document.getElementById('nextVideoBtn');
+        const prevVideoBtn = document.getElementById('prevVideoBtn');
 
 
         // LEGENDAS
@@ -320,6 +433,171 @@
         const subtitleFileInput = document.getElementById('subtitleFileInput');
         const searchSubBtn = document.getElementById('searchSubBtn');
         const onlineSubList = document.getElementById('onlineSubList');
+        
+        // NOVO: ELEMENTOS DO TUTORIAL
+        const tutorialOverlay = document.getElementById('tutorialOverlay');
+        const tutorialBalloon = document.getElementById('tutorialBalloon');
+        const tutorialText = document.getElementById('tutorialText');
+        const stepCounter = document.getElementById('stepCounter');
+        const nextStepBtn = document.getElementById('nextStepBtn');
+
+
+        // NOVO: DEFINIÇÃO DOS PASSOS DO TUTORIAL
+        const tutorialSteps = [
+            { 
+                element: document.getElementById('searchMode'), 
+                title: "1. Modo de Busca",
+                text: "Selecione como deseja obter o conteúdo: **Torrent** (melhor qualidade, via P2P), **Cloud Direct** (busca links diretos) ou **Web Stream** (busca por players online).",
+                position: 'bottom' // Posição do balão em relação ao elemento alvo
+            },
+            { 
+                element: document.getElementById('aiSearchInput'), 
+                title: "2. Busca Inteligente",
+                text: "Digite o nome do filme/série com a qualidade desejada (Ex: 'Oppenheimer 4K'). A busca é otimizada para encontrar links de mídia.",
+                position: 'bottom'
+            },
+            { 
+                element: document.getElementById('searchButton'), 
+                title: "3. Iniciar Busca",
+                text: "Clique aqui para realizar a busca no Google com os parâmetros otimizados para o modo que você selecionou.",
+                position: 'right'
+            },
+            { 
+                element: document.getElementById('magnetInput').parentElement.parentElement, // Painel do Magnet Link
+                title: "4. Carregar Magnet Link",
+                text: "Cole um **Magnet Link** ou o **hash Info** aqui para iniciar o download/stream via WebTorrent diretamente.",
+                position: 'bottom'
+            },
+            { 
+                element: document.getElementById('dropZone'), 
+                title: "5. Upload Local ou Pasta",
+                text: "Use o arrastar e soltar (Drag & Drop) ou clique nos botões para carregar vídeos locais ou pastas inteiras (que serão tratadas como playlist).",
+                position: 'bottom'
+            },
+            { 
+                element: document.getElementById('playerContainer'), 
+                title: "6. Player de Vídeo",
+                text: "Aqui o vídeo será reproduzido. Ele suporta a maioria dos formatos e possui todos os controles essenciais (legenda, áudio, velocidade).",
+                position: 'right'
+            },
+            { 
+                element: document.getElementById('settingsBtn'), 
+                title: "7. Configurações Avançadas",
+                text: "Acesse as opções de legenda (Upload local ou Busca online), faixas de áudio e controle de velocidade de reprodução.",
+                position: 'top'
+            }
+        ];
+        
+        // NOVO: FUNÇÕES DE CONTROLE DO TUTORIAL
+
+        function highlightElement(element) {
+            // Remove destaque do passo anterior
+            const prevElement = document.querySelector('.pulse-target');
+            if (prevElement) {
+                prevElement.classList.remove('pulse-target');
+                // Restaura o z-index original se ele foi alterado
+                if (originalZIndices.has(prevElement)) {
+                    prevElement.style.zIndex = originalZIndices.get(prevElement);
+                    originalZIndices.delete(prevElement);
+                }
+            }
+
+            if (element) {
+                // Armazena e define o novo z-index
+                originalZIndices.set(element, element.style.zIndex);
+                element.style.zIndex = 1002;
+                element.classList.add('pulse-target');
+            }
+        }
+
+        function positionBalloon(target, balloon, position) {
+            const targetRect = target.getBoundingClientRect();
+            
+            // Limpa as classes de seta
+            balloon.className = 'tutorial-balloon';
+
+            // Posições base
+            let top = 0;
+            let left = 0;
+            const scrollX = window.scrollX || window.pageXOffset;
+            const scrollY = window.scrollY || window.pageYOffset;
+            
+            if (position === 'bottom') {
+                top = targetRect.bottom + 20 + scrollY;
+                left = targetRect.left + targetRect.width / 2 + scrollX - balloon.offsetWidth / 2;
+                balloon.classList.add('balloon-bottom');
+            } else if (position === 'top') {
+                top = targetRect.top - balloon.offsetHeight - 20 + scrollY;
+                left = targetRect.left + targetRect.width / 2 + scrollX - balloon.offsetWidth / 2;
+                balloon.classList.add('balloon-top');
+            } else if (position === 'left') {
+                top = targetRect.top + targetRect.height / 2 + scrollY - balloon.offsetHeight / 2;
+                left = targetRect.left - balloon.offsetWidth - 20 + scrollX;
+                balloon.classList.add('balloon-left');
+            } else if (position === 'right') {
+                top = targetRect.top + targetRect.height / 2 + scrollY - balloon.offsetHeight / 2;
+                left = targetRect.right + 20 + scrollX;
+                balloon.classList.add('balloon-right');
+            }
+            
+            // Ajuste para não sair da tela (simples)
+            left = Math.max(20 + scrollX, Math.min(left, window.innerWidth - balloon.offsetWidth - 20 + scrollX));
+            top = Math.max(20 + scrollY, top);
+
+            balloon.style.top = `${top}px`;
+            balloon.style.left = `${left}px`;
+            
+            // Rola para garantir que o alvo e o balão estejam visíveis
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function showStep(index) {
+            if (index < 0 || index >= tutorialSteps.length) {
+                endTutorial();
+                return;
+            }
+
+            currentTutorialStep = index;
+            const step = tutorialSteps[index];
+            
+            // Atualiza o conteúdo do balão
+            document.getElementById('tutorialBalloon').querySelector('h4').innerText = step.title;
+            tutorialText.innerHTML = step.text;
+            stepCounter.innerText = `${index + 1}/${tutorialSteps.length}`;
+            
+            // Atualiza o botão do último passo
+            if (index === tutorialSteps.length - 1) {
+                nextStepBtn.innerHTML = 'Finalizar <span class="material-icons text-sm ml-1 align-middle">done</span>';
+            } else {
+                nextStepBtn.innerHTML = 'Próximo <span class="material-icons text-sm ml-1 align-middle">arrow_forward</span>';
+            }
+
+            // Destaque e Posicionamento
+            highlightElement(step.element);
+            // Precisa de um pequeno delay para o DOM calcular o offsetWidth/Height do balão
+            setTimeout(() => {
+                positionBalloon(step.element, tutorialBalloon, step.position);
+            }, 50);
+        }
+
+        function startTutorial() {
+            tutorialOverlay.style.display = 'block';
+            showStep(0);
+        }
+
+        function nextStep() {
+            showStep(currentTutorialStep + 1);
+        }
+
+        function endTutorial() {
+            tutorialOverlay.style.display = 'none';
+            highlightElement(null); // Remove o destaque do último elemento
+            currentTutorialStep = 0; // Reseta para o próximo início
+            alert("✨ Tutorial concluído! Divirta-se!");
+        }
+
+        // FIM NOVO: FUNÇÕES DE CONTROLE DO TUTORIAL
+
 
         // FUNÇÃO DE FEEDBACK VISUAL PARA TEMPO E VOLUME (Melhoria)
         let indicatorTimeout = null;
@@ -412,7 +690,9 @@
         };
 
         document.onclick = (e) => {
-            if(!settingsMenu.contains(e.target) && e.target !== settingsBtn) {
+            // Evita que o balão do tutorial feche o menu
+            if(settingsMenu && !settingsMenu.contains(e.target) && e.target !== settingsBtn && 
+               !tutorialOverlay.contains(e.target)) {
                 settingsMenu.classList.add('hidden');
             }
         };
@@ -480,12 +760,13 @@
                 btn.classList.add('text-gray-300');
             });
             
-            if (event && event.target) {
-                event.target.classList.add('bg-neon-cyan/20', 'text-white');
-                event.target.classList.remove('text-gray-300');
-            } else {
-                // Caso seja chamado por atalho, atualiza 1x (padrão)
-                document.querySelector('[onclick="setPlaybackSpeed(1, event)"]').classList.add('bg-neon-cyan/20', 'text-white');
+            // Corrige para usar o event.target ou a lógica de fallback para 1x
+            const targetButton = event && event.target.tagName === 'BUTTON' ? event.target :
+                                 document.querySelector('[onclick="setPlaybackSpeed(1, event)"]');
+            
+            if (targetButton) {
+                targetButton.classList.add('bg-neon-cyan/20', 'text-white');
+                targetButton.classList.remove('text-gray-300');
             }
         }
 
@@ -729,8 +1010,8 @@
 
         // ATALHOS DE TECLADO (Corrigido para usar as funções de clique)
         document.addEventListener('keydown', (e) => {
-            // Ignora se está digitando em algum input
-            if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            // Ignora se está digitando em algum input OU se o tutorial estiver ativo
+            if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || tutorialOverlay.style.display === 'block') return;
             
             switch(e.key) {
                 case ' ':

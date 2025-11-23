@@ -571,16 +571,17 @@
         const aiResponses = {
             'olá': 'Olá! 👋 Bem-vindo ao OakCine! Como posso ajudá-lo hoje? Você pode me perguntar sobre funcionalidades, como usar o player, ou qualquer coisa sobre o site.',
             'oi': 'Oi! 😊 Estou aqui para ajudar! Quer saber como usar o OakCine? Me pergunte sobre qualquer funcionalidade!',
-            'como usar': 'Para usar o OakCine, você tem 3 opções:\n1️⃣ Busca com IA - Digite um nome de filme/série\n2️⃣ Upload Local - Arraste arquivos ou pastas\n3️⃣ Magnet Links - Cole um link de torrent ou IPTV\n\nDeseja mais detalhes sobre alguma delas?',
-            'torrent': 'OakCine suporta torrents através de WebTorrent! Você pode:\n- Cole um magnet link\n- Veja estatísticas em tempo real\n- Reproduza enquanto baixa\n\nTodos os dados ficam no seu navegador - totalmente privado! 🔐',
+            'proxy': 'Você pode configurar um servidor proxy (HTTP/S ou SOCKS) na seção "Configuração de Proxy".\n- **Uso Principal:** O proxy é aplicado a streams diretos (IPTV/M3U8) para aumentar a privacidade e contornar restrições geográficas.\n- **Como usar:** Cole o endereço completo (Ex: https://host:porta) no campo e clique em Salvar. O sistema salvará no seu navegador!',
+            'como usar': 'Para usar o OakCine, você tem 3 opções:\n1️⃣ Busca com IA - Digite um nome de filme/série\n2️⃣ Upload Local - Arraste arquivos ou pastas\n3️⃣ Magnet Links - Cole um link de torrent, stream direto ou IPTV (com suporte a Proxy!).\n\nDeseja mais detalhes sobre alguma delas?',
+            'torrent': 'OakCine suporta torrents através de WebTorrent! Você pode:\n- Cole um magnet link\n- Veja estatísticas em tempo real\n- Reproduza enquanto baixa\n- **Privacidade:** Para maior anonimato, configure um proxy na seção "Configuração de Proxy"!',
             'legendas': 'Você pode gerenciar legendas de várias formas:\n📁 Upload local (SRT, VTT, ASS)\n🔍 Busca automática em OpenSubtitles\n⚙️ Seleção de múltiplas faixas\n\nClique no botão ⚙️ no player para acessar!',
             'atalhos': 'Principais atalhos do teclado:\n⏸️ Espaço/K = Play/Pause\n📺 F = Tela cheia\n🔊 M = Mudo\n➡️ Setas = Navegar\n🎚️ Menos/Mais = Volume\n📝 C = Legendas\n\nClique em "info" para ver mais!',
-            'pesquisa': 'A pesquisa tem 3 modos:\n🌊 Torrent (Best) - Busca por torrents\n📁 Cloud Direct - Busca em nuvem\n📺 Web Stream/IPTV - Busca streams ao vivo\n\nDigite o nome do filme/série e clique BUSCAR!',
+            'pesquisa': 'A pesquisa tem 3 modos:\n🌊 Torrent (Best) - Busca por torrents\n📁 Cloud Direct - Busca em nuvem\n📺 Web Stream / IPTV - Busca streams ao vivo\n\nDigite o nome do filme/série e clique BUSCAR!',
             'voz': 'Sim! Temos pesquisa por voz! 🎤\n- Clique no ícone de microfone\n- Fale o nome do filme/série\n- Pronto! A busca acontece automaticamente\n\nSuportamos português brasileiro!',
             'playlist': 'O gerenciador de playlist é automático! 🎬\n- Quando você faz upload de uma pasta\n- OakCine cria uma playlist ordenada\n- Clique em qualquer vídeo para reproduzir\n- Controles: N = Próximo, P = Anterior',
             'velocidade': 'Você pode ajustar a velocidade de reprodução! ⏱️\n- 0.5x até 2x\n- Use o menu ⚙️ no player\n- Ou use < e > do teclado\n- Perfeito para estudar ou assistir rápido!',
-            'stream': 'OakCine suporta streams IPTV e M3U8! 📺\n- Cole um link .m3u8\n- Ou uma lista IPTV completa\n- Suporta canais ao vivo\n- Qualquer stream HTTP/S funciona!',
-            'default': 'Desculpe, não entendi sua pergunta. 🤔 Você pode perguntar sobre:\n- Como usar o site\n- Torrents e Magnet Links\n- Legendas e Áudio\n- Atalhos de teclado\n- Playlists\n- Ou qualquer outra funcionalidade!\n\nO que você gostaria de saber? 😊'
+            'stream': 'OakCine suporta streams IPTV e M3U8! 📺\n- Cole um link .m3u8 ou IPTV.\n- **Novo:** Você pode usar a "Configuração de Proxy" (abaixo do Magnet Link) para mascarar seu IP ao carregar esses streams!',
+            'default': 'Desculpe, não entendi sua pergunta. 🤔 Você pode perguntar sobre:\n- Como usar o site\n- Proxy e IPTV\n- Torrents e Magnet Links\n- Legendas e Áudio\n- Atalhos de teclado\n- Playlists\n- Ou qualquer outra funcionalidade!\n\nO que você gostaria de saber? 😊'
         };
 
         function getAIResponse(userMessage) {

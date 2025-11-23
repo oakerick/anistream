@@ -466,17 +466,27 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div class="glass-panel p-4 rounded-xl">
                         <div class="flex items-center gap-2 mb-2 text-neon-purple font-bold text-sm">
-                            <span class="material-icons text-sm">bolt</span> Magnet Link
+                            <span class="material-icons text-sm">bolt</span> Magnet Link / IPTV
                         </div>
                         <div class="flex gap-2">
-                            <input type="text" id="magnetInput" placeholder="magnet:?xt=..." class="neon-input w-full rounded px-3 py-2 text-xs text-white">
+                            <input type="text" id="magnetInput" placeholder="magnet:?xt=... ou http://stream..." class="neon-input w-full rounded px-3 py-2 text-xs text-white">
                             <button id="loadMagnetBtn" class="bg-neon-purple hover:bg-purple-600 text-white px-3 rounded transition"><span class="material-icons text-sm">play_arrow</span></button>
                         </div>
                     </div>
-
+                    
+                    <div class="glass-panel p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2 text-neon-cyan font-bold text-sm">
+                            <span class="material-icons text-sm">vpn_key</span> Configuração de Proxy (Opcional)
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="proxyInput" placeholder="Ex: https://proxy.server:port" class="neon-input w-full rounded px-3 py-2 text-xs text-white">
+                            <button id="saveProxyBtn" class="bg-neon-cyan hover:bg-cyan-600 text-black px-3 rounded transition"><span class="material-icons text-sm">save</span></button>
+                        </div>
+                        <p id="proxyStatus" class="text-xs mt-2 text-gray-500">Nenhum proxy configurado.</p>
+                    </div>
                     <div id="dropZone" class="glass-panel p-4 rounded-xl border border-dashed border-gray-600 hover:border-neon-cyan cursor-pointer transition group relative">
                         <input type="file" id="fileInput" class="hidden" accept="video/*,audio/*" multiple>
                         <input type="file" id="folderInput" class="hidden" webkitdirectory multiple>
@@ -620,7 +630,10 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        // CONTROLES DO PLAYER
+        // Variáveis de Proxy
+        let PROXY_ADDRESS = localStorage.getItem('oakcine_proxy') || '';
+
+        // Inicializa WebTorrent
         const client = new WebTorrent();
         let currentTorrent = null;
         let playlist = [];
@@ -653,6 +666,34 @@
         const subtitleOptions = document.getElementById('subtitleOptions');
         const uploadSubBtn = document.getElementById('uploadSubBtn');
         const subtitleFileInput = document.getElementById('subtitleFileInput');
+        
+        // Variáveis de Proxy
+        const proxyInput = document.getElementById('proxyInput');
+        const saveProxyBtn = document.getElementById('saveProxyBtn');
+        const proxyStatus = document.getElementById('proxyStatus');
+
+        // Inicialização do campo de Proxy
+        proxyInput.value = PROXY_ADDRESS;
+        proxyStatus.innerText = PROXY_ADDRESS ? `Proxy ativo: ${PROXY_ADDRESS}` : 'Nenhum proxy configurado.';
+
+        saveProxyBtn.onclick = () => {
+            const newProxy = proxyInput.value.trim();
+            // Verifica se o endereço é válido (começa com http:// ou https://)
+            if (newProxy && (newProxy.startsWith('http://') || newProxy.startsWith('https://'))) {
+                PROXY_ADDRESS = newProxy.endsWith('/') ? newProxy.slice(0, -1) : newProxy; // Remove barra final se existir
+                localStorage.setItem('oakcine_proxy', PROXY_ADDRESS);
+                proxyStatus.innerText = `Proxy salvo e ativo: ${PROXY_ADDRESS}`;
+                alert("✅ Configuração de Proxy salva e ativada! Será usada para Streams Diretos/IPTV.");
+            } else if (newProxy === '') {
+                PROXY_ADDRESS = '';
+                localStorage.removeItem('oakcine_proxy');
+                proxyStatus.innerText = 'Nenhum proxy configurado.';
+                alert("✅ Configuração de Proxy removida.");
+            } else {
+                alert("❌ Endereço de Proxy inválido. Use o formato http://host:porta, https://host:porta ou deixe vazio.");
+            }
+        };
+
 
         // HISTÓRICO DE ATUALIZAÇÕES
         const updates = [
@@ -940,7 +981,19 @@
 
             if (isDirectStream) {
                 currentVideoName = trimmedUri;
-                video.src = trimmedUri;
+                
+                let finalUrl = trimmedUri;
+                if (PROXY_ADDRESS) {
+                    // Se um endereço de proxy está configurado, construa a URL para passar o stream pelo proxy.
+                    // O formato mais comum para proxies HTTP/S que encaminham o conteúdo é usando o link original
+                    // como parâmetro, ou dependendo do tipo de proxy, concatenando. Aqui usamos o formato parâmetro.
+                    // ATENÇÃO: Isso só funciona se o servidor proxy suportar essa sintaxe de encapsulamento.
+                    finalUrl = `${PROXY_ADDRESS}/?url=${encodeURIComponent(trimmedUri)}`;
+                    console.log(`Usando URL de Proxy para Stream: ${finalUrl}`);
+                    alert(`🔗 Tentando carregar via Proxy: ${PROXY_ADDRESS}`);
+                }
+                
+                video.src = finalUrl;
                 video.load();
                 document.getElementById('mediaInfo').classList.remove('hidden');
                 document.getElementById('infoFilename').innerText = "STREAM: " + trimmedUri.split('/').pop().substring(0, 50);
@@ -948,8 +1001,19 @@
                     loading.classList.add('hidden');
                     placeholder.style.display = 'none';
                     video.play().catch(e => {
-                        alert("Erro: " + e.message);
-                        loading.classList.add('hidden');
+                        // Se falhar com proxy, tente carregar o link direto como fallback
+                        if (PROXY_ADDRESS) {
+                             alert(`❌ Erro ao usar Proxy. Tentando carregar link direto...`);
+                             video.src = trimmedUri; // Tenta o link original
+                             video.load();
+                             video.play().catch(e2 => {
+                                 alert("❌ Erro ao reproduzir stream (Proxy e Link Direto falharam): " + e2.message);
+                                 loading.classList.add('hidden');
+                             });
+                        } else {
+                            alert("❌ Erro ao reproduzir stream (verifique o link): " + e.message);
+                            loading.classList.add('hidden');
+                        }
                     });
                 };
             } else if (isMagnet) {

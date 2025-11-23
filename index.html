@@ -58,19 +58,52 @@
         }
         .neon-input:focus { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); outline: none; }
         
-        /* Estilos para o balão flutuante do Tour */
+        .nav-pill {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(30, 41, 59, 0.4);
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-pill:hover {
+            background: rgba(168, 85, 247, 0.2);
+            border-color: #a855f7;
+            color: #a855f7;
+        }
+
+        .nav-pill.active {
+            background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+            border-color: #a855f7;
+            color: #fff;
+        }
+
+        .page-container {
+            display: none;
+        }
+
+        .page-container.active {
+            display: flex;
+        }
+
         #tourBalloon {
-            z-index: 5000; /* Acima de tudo */
-            background: rgba(30, 41, 59, 0.95); /* glass-panel background */
+            z-index: 5000;
+            background: rgba(30, 41, 59, 0.95);
             backdrop-filter: blur(10px);
-            border: 1px solid #06b6d4; /* Neon-cyan border */
+            border: 1px solid #06b6d4;
             border-radius: 0.5rem;
             padding: 1rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
             transition: all 0.3s ease;
         }
         
-        /* Flecha do balão (A seta sempre aponta para o elemento realçado) */
         #tourBalloon::after {
             content: '';
             position: absolute;
@@ -81,7 +114,7 @@
 
         #tourBalloon[data-placement="bottom"]::after {
             border-width: 0 10px 10px 10px;
-            border-color: transparent transparent #06b6d4 transparent; /* Pointer pointing up */
+            border-color: transparent transparent #06b6d4 transparent;
             top: -10px;
             left: 50%;
             transform: translateX(-50%);
@@ -89,7 +122,7 @@
 
         #tourBalloon[data-placement="top"]::after {
             border-width: 10px 10px 0 10px;
-            border-color: #06b6d4 transparent transparent transparent; /* Pointer pointing down */
+            border-color: #06b6d4 transparent transparent transparent;
             bottom: -10px;
             left: 50%;
             transform: translateX(-50%);
@@ -97,10 +130,64 @@
 
         #tourBalloon[data-placement="right"]::after {
             border-width: 10px 10px 10px 0;
-            border-color: transparent #06b6d4 transparent transparent; /* Pointer pointing left */
+            border-color: transparent #06b6d4 transparent transparent;
             top: 50%;
             left: -10px;
             transform: translateY(-50%);
+        }
+
+        .ai-chat-bubble {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ai-toggle-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999;
+            background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .ai-toggle-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+        }
+
+        .update-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .update-card:hover {
+            background: rgba(30, 41, 59, 0.6);
+            border-color: #06b6d4;
+            transform: translateY(-2px);
         }
     </style>
 </head>
@@ -152,6 +239,32 @@
             </button>
         </div>
     </div>
+
+    <div id="aiChatModal" class="hidden fixed top-0 left-0 w-full h-full z-[9998] bg-black/80 backdrop-blur-sm flex items-center justify-center">
+        <div class="glass-panel w-full max-w-md p-6 rounded-2xl shadow-2xl relative flex flex-col max-h-[80vh]">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
+                <h3 class="text-xl font-bold text-neon-cyan flex items-center gap-2">
+                    <span class="material-icons">smart_toy</span> IA OakCine
+                </h3>
+                <button id="closeAiChat" class="text-gray-400 hover:text-white transition">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            
+            <div id="aiChatMessages" class="flex-1 overflow-y-auto mb-4 space-y-3 pr-2">
+                <div class="ai-chat-bubble p-3 bg-neon-purple/20 rounded-lg border border-neon-purple/30">
+                    <p class="text-sm text-gray-200">Olá! 👋 Sou a IA do OakCine. Posso ajudá-lo com dúvidas sobre o site, como usar as funcionalidades, ou qualquer coisa relacionada ao streaming. O que você gostaria de saber?</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <input type="text" id="aiChatInput" placeholder="Faça uma pergunta..." class="neon-input flex-1 rounded px-3 py-2 text-sm text-white">
+                <button id="aiChatSend" class="bg-neon-cyan hover:bg-cyan-600 text-black font-bold px-4 py-2 rounded transition">
+                    <span class="material-icons text-sm">send</span>
+                </button>
+            </div>
+        </div>
+    </div>
     
     <header class="w-full max-w-7xl p-6 flex justify-between items-center">
         <div class="flex items-center gap-3 select-none cursor-pointer" onclick="location.reload()">
@@ -162,1048 +275,217 @@
         </div>
     </header>
 
-    <section class="w-full max-w-4xl px-4 mb-6 relative z-50">
-        <div class="glass-panel rounded-xl p-1 flex flex-col md:flex-row gap-2 items-center shadow-2xl relative overflow-hidden">
-            <div class="relative w-full md:w-auto" id="searchModeContainer">
-                <select id="searchMode" class="w-full md:w-48 bg-[#0f172a] text-gray-300 text-xs font-bold uppercase tracking-wide py-3 px-4 rounded-lg border border-gray-700 outline-none appearance-none cursor-pointer hover:text-white transition">
-                    <option value="torrent">🌊 Torrent (Best)</option>
-                    <option value="direct">📂 Cloud Direct</option>
-                    <option value="stream">📺 Web Stream / IPTV</option>
-                </select>
-                <span class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">expand_more</span>
-            </div>
+    <div id="inicio" class="page-container active w-full max-w-4xl px-4 mb-6 flex flex-col gap-6">
+        <div class="flex gap-2 flex-wrap items-center justify-center">
+            <button class="nav-pill active" onclick="switchPage('inicio')">
+                <span class="material-icons" style="font-size: 16px;">home</span>
+                Início
+            </button>
+            <button class="nav-pill" onclick="switchPage('atualizacoes')">
+                <span class="material-icons" style="font-size: 16px;">new_releases</span>
+                Atualizações
+            </button>
+        </div>
 
-            <div class="flex-1 relative w-full flex items-center">
-                <span class="material-icons text-neon-purple text-xl absolute left-3">auto_awesome</span>
-                <input type="text" id="aiSearchInput" 
-                       class="w-full bg-[#0f172a]/50 text-white placeholder-gray-500 pl-10 pr-[45px] py-3 rounded-lg outline-none border border-transparent focus:border-neon-purple/50 transition-colors"
-                       placeholder="O que vamos assistir hoje? (Ex: Oppenheimer 4K)" autocomplete="off">
-
-                <div class="absolute right-2 z-10">
-                    <button id="micBtn" class="p-1 text-gray-400 hover:text-neon-cyan transition rounded-full hover:bg-white/10" title="Pesquisa por Voz">
-                        <span class="material-icons text-lg">mic</span>
-                    </button>
+        <section class="w-full relative z-50">
+            <div class="glass-panel rounded-xl p-1 flex flex-col md:flex-row gap-2 items-center shadow-2xl relative overflow-hidden">
+                <div class="relative w-full md:w-auto" id="searchModeContainer">
+                    <select id="searchMode" class="w-full md:w-48 bg-[#0f172a] text-gray-300 text-xs font-bold uppercase tracking-wide py-3 px-4 rounded-lg border border-gray-700 outline-none appearance-none cursor-pointer hover:text-white transition">
+                        <option value="torrent">🌊 Torrent (Best)</option>
+                        <option value="direct">📁 Cloud Direct</option>
+                        <option value="stream">📺 Web Stream / IPTV</option>
+                    </select>
+                    <span class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">expand_more</span>
                 </div>
-            </div>
 
-            <button onclick="performSmartSearch()" class="w-full md:w-auto px-6 py-3 rounded-lg bg-gradient-to-r from-neon-purple to-indigo-600 hover:from-indigo-500 hover:to-neon-purple text-white font-bold text-sm tracking-wider transition-all shadow-lg">
-                BUSCAR
-            </button>
-            
-            <button id="shortcutsBtn" class="text-gray-400 hover:text-neon-cyan transition p-3 rounded-lg" title="Mostrar Atalhos e Guia">
-                 <span class="material-icons text-lg">info</span>
-            </button>
+                <div class="flex-1 relative w-full flex items-center">
+                    <span class="material-icons text-neon-purple text-xl absolute left-3">auto_awesome</span>
+                    <input type="text" id="aiSearchInput" 
+                           class="w-full bg-[#0f172a]/50 text-white placeholder-gray-500 pl-10 pr-[45px] py-3 rounded-lg outline-none border border-transparent focus:border-neon-purple/50 transition-colors"
+                           placeholder="O que vamos assistir hoje? (Ex: Oppenheimer 4K)" autocomplete="off">
 
-            <div id="aiLoadingBar" class="absolute bottom-0 left-0 h-1 bg-neon-cyan transition-all duration-[2000ms] ease-out w-0"></div>
-        </div>
-        
-        <div id="aiFeedback" class="h-6 mt-2 text-center text-xs font-mono text-neon-cyan hidden">
-            <span class="animate-pulse">Inicializando busca neural...</span>
-        </div>
-    </section>
+                    <div class="absolute right-2 z-10">
+                        <button id="micBtn" class="p-1 text-gray-400 hover:text-neon-cyan transition rounded-full hover:bg-white/10" title="Pesquisa por Voz">
+                            <span class="material-icons text-lg">mic</span>
+                        </button>
+                    </div>
+                </div>
 
-    <div class="w-full max-w-4xl px-4 flex flex-col lg:flex-row gap-6 items-start">
-        
-        <div class="flex-1 w-full min-w-0 flex flex-col gap-4">
-            
-            <div id="playerContainer" class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800 group">
-                <video id="nativeVideo" class="w-full h-full object-contain bg-black" crossorigin="anonymous">
-                    <track kind="subtitles" id="subtitleTrack" default>
-                </video>
+                <button onclick="performSmartSearch()" class="w-full md:w-auto px-6 py-3 rounded-lg bg-gradient-to-r from-neon-purple to-indigo-600 hover:from-indigo-500 hover:to-neon-purple text-white font-bold text-sm tracking-wider transition-all shadow-lg">
+                    BUSCAR
+                </button>
                 
-                <div id="videoPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 z-20">
-                    <div class="p-5 rounded-full bg-white/5 mb-4 animate-pulse">
-                        <span class="material-icons text-5xl text-gray-600">folder_open</span>
-                    </div>
-                    <h2 class="text-xl font-bold text-gray-300">Aguardando Mídia</h2>
-                    <p class="text-gray-500 text-xs mt-2">Arraste Arquivos ou Pastas aqui</p>
-                </div>
+                <button id="shortcutsBtn" class="text-gray-400 hover:text-neon-cyan transition p-3 rounded-lg" title="Mostrar Atalhos e Guia">
+                     <span class="material-icons text-lg">info</span>
+                </button>
 
-                <div id="loadingOverlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-30 hidden">
-                    <div class="w-12 h-12 border-4 border-neon-cyan border-t-transparent rounded-full animate-spin mb-3"></div>
-                    <p class="text-neon-cyan text-xs font-bold tracking-widest animate-pulse">CARREGANDO</p>
-                </div>
+                <div id="aiLoadingBar" class="absolute bottom-0 left-0 h-1 bg-neon-cyan transition-all duration-[2000ms] ease-out w-0"></div>
+            </div>
+            
+            <div id="aiFeedback" class="h-6 mt-2 text-center text-xs font-mono text-neon-cyan hidden">
+                <span class="animate-pulse">Inicializando busca neural...</span>
+            </div>
+        </section>
 
-                <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-40">
-                    <div class="w-full mb-3 group/progress cursor-pointer relative h-1 hover:h-2 transition-all" id="progressBar">
-                        <div class="absolute inset-0 bg-gray-700/50 rounded-full"></div>
-                        <div id="playBar" class="absolute top-0 left-0 h-full bg-neon-cyan rounded-full w-0"></div>
-                    </div>
+        <div class="w-full flex flex-col lg:flex-row gap-6 items-start">
+            
+            <div class="flex-1 w-full min-w-0 flex flex-col gap-4">
+                
+                <div id="playerContainer" class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800 group">
+                    <video id="nativeVideo" class="w-full h-full object-contain bg-black" crossorigin="anonymous">
+                        <track kind="subtitles" id="subtitleTrack" default>
+                    </video>
                     
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <button id="prevVideoBtn" class="text-gray-400 hover:text-white transition" title="Vídeo Anterior">
-                                <span class="material-icons text-lg">skip_previous</span>
-                            </button>
-                            
-                            <button id="rewind10Btn" class="text-gray-400 hover:text-white transition" title="Voltar 10 segundos">
-                                <span class="material-icons text-lg">replay_10</span>
-                            </button>
-                            
-                            <button id="playPauseBtn" class="text-white hover:scale-110 transition">
-                                <span class="material-icons text-2xl">play_arrow</span>
-                            </button>
-                            
-                            <button id="forward10Btn" class="text-gray-400 hover:text-white transition" title="Avançar 10 segundos">
-                                <span class="material-icons text-lg">forward_10</span>
-                            </button>
-                            
-                            <button id="nextVideoBtn" class="text-gray-400 hover:text-white transition" title="Próximo Vídeo">
-                                <span class="material-icons text-lg">skip_next</span>
-                            </button>
-                            
-                            <div class="h-4 w-px bg-gray-600 mx-1"></div>
-                            
-                            <button id="volumeBtn" class="text-gray-300 hover:text-white transition">
-                                <span class="material-icons text-sm">volume_up</span>
-                            </button>
-                            
-                            <span id="timeDisplay" class="text-[10px] font-mono text-gray-400">0:00 / 0:00</span>
+                    <div id="videoPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 z-20">
+                        <div class="p-5 rounded-full bg-white/5 mb-4 animate-pulse">
+                            <span class="material-icons text-5xl text-gray-600">folder_open</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-300">Aguardando Mídia</h2>
+                        <p class="text-gray-500 text-xs mt-2">Arraste Arquivos ou Pastas aqui</p>
+                    </div>
+
+                    <div id="loadingOverlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-30 hidden">
+                        <div class="w-12 h-12 border-4 border-neon-cyan border-t-transparent rounded-full animate-spin mb-3"></div>
+                        <p class="text-neon-cyan text-xs font-bold tracking-widest animate-pulse">CARREGANDO</p>
+                    </div>
+
+                    <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-40">
+                        <div class="w-full mb-3 group/progress cursor-pointer relative h-1 hover:h-2 transition-all" id="progressBar">
+                            <div class="absolute inset-0 bg-gray-700/50 rounded-full"></div>
+                            <div id="playBar" class="absolute top-0 left-0 h-full bg-neon-cyan rounded-full w-0"></div>
                         </div>
                         
-                        <div class="flex items-center gap-2">
-                            <div class="relative">
-                                <button id="settingsBtn" class="text-gray-300 hover:text-white transition">
-                                    <span class="material-icons text-lg">settings</span>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <button id="prevVideoBtn" class="text-gray-400 hover:text-white transition" title="Vídeo Anterior">
+                                    <span class="material-icons text-lg">skip_previous</span>
                                 </button>
                                 
-                                <div id="settingsMenu" class="hidden absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl min-w-[280px] overflow-hidden">
-                                    <div class="p-3 border-b border-white/10">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2">
-                                                <span class="material-icons text-sm text-neon-cyan">subtitles</span>
-                                                Legendas
-                                            </span>
-                                            <label class="relative inline-flex items-center cursor-pointer">
-                                                <input type="checkbox" id="subtitlesToggle" class="sr-only peer">
-                                                <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-cyan"></div>
-                                            </label>
-                                        </div>
-                                        
-                                        <div id="subtitleOptions" class="space-y-1 hidden">
-                                            <input type="file" id="subtitleFileInput" accept=".srt,.vtt,.ass" class="hidden">
-                                            <button id="uploadSubBtn" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-white/5 rounded transition flex items-center gap-2">
-                                                <span class="material-icons text-sm">upload_file</span>
-                                                Carregar Legenda Local (.srt, .vtt)
-                                            </button>
-                                            
-                                            <div class="relative">
-                                                <button id="searchSubBtn" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-white/5 rounded transition flex items-center gap-2">
-                                                    <span class="material-icons text-sm">search</span>
-                                                    Buscar Legendas Online
-                                                </button>
+                                <button id="rewind10Btn" class="text-gray-400 hover:text-white transition" title="Voltar 10 segundos">
+                                    <span class="material-icons text-lg">replay_10</span>
+                                </button>
+                                
+                                <button id="playPauseBtn" class="text-white hover:scale-110 transition">
+                                    <span class="material-icons text-2xl">play_arrow</span>
+                                </button>
+                                
+                                <button id="forward10Btn" class="text-gray-400 hover:text-white transition" title="Avançar 10 segundos">
+                                    <span class="material-icons text-lg">forward_10</span>
+                                </button>
+                                
+                                <button id="nextVideoBtn" class="text-gray-400 hover:text-white transition" title="Próximo Vídeo">
+                                    <span class="material-icons text-lg">skip_next</span>
+                                </button>
+                                
+                                <div class="h-4 w-px bg-gray-600 mx-1"></div>
+                                
+                                <button id="volumeBtn" class="text-gray-300 hover:text-white transition">
+                                    <span class="material-icons text-sm">volume_up</span>
+                                </button>
+                                
+                                <span id="timeDisplay" class="text-[10px] font-mono text-gray-400">0:00 / 0:00</span>
+                            </div>
+                            
+                            <div class="flex items-center gap-2">
+                                <div class="relative">
+                                    <button id="settingsBtn" class="text-gray-300 hover:text-white transition">
+                                        <span class="material-icons text-lg">settings</span>
+                                    </button>
+                                    
+                                    <div id="settingsMenu" class="hidden absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl min-w-[280px] overflow-hidden">
+                                        <div class="p-3 border-b border-white/10">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2">
+                                                    <span class="material-icons text-sm text-neon-cyan">subtitles</span>
+                                                    Legendas
+                                                </span>
+                                                <label class="relative inline-flex items-center cursor-pointer">
+                                                    <input type="checkbox" id="subtitlesToggle" class="sr-only peer">
+                                                    <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-cyan"></div>
+                                                </label>
                                             </div>
                                             
-                                            <div id="onlineSubList" class="max-h-32 overflow-y-auto hidden space-y-1 pt-2 border-t border-white/5">
+                                            <div id="subtitleOptions" class="space-y-1 hidden">
+                                                <input type="file" id="subtitleFileInput" accept=".srt,.vtt,.ass" class="hidden">
+                                                <button id="uploadSubBtn" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-white/5 rounded transition flex items-center gap-2">
+                                                    <span class="material-icons text-sm">upload_file</span>
+                                                    Carregar Legenda Local (.srt, .vtt)
+                                                </button>
+                                                
+                                                <div class="relative">
+                                                    <button id="searchSubBtn" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-white/5 rounded transition flex items-center gap-2">
+                                                        <span class="material-icons text-sm">search</span>
+                                                        Buscar Legendas Online
+                                                    </button>
                                                 </div>
+                                                
+                                                <div id="onlineSubList" class="max-h-32 overflow-y-auto hidden space-y-1 pt-2 border-t border-white/5">
+                                                    </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    
-                                    <div class="p-3 border-b border-white/10">
-                                        <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2 mb-2">
-                                            <span class="material-icons text-sm text-neon-purple">audiotrack</span>
-                                            Áudio
-                                        </span>
-                                        <div id="audioTracks" class="text-xs text-gray-400">
-                                            <div class="px-3 py-2 text-gray-500">Faixa Principal</div>
+                                        
+                                        <div class="p-3 border-b border-white/10">
+                                            <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2 mb-2">
+                                                <span class="material-icons text-sm text-neon-purple">audiotrack</span>
+                                                Áudio
+                                            </span>
+                                            <div id="audioTracks" class="text-xs text-gray-400">
+                                                <div class="px-3 py-2 text-gray-500">Faixa Principal</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    
-                                    <div class="p-3">
-                                        <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2 mb-2">
-                                            <span class="material-icons text-sm text-green-400">speed</span>
-                                            Velocidade
-                                        </span>
-                                        <div class="grid grid-cols-4 gap-1">
-                                            <button onclick="setPlaybackSpeed(0.5, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">0.5x</button>
-                                            <button onclick="setPlaybackSpeed(0.75, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">0.75x</button>
-                                            <button onclick="setPlaybackSpeed(1, event)" class="px-2 py-1 text-xs text-white bg-neon-cyan/20 rounded">1x</button>
-                                            <button onclick="setPlaybackSpeed(1.25, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.25x</button>
-                                            <button onclick="setPlaybackSpeed(1.5, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.5x</button>
-                                            <button onclick="setPlaybackSpeed(1.75, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.75x</button>
-                                            <button onclick="setPlaybackSpeed(2, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">2x</button>
+                                        
+                                        <div class="p-3">
+                                            <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2 mb-2">
+                                                <span class="material-icons text-sm text-green-400">speed</span>
+                                                Velocidade
+                                            </span>
+                                            <div class="grid grid-cols-4 gap-1">
+                                                <button onclick="setPlaybackSpeed(0.5, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">0.5x</button>
+                                                <button onclick="setPlaybackSpeed(0.75, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">0.75x</button>
+                                                <button onclick="setPlaybackSpeed(1, event)" class="px-2 py-1 text-xs text-white bg-neon-cyan/20 rounded">1x</button>
+                                                <button onclick="setPlaybackSpeed(1.25, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.25x</button>
+                                                <button onclick="setPlaybackSpeed(1.5, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.5x</button>
+                                                <button onclick="setPlaybackSpeed(1.75, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.75x</button>
+                                                <button onclick="setPlaybackSpeed(2, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">2x</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                                
+                                <button id="fullscreenBtn" class="text-gray-300 hover:text-white transition">
+                                    <span class="material-icons text-lg">fullscreen</span>
+                                </button>
                             </div>
-                            
-                            <button id="fullscreenBtn" class="text-gray-300 hover:text-white transition">
-                                <span class="material-icons text-lg">fullscreen</span>
-                            </button>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="glass-panel p-4 rounded-xl">
-                    <div class="flex items-center gap-2 mb-2 text-neon-purple font-bold text-sm">
-                        <span class="material-icons text-sm">bolt</span> Magnet Link / Stream Direto
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="glass-panel p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2 text-neon-purple font-bold text-sm">
+                            <span class="material-icons text-sm">bolt</span> Magnet Link / Stream Direto
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="magnetInput" placeholder="magnet:?xt=... ou link IPTV (.m3u8)" class="neon-input w-full rounded px-3 py-2 text-xs text-white">
+                            <button id="loadMagnetBtn" class="bg-neon-purple hover:bg-purple-600 text-white px-3 rounded transition"><span class="material-icons text-sm">play_arrow</span></button>
+                        </div>
                     </div>
-                    <div class="flex gap-2">
-                        <input type="text" id="magnetInput" placeholder="magnet:?xt=... ou link IPTV (.m3u8)" class="neon-input w-full rounded px-3 py-2 text-xs text-white">
-                        <button id="loadMagnetBtn" class="bg-neon-purple hover:bg-purple-600 text-white px-3 rounded transition"><span class="material-icons text-sm">play_arrow</span></button>
-                    </div>
-                </div>
 
-                <div id="dropZone" class="glass-panel p-4 rounded-xl border border-dashed border-gray-600 hover:border-neon-cyan cursor-pointer transition group relative">
-                    <input type="file" id="fileInput" class="hidden" accept="video/*,audio/*" multiple>
-                    <input type="file" id="folderInput" class="hidden" webkitdirectory multiple>
-                    
-                    <div class="text-center z-10 relative">
-                        <span class="material-icons text-gray-400 group-hover:text-white transition mb-1">drive_folder_upload</span>
-                        <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Upload Local</p>
-                        <div class="flex justify-center gap-2 mt-2">
-                            <button type="button" id="fileBtn" class="text-[10px] bg-white/10 px-2 py-1 rounded hover:bg-white/20">Arquivos</button>
-                            <button type="button" id="folderBtn" class="text-[10px] bg-neon-cyan/20 text-neon-cyan px-2 py-1 rounded hover:bg-neon-cyan/30">Pasta</button>
+                    <div id="dropZone" class="glass-panel p-4 rounded-xl border border-dashed border-gray-600 hover:border-neon-cyan cursor-pointer transition group relative">
+                        <input type="file" id="fileInput" class="hidden" accept="video/*,audio/*" multiple>
+                        <input type="file" id="folderInput" class="hidden" webkitdirectory multiple>
+                        
+                        <div class="text-center z-10 relative">
+                            <span class="material-icons text-gray-400 group-hover:text-white transition mb-1">drive_folder_upload</span>
+                            <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Upload Local</p>
+                            <div class="flex justify-center gap-2 mt-2">
+                                <button type="button" id="fileBtn" class="text-[10px] bg-white/10 px-2 py-1 rounded hover:bg-white/20">Arquivos</button>
+                                <button type="button" id="folderBtn" class="text-[10px] bg-neon-cyan/20 text-neon-cyan px-2 py-1 rounded hover:bg-neon-cyan/30">Pasta</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div id="mediaInfo" class="hidden bg-black/20 rounded-lg p-3 border border-white/5">
-                <h3 id="infoFilename" class="text-sm text-white font-medium truncate">Nome do arquivo...</h3>
-                <div id="torrentStats" class="hidden flex gap-4 mt-1 text-[10px] font-mono text-gray-400">
-                    <span class="text-green-400">DL: <span id="infoDown">0 KB/s</span></span>
-                    <span class="text-blue-400">Peers: <span id="infoPeers">0</span></span>
-                </div>
-            </div>
-        </div>
-
-        <div id="playlistPanel" class="w-full lg:w-80 hidden flex-col gap-2">
-            <div class="glass-panel rounded-xl flex flex-col h-[500px] lg:h-[600px] sticky top-4">
-                <div class="p-3 border-b border-white/5 bg-black/20 rounded-t-xl flex justify-between items-center">
-                    <span class="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                        <span class="material-icons text-sm text-neon-cyan">queue_music</span> Playlist
-                    </span>
-                    <span id="playlistCount" class="text-[10px] text-gray-400 font-mono">0</span>
-                </div>
-                
-                <div id="playlistContainer" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
-            </div>
-        </div>
-
-    </div>
-
-    <script>
-        const client = new WebTorrent();
-        let currentTorrent = null;
-        let playlist = [];
-        let currentIndex = -1;
-        let updateInterval = null;
-        let currentVideoName = '';
-
-        const video = document.getElementById('nativeVideo');
-        const placeholder = document.getElementById('videoPlaceholder');
-        const loading = document.getElementById('loadingOverlay');
-        const subtitleTrack = document.getElementById('subtitleTrack');
-
-        // CONTROLES CUSTOMIZADOS
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        const volumeBtn = document.getElementById('volumeBtn');
-        const progressBar = document.getElementById('progressBar');
-        const playBar = document.getElementById('playBar');
-        const timeDisplay = document.getElementById('timeDisplay');
-        const settingsBtn = document.getElementById('settingsBtn');
-        const settingsMenu = document.getElementById('settingsMenu');
-        const fullscreenBtn = document.getElementById('fullscreenBtn');
-        
-        // NOVAS REFERÊNCIAS
-        const rewind10Btn = document.getElementById('rewind10Btn');
-        const forward10Btn = document.getElementById('forward10Btn');
-        const nextVideoBtn = document.getElementById('nextVideoBtn');
-        const prevVideoBtn = document.getElementById('prevVideoBtn');
-
-        // NOVAS REFERÊNCIAS PARA BUSCA POR VOZ/TUTORIAL
-        const aiSearchInput = document.getElementById('aiSearchInput');
-        const micBtn = document.getElementById('micBtn');
-        const shortcutsBtn = document.getElementById('shortcutsBtn'); // Antigo tutorialBtn
-        const tutorialModal = document.getElementById('tutorialModal');
-        const closeTutorial = document.getElementById('closeTutorial');
-        
-        // NOVAS REFERÊNCIAS PARA O TOUR
-        const tourBalloon = document.getElementById('tourBalloon');
-        const tourTitle = document.getElementById('tourTitle');
-        const tourContent = document.getElementById('tourContent');
-        const tourProgress = document.getElementById('tourProgress');
-        const tourSkip = document.getElementById('tourSkip');
-        const tourPrev = document.getElementById('tourPrev');
-        const tourNext = document.getElementById('tourNext');
-        
-        let currentStep = -1;
-        const tourSteps = [
-            { id: 'searchModeContainer', title: '1. Modo de Busca', content: 'Selecione o tipo de pesquisa: Torrent (melhor), Link Direto (Cloud) ou Stream (IPTV/M3U8).', placement: 'bottom' },
-            { id: 'aiSearchInput', title: '2. Pesquisa Inteligente', content: 'Digite o nome do filme/série aqui. A busca é feita no Google, otimizada para encontrar links.', placement: 'bottom' },
-            { id: 'micBtn', title: '3. Pesquisa por Voz', content: 'Use seu microfone para digitar o termo de busca sem precisar do teclado.', placement: 'right' },
-            { id: 'loadMagnetBtn', title: '4. Links Diretos', content: 'Cole um Magnet Link ou um link de Stream Direto (.m3u8) e clique no Play para carregar.', placement: 'top' },
-            { id: 'dropZone', title: '5. Upload Local', content: 'Arraste e solte arquivos ou pastas de mídia aqui para reproduzir diretamente no player.', placement: 'top' },
-            { id: 'playerContainer', title: '6. O Player', content: 'Seu vídeo será reproduzido aqui. Use os atalhos de teclado (botão "info" ao lado) para controle rápido!', placement: 'bottom' }
-        ];
-
-        // LÓGICA DO TUTORIAL/ATALHOS (Modal)
-        shortcutsBtn.onclick = () => {
-             // O botão "info" abre o modal de atalhos/tutorial, conforme a última solicitação.
-            tutorialModal.classList.remove('hidden');
-            tutorialModal.classList.add('flex');
-        };
-
-        closeTutorial.onclick = () => {
-            tutorialModal.classList.add('hidden');
-            tutorialModal.classList.remove('flex');
-        };
-        
-        // Fechar ao clicar fora do modal
-        tutorialModal.onclick = (e) => {
-            if (e.target.id === 'tutorialModal') {
-                closeTutorial.click();
-            }
-        };
-
-        // LÓGICA DO TOUR GUIADO
-        // Função para posicionar o balão
-        function positionBalloon(target, balloon, placement) {
-            const targetRect = target.getBoundingClientRect();
-            const balloonRect = balloon.getBoundingClientRect();
-            
-            let top, left;
-
-            if (placement === 'bottom') {
-                top = targetRect.bottom + 15;
-                left = targetRect.left + (targetRect.width / 2) - (balloonRect.width / 2);
-            } else if (placement === 'top') {
-                top = targetRect.top - balloonRect.height - 15;
-                left = targetRect.left + (targetRect.width / 2) - (balloonRect.width / 2);
-            } else if (placement === 'right') {
-                top = targetRect.top + (targetRect.height / 2) - (balloonRect.height / 2);
-                left = targetRect.right + 15;
-            } else if (placement === 'left') {
-                top = targetRect.top + (targetRect.height / 2) - (balloonRect.height / 2);
-                left = targetRect.left - balloonRect.width - 15;
-            }
-            
-            // Ajustar para evitar que saia da tela
-            left = Math.max(10, Math.min(left, window.innerWidth - balloonRect.width - 10));
-            top = Math.max(10, Math.min(top, window.innerHeight - balloonRect.height - 10));
-            
-            // Se a seta for horizontal, ajusta o top para compensar o balão.
-            if (placement === 'right' || placement === 'left') {
-                 // Ajusta a posição vertical da seta para estar no meio do target
-                const arrowOffset = targetRect.top + (targetRect.height / 2) - top;
-                balloon.style.setProperty('--arrow-v-offset', `${arrowOffset}px`); // Propriedade customizada para o CSS
-                
-                // Precisamos de CSS para ajustar a posição da flecha
-                // Uma solução simples aqui é garantir que a flecha esteja sempre centralizada no lado correto. 
-                // Como não podemos injetar estilos customizados para cada balão, manteremos a flecha centralizada (o que já fazemos)
-            }
-
-
-            balloon.style.top = `${top}px`;
-            balloon.style.left = `${left}px`;
-            balloon.setAttribute('data-placement', placement);
-        }
-
-        function showStep(index) {
-            if (index < 0 || index >= tourSteps.length) {
-                skipTour();
-                return;
-            }
-
-            currentStep = index;
-            const step = tourSteps[currentStep];
-            const target = document.getElementById(step.id);
-
-            if (!target) {
-                console.error(`Tour: Target element #${step.id} not found.`);
-                skipTour();
-                return;
-            }
-            
-            // Remove highlight from previous step
-            tourSteps.forEach(s => {
-                const t = document.getElementById(s.id);
-                if (t) {
-                    t.style.boxShadow = '';
-                    t.style.zIndex = '';
-                    t.style.transition = '';
-                }
-            });
-
-            // Highlight current target
-            target.style.zIndex = '5001';
-            target.style.boxShadow = '0 0 20px 5px rgba(6, 182, 212, 0.6)';
-            target.style.transition = 'box-shadow 0.5s ease-in-out';
-            
-            // Scroll to target
-            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-            tourTitle.innerText = step.title;
-            tourContent.innerText = step.content;
-            tourProgress.innerText = `${currentStep + 1}/${tourSteps.length}`;
-
-            tourPrev.disabled = currentStep === 0;
-            tourNext.innerText = currentStep === tourSteps.length - 1 ? 'Concluir' : 'Próximo';
-
-            tourBalloon.classList.remove('hidden');
-            
-            // Give time for scroll and element rendering before positioning
-            setTimeout(() => {
-                positionBalloon(target, tourBalloon, step.placement || 'bottom');
-            }, 300);
-        }
-
-        function nextStep() {
-            if (currentStep < tourSteps.length - 1) {
-                showStep(currentStep + 1);
-            } else {
-                skipTour();
-                alert('🎉 Tour concluído! Divirta-se usando o OakCine!');
-            }
-        }
-
-        function prevStep() {
-            if (currentStep > 0) {
-                showStep(currentStep - 1);
-            }
-        }
-
-        function skipTour() {
-            tourBalloon.classList.add('hidden');
-            // Remove all z-index/shadows
-            tourSteps.forEach(step => {
-                const target = document.getElementById(step.id);
-                if (target) {
-                    target.style.zIndex = '';
-                    target.style.boxShadow = '';
-                    target.style.transition = '';
-                }
-            });
-            currentStep = -1;
-        }
-
-        tourNext.onclick = nextStep;
-        tourPrev.onclick = prevStep;
-        tourSkip.onclick = skipTour;
-        
-        // Função que cria o Prompt Flutuante inicial
-        function initializeTourPrompt() {
-            const initialPrompt = document.createElement('div');
-            initialPrompt.id = 'initialTourPrompt';
-            initialPrompt.className = 'fixed top-1/2 right-4 transform -translate-y-1/2 p-4 glass-panel rounded-xl shadow-2xl z-50 text-center flex flex-col gap-2 transition-all duration-500';
-            initialPrompt.innerHTML = `
-                <p class="text-sm font-bold text-white">Novo por aqui?</p>
-                <button id="startTourNow" class="bg-neon-cyan hover:bg-cyan-600 text-black font-bold text-xs py-2 px-4 rounded transition">
-                    ▶️ Iniciar Tour Rápido
-                </button>
-                <button id="hideTourPrompt" class="text-gray-400 hover:text-white text-[10px] underline">
-                    Não, obrigado.
-                </button>
-            `;
-            document.body.appendChild(initialPrompt);
-
-            document.getElementById('startTourNow').onclick = () => {
-                initialPrompt.remove();
-                showStep(0);
-            };
-            
-            document.getElementById('hideTourPrompt').onclick = () => {
-                initialPrompt.remove();
-            };
-        }
-
-        // Chama o prompt de inicialização do tour
-        window.onload = initializeTourPrompt;
-
-
-        // LEGENDAS
-        const subtitlesToggle = document.getElementById('subtitlesToggle');
-        const subtitleOptions = document.getElementById('subtitleOptions');
-        const uploadSubBtn = document.getElementById('uploadSubBtn');
-        const subtitleFileInput = document.getElementById('subtitleFileInput');
-        const searchSubBtn = document.getElementById('searchSubBtn');
-        const onlineSubList = document.getElementById('onlineSubList');
-
-        // FUNÇÃO DE FEEDBACK VISUAL PARA TEMPO E VOLUME
-        let indicatorTimeout = null;
-        function showTimeIndicator(text) {
-            let indicator = document.getElementById('tempIndicator');
-            if (!indicator) {
-                indicator = document.createElement('div');
-                indicator.id = 'tempIndicator';
-                indicator.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg text-lg font-bold text-white opacity-0 transition-opacity z-50 pointer-events-none';
-                document.getElementById('playerContainer').appendChild(indicator);
-            }
-
-            indicator.innerText = text;
-            indicator.style.opacity = '1';
-            
-            clearTimeout(indicatorTimeout);
-            indicatorTimeout = setTimeout(() => {
-                indicator.style.opacity = '0';
-            }, 500);
-        }
-
-        // CONTROLES DO PLAYER
-        playPauseBtn.onclick = () => {
-            if(video.paused) {
-                video.play();
-                playPauseBtn.innerHTML = '<span class="material-icons text-2xl">pause</span>';
-            } else {
-                video.pause();
-                playPauseBtn.innerHTML = '<span class="material-icons text-2xl">play_arrow</span>';
-            }
-        };
-
-        video.onclick = () => playPauseBtn.click();
-
-        volumeBtn.onclick = () => {
-            video.muted = !video.muted;
-            volumeBtn.innerHTML = video.muted ? 
-                '<span class="material-icons text-sm">volume_off</span>' : 
-                '<span class="material-icons text-sm">volume_up</span>';
-            showTimeIndicator(video.muted ? 'Mudo' : `Vol: ${Math.round(video.volume * 100)}%`);
-        };
-        
-        rewind10Btn.onclick = () => {
-            video.currentTime = Math.max(0, video.currentTime - 10);
-            showTimeIndicator('-10s');
-        };
-
-        forward10Btn.onclick = () => {
-            video.currentTime = Math.min(video.duration, video.currentTime + 10);
-            showTimeIndicator('+10s');
-        };
-
-        prevVideoBtn.onclick = () => playItem(currentIndex - 1);
-        nextVideoBtn.onclick = () => playItem(currentIndex + 1);
-
-
-        video.ontimeupdate = () => {
-            if(video.duration) {
-                const pct = (video.currentTime / video.duration) * 100;
-                playBar.style.width = pct + '%';
-                
-                const fmt = (s) => {
-                    const m = Math.floor(s / 60);
-                    const sec = Math.floor(s % 60);
-                    return `${m}:${sec.toString().padStart(2, '0')}`;
-                };
-                
-                timeDisplay.innerText = fmt(video.currentTime) + " / " + fmt(video.duration);
-            }
-        };
-
-        progressBar.onclick = (e) => {
-            const rect = progressBar.getBoundingClientRect();
-            const pos = (e.clientX - rect.left) / rect.width;
-            video.currentTime = pos * video.duration;
-        };
-
-        fullscreenBtn.onclick = () => {
-            if(!document.fullscreenElement) {
-                document.getElementById('playerContainer').requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-        };
-
-        // MENU DE CONFIGURAÇÕES
-        settingsBtn.onclick = (e) => {
-            e.stopPropagation();
-            settingsMenu.classList.toggle('hidden');
-        };
-
-        document.onclick = (e) => {
-            if(!settingsMenu.contains(e.target) && e.target !== settingsBtn) {
-                settingsMenu.classList.add('hidden');
-            }
-        };
-
-        // LEGENDAS
-        subtitlesToggle.onchange = () => {
-            const enabled = subtitlesToggle.checked;
-            subtitleOptions.classList.toggle('hidden', !enabled);
-            
-            if(video.textTracks[0]) {
-                video.textTracks[0].mode = enabled ? 'showing' : 'hidden';
-            }
-        };
-
-        uploadSubBtn.onclick = () => {
-            subtitleFileInput.click();
-        };
-
-        subtitleFileInput.onchange = (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            
-            const url = URL.createObjectURL(file);
-            subtitleTrack.src = url;
-            video.textTracks[0].mode = 'showing';
-            subtitlesToggle.checked = true;
-            
-            alert("✅ Legenda carregada com sucesso!");
-        };
-
-        searchSubBtn.onclick = async () => {
-            if(!currentVideoName) {
-                alert("⚠️ Nenhum vídeo em reprodução");
-                return;
-            }
-            
-            onlineSubList.innerHTML = '<div class="px-3 py-2 text-xs text-gray-500">🔍 Buscando legendas...</div>';
-            onlineSubList.classList.remove('hidden');
-            
-            // Extrai nome limpo do arquivo
-            const cleanName = currentVideoName.replace(/\.[^/.]+$/, "").replace(/[._]/g, ' ');
-            
-            // Sugestões de sites de legendas
-            const sites = [
-                { name: 'OpenSubtitles', url: `https://www.opensubtitles.org/en/search/sublanguageid-por/moviename-${encodeURIComponent(cleanName)}` },
-                { name: 'Legendas.tv', url: `https://legendas.tv/busca/${encodeURIComponent(cleanName)}` },
-                { name: 'Subdivx', url: `https://www.subdivx.com/index.php?buscar=${encodeURIComponent(cleanName)}` }
-            ];
-            
-            onlineSubList.innerHTML = sites.map(site => `
-                <a href="${site.url}" target="_blank" class="block px-3 py-2 text-xs text-neon-cyan hover:bg-white/10 rounded transition flex items-center justify-between">
-                    <span>${site.name}</span>
-                    <span class="material-icons text-xs">open_in_new</span>
-                </a>
-            `).join('');
-        };
-
-        // VELOCIDADE (Ajustado para receber o event corretamente)
-        function setPlaybackSpeed(speed, event) {
-            video.playbackRate = speed;
-            
-            // Atualiza visual
-            document.querySelectorAll('#settingsMenu button').forEach(btn => {
-                btn.classList.remove('bg-neon-cyan/20', 'text-white');
-                btn.classList.add('text-gray-300');
-            });
-            
-            if (event && event.target && event.target.tagName === 'BUTTON') {
-                event.target.classList.add('bg-neon-cyan/20', 'text-white');
-                event.target.classList.remove('text-gray-300');
-            } else {
-                // Caso seja chamado por atalho, atualiza 1x (padrão)
-                const defaultButton = document.querySelector('[onclick="setPlaybackSpeed(1, event)"]');
-                if (defaultButton) {
-                    defaultButton.classList.add('bg-neon-cyan/20', 'text-white');
-                    defaultButton.classList.remove('text-gray-300');
-                }
-            }
-            showTimeIndicator(`${speed.toFixed(2)}x`);
-        }
-        setPlaybackSpeed(1, null);
-
-        // DETECTAR FAIXAS DE ÁUDIO
-        video.onloadedmetadata = () => {
-            const audioTracks = document.getElementById('audioTracks');
-            
-            if(video.audioTracks && video.audioTracks.length > 0) {
-                audioTracks.innerHTML = Array.from(video.audioTracks).map((track, i) => `
-                    <button onclick="selectAudioTrack(${i})" class="w-full text-left px-3 py-2 text-xs hover:bg-white/5 rounded transition ${i === 0 ? 'text-neon-cyan' : 'text-gray-300'}">
-                        ${track.label || `Faixa ${i + 1}`} ${track.language ? `(${track.language})` : ''}
-                    </button>
-                `).join('');
-            } else {
-                audioTracks.innerHTML = '<div class="px-3 py-2 text-gray-500">Faixa Principal</div>';
-            }
-        };
-
-        function selectAudioTrack(index) {
-            if(video.audioTracks) {
-                Array.from(video.audioTracks).forEach((track, i) => {
-                    track.enabled = i === index;
-                });
-                
-                // Atualiza visual
-                document.querySelectorAll('#audioTracks button').forEach((btn, i) => {
-                    btn.classList.toggle('text-neon-cyan', i === index);
-                    btn.classList.toggle('text-gray-300', i !== index);
-                });
-            }
-        }
-
-        // PESQUISA POR VOZ
-        function startVoiceSearch() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert("❌ Seu navegador não suporta Pesquisa por Voz.");
-                return;
-            }
-
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'pt-BR'; // Define o idioma para Português
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
-            const originalPlaceholder = aiSearchInput.placeholder;
-
-            micBtn.innerHTML = '<span class="material-icons text-lg text-red-500 animate-pulse">mic</span>';
-            micBtn.classList.add('bg-white/10');
-            aiSearchInput.placeholder = "Fale agora...";
-
-            recognition.start();
-
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                aiSearchInput.value = transcript;
-            };
-
-            recognition.onerror = (event) => {
-                console.error('Speech recognition error', event.error);
-                resetMicButton(originalPlaceholder);
-            };
-
-            recognition.onend = () => {
-                resetMicButton(originalPlaceholder);
-            };
-            
-            function resetMicButton(placeholder) {
-                micBtn.innerHTML = '<span class="material-icons text-lg">mic</span>';
-                micBtn.classList.remove('bg-white/10');
-                aiSearchInput.placeholder = placeholder;
-            }
-        }
-
-        // ADICIONA EVENT LISTENERS PARA OS BOTÕES
-        micBtn.onclick = startVoiceSearch;
-
-
-        // BUSCA
-        function performSmartSearch() {
-            const query = aiSearchInput.value.trim();
-            const mode = document.getElementById('searchMode').value;
-            
-            if(!query) {
-                alert("💡 Digite algo para buscar!");
-                return;
-            }
-
-            const bar = document.getElementById('aiLoadingBar');
-            const feedback = document.getElementById('aiFeedback');
-            
-            bar.style.width = '0';
-            setTimeout(() => bar.style.width = '100%', 50);
-            feedback.classList.remove('hidden');
-            
-            const messages = ["🔍 Analisando...", "🎯 Filtrando...", "⚡ Otimizando..."];
-            let i = 0;
-            const interval = setInterval(() => {
-                feedback.querySelector('span').innerText = messages[i];
-                i = (i + 1) % messages.length;
-            }, 500);
-
-            setTimeout(() => {
-                clearInterval(interval);
-                let q = "";
-                const year = new Date().getFullYear();
-                
-                if(mode === 'direct') {
-                    q = `"${query}" (site:mega.nz OR site:drive.google.com) (mp4 OR mkv)`;
-                } else if(mode === 'torrent') {
-                    q = `"${query}" (1080p OR 4K) (BluRay OR WEB-DL) ${year} -cam -ts (magnet OR torrent)`;
-                } else { // mode === 'stream' (Busca IPTV)
-                    q = `"${query}" (site:pastebin.com OR site:github.com) (m3u8 OR m3u OR iptv) (list OR playlist) filetype:txt OR filetype:m3u OR filetype:m3u8`;
-                }
-
-                feedback.classList.add('hidden');
-                bar.style.width = '0';
-                window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, '_blank');
-            }, 1800);
-        }
-
-        aiSearchInput.addEventListener('keydown', (e) => { 
-            if(e.key === 'Enter') performSmartSearch(); 
-        });
-
-        // VERIFICAR SE É MÍDIA (VÍDEO OU ÁUDIO)
-        function isMedia(name) {
-            const exts = [
-                // Vídeo
-                'mp4','mkv','webm','avi','mov','wmv','flv','m4v','mpg','mpeg','ts','m2ts','3gp','vob','ogv','divx',
-                // Áudio (para reprodução pelo elemento <video> como áudio-only)
-                'mp3','ogg','wav','flac','aac','m4a', 'opus'
-            ];
-            const ext = name.split('.').pop().toLowerCase();
-            return exts.includes(ext);
-        }
-
-        // PROCESSAR ARQUIVOS
-        function processFiles(files) {
-            const all = Array.from(files);
-            const torrents = all.filter(f => f.name.endsWith('.torrent'));
-            const mediaFiles = all.filter(f => isMedia(f.name)); 
-            
-            if(torrents.length > 0) {
-                const reader = new FileReader();
-                reader.onload = (e) => loadMagnet(e.target.result);
-                reader.readAsArrayBuffer(torrents[0]);
-                return;
-            }
-            
-            if(mediaFiles.length === 0) {
-                alert("❌ Nenhuma mídia (vídeo/áudio) encontrada!\n\nFormatos suportados: MP4, MKV, MP3, FLAC, etc.");
-                return;
-            }
-
-            playlist = mediaFiles.sort((a, b) => 
-                a.name.localeCompare(b.name, undefined, { numeric: true })
-            );
-            
-            currentIndex = -1;
-            
-            document.getElementById('playlistPanel').style.display = 'flex';
-            document.getElementById('playlistCount').innerText = playlist.length;
-            
-            updatePlaylistUI();
-            playItem(0);
-        }
-
-        // ATUALIZAR UI DA PLAYLIST
-        function updatePlaylistUI() {
-            const container = document.getElementById('playlistContainer');
-            container.innerHTML = playlist.map((file, i) => `
-                <div class="playlist-item p-2 rounded cursor-pointer flex gap-2 ${i === currentIndex ? 'active' : ''}" onclick="playItem(${i})">
-                    <span class="text-[10px] font-mono text-gray-500">${i + 1}</span>
-                    <p class="text-xs text-gray-300 truncate flex-1">${file.name}</p>
-                    ${i === currentIndex ? '<span class="material-icons text-[10px] text-neon-cyan animate-pulse">equalizer</span>' : ''}
-                </div>
-            `).join('');
-        }
-
-        // REPRODUZIR ITEM
-        function playItem(index) {
-            if(index < 0 || index >= playlist.length) return;
-            
-            currentIndex = index;
-            updatePlaylistUI();
-            
-            const file = playlist[index];
-            currentVideoName = file.name;
-            const url = URL.createObjectURL(file);
-            
-            loading.classList.remove('hidden');
-            video.src = url;
-            video.load();
-            
-            document.getElementById('mediaInfo').classList.remove('hidden');
-            document.getElementById('infoFilename').innerText = file.name;
-            
-            video.onloadeddata = () => {
-                loading.classList.add('hidden');
-                placeholder.style.display = 'none';
-                video.play().catch(() => {});
-            };
-        }
-
-        // MAGNET/STREAM
-        function loadMagnet(uri) {
-            const trimmedUri = uri.trim();
-            if(!trimmedUri) return;
-            
-            loading.classList.remove('hidden');
-            
-            // 1. Limpa o torrent anterior, se houver
-            if(currentTorrent) {
-                currentTorrent.destroy();
-                currentTorrent = null;
-                clearInterval(updateInterval);
-                document.getElementById('torrentStats').classList.add('hidden');
-            }
-            
-            // Reseta a src do vídeo para limpar o player
-            video.src = '';
-            
-            const isMagnet = trimmedUri.startsWith('magnet:?');
-            // Links que começam com http ou https são tratados como streams diretos/IPTV
-            const isDirectStream = trimmedUri.startsWith('http://') || trimmedUri.startsWith('https://');
-
-            if (isDirectStream) {
-                // Carregar link de IPTV/Stream Direto
-                currentVideoName = trimmedUri;
-                
-                video.src = trimmedUri;
-                video.load();
-                
-                document.getElementById('mediaInfo').classList.remove('hidden');
-                // Exibe uma parte do link para feedback
-                document.getElementById('infoFilename').innerText = "STREAM: " + trimmedUri.split('/').pop().substring(0, 50) + '...';
-                document.getElementById('torrentStats').classList.add('hidden');
-
-                // Garante que o placeholder seja escondido e o vídeo tente reproduzir
-                video.onloadeddata = () => {
-                    loading.classList.add('hidden');
-                    placeholder.style.display = 'none';
-                    video.play().catch(e => {
-                        alert("Erro ao iniciar a stream: " + e.message + "\nVerifique o link ou se ele requer um CORS proxy.");
-                        loading.classList.add('hidden');
-                    });
-                };
-                // Caso a stream falhe rapidamente
-                video.onerror = (e) => {
-                    loading.classList.add('hidden');
-                    alert("Erro ao carregar o vídeo ou stream. Verifique se o link é válido ou se há problemas de CORS.");
-                    console.error("Video Error:", e);
-                };
-
-            } else if (isMagnet) {
-                // Lógica para Magnet Link (WebTorrent)
-                client.add(trimmedUri, (torrent) => {
-                    currentTorrent = torrent;
-                    const file = torrent.files.find(f => isMedia(f.name)); 
-                    
-                    if(!file) {
-                        loading.classList.add('hidden');
-                        alert("❌ Nenhuma mídia no torrent");
-                        return;
-                    }
-
-                    file.renderTo(video, { autoplay: true }, (err) => {
-                        if(err) {
-                            loading.classList.add('hidden');
-                            alert("❌ Erro: " + err.message);
-                            return;
-                        }
-                        
-                        loading.classList.add('hidden');
-                        placeholder.style.display = 'none';
-                        
-                        document.getElementById('mediaInfo').classList.remove('hidden');
-                        document.getElementById('infoFilename').innerText = file.name;
-                        document.getElementById('torrentStats').classList.remove('hidden');
-                        
-                        updateInterval = setInterval(() => {
-                            document.getElementById('infoDown').innerText = (torrent.downloadSpeed / 1024 / 1024).toFixed(2) + ' MB/s';
-                            document.getElementById('infoPeers').innerText = torrent.numPeers;
-                        }, 1000);
-                    });
-                });
-            } else {
-                loading.classList.add('hidden');
-                alert("⚠️ Por favor, insira um link 'magnet:' válido ou um link de stream HTTP/S (ex: .m3u8, .mp4).");
-            }
-        }
-
-
-        document.getElementById('loadMagnetBtn').onclick = () => {
-            const uri = document.getElementById('magnetInput').value.trim();
-            if(uri) loadMagnet(uri);
-        };
-
-        // DRAG & DROP
-        const dropZone = document.getElementById('dropZone');
-        
-        dropZone.ondragover = (e) => {
-            e.preventDefault();
-            dropZone.classList.add('border-neon-cyan');
-        };
-        
-        dropZone.ondragleave = () => {
-            dropZone.classList.remove('border-neon-cyan');
-        };
-        
-        dropZone.ondrop = (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('border-neon-cyan');
-            if(e.dataTransfer.files.length) processFiles(e.dataTransfer.files);
-        };
-
-        // BOTÕES
-        document.getElementById('fileBtn').onclick = (e) => {
-            e.stopPropagation();
-            document.getElementById('fileInput').click();
-        };
-        
-        document.getElementById('folderBtn').onclick = (e) => {
-            e.stopPropagation();
-            document.getElementById('folderInput').click();
-        };
-
-        document.getElementById('fileInput').onchange = (e) => {
-            if(e.target.files.length) processFiles(e.target.files);
-        };
-        
-        document.getElementById('folderInput').onchange = (e) => {
-            if(e.target.files.length) processFiles(e.target.files);
-        };
-
-        // PRÓXIMO VÍDEO AUTOMÁTICO
-        video.onended = () => {
-            if(currentIndex < playlist.length - 1) {
-                playItem(currentIndex + 1);
-            }
-        };
-
-        // ATALHOS DE TECLADO
-        document.addEventListener('keydown', (e) => {
-            // Ignora se está digitando em algum input
-            if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            
-            switch(e.key) {
-                case ' ':
-                case 'k':
-                    e.preventDefault();
-                    playPauseBtn.click();
-                    break;
-                case 'ArrowLeft':
-                case 'j':
-                    e.preventDefault();
-                    rewind10Btn.click();
-                    break;
-                case 'ArrowRight':
-                case 'l':
-                    e.preventDefault();
-                    forward10Btn.click();
-                    break;
-                case 'ArrowUp':
-                    e.preventDefault();
-                    video.volume = Math.min(1, video.volume + 0.1);
-                    showTimeIndicator(`Vol: ${Math.round(video.volume * 100)}%`);
-                    break;
-                case 'ArrowDown':
-                    e.preventDefault();
-                    video.volume = Math.max(0, video.volume - 0.1);
-                    showTimeIndicator(`Vol: ${Math.round(video.volume * 100)}%`);
-                    break;
-                case 'm':
-                    e.preventDefault();
-                    volumeBtn.click();
-                    break;
-                case 'f':
-                    e.preventDefault();
-                    fullscreenBtn.click();
-                    break;
-                case 'n':
-                case 'N':
-                    e.preventDefault();
-                    if(playlist.length > 0) nextVideoBtn.click();
-                    break;
-                case 'p':
-                case 'P':
-                    e.preventDefault();
-                    if(playlist.length > 0) prevVideoBtn.click();
-                    break;
-                case 'c':
-                case 'C':
-                    e.preventDefault();
-                    subtitlesToggle.click();
-                    break;
-                case '>': // Avançar velocidade
-                    e.preventDefault();
-                    let newSpeedForward = Math.min(2, video.playbackRate + 0.25);
-                    setPlaybackSpeed(newSpeedForward, null);
-                    showTimeIndicator(`${newSpeedForward.toFixed(2)}x`);
-                    break;
-                case '<': // Retroceder velocidade
-                    e.preventDefault();
-                    let newSpeedBackward = Math.max(0.5, video.playbackRate - 0.25);
-                    setPlaybackSpeed(newSpeedBackward, null);
-                    showTimeIndicator(`${newSpeedBackward.toFixed(2)}x`);
-                    break;
-            }
-        });
-    </script>
-</body>
-</html>
+                <div id="mediaInfo" class="hidden bg-black/20 rounded-lg p-3 border border-white/5">
+                    <h3 id="infoFilename" class="text-sm text-white font-medium truncate">Nome do arquivo...</h3>
+                    <div i

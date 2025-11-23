@@ -529,6 +529,27 @@
             <p class="text-gray-400 text-sm">Fique atualizado com as últimas melhorias e novidades do OakCine</p>
         </div>
 
+        <div id="statusPanel" class="glass-panel p-6 rounded-xl mb-8 flex flex-col md:flex-row justify-around items-center text-center">
+            <div class="p-4">
+                <p class="text-xs uppercase text-gray-400 font-bold mb-1">Versão Atual</p>
+                <p id="versionDisplay" class="text-2xl font-black text-neon-cyan">N/A</p>
+            </div>
+            <div class="h-10 w-px bg-white/10 hidden md:block"></div>
+            <div class="p-4">
+                <p class="text-xs uppercase text-gray-400 font-bold mb-1">Total de Atualizações</p>
+                <p id="countDisplay" class="text-2xl font-black text-neon-purple">0</p>
+            </div>
+            <div class="h-10 w-px bg-white/10 hidden md:block"></div>
+            <div class="p-4">
+                <p class="text-xs uppercase text-gray-400 font-bold mb-1">Progresso Total</p>
+                <div class="flex items-center justify-center gap-2">
+                    <div class="w-24 h-2 rounded-full bg-gray-700 overflow-hidden">
+                        <div id="progressFill" class="h-full bg-gradient-to-r from-neon-purple to-neon-cyan transition-all duration-1000" style="width: 0%;"></div>
+                    </div>
+                    <p id="progressDisplay" class="text-2xl font-black text-white">0%</p>
+                </div>
+            </div>
+        </div>
         <div class="space-y-4" id="updatesContainer">
             </div>
     </div>
@@ -784,9 +805,22 @@
             }
         ];
 
+        // VARIÁVEIS DO STATUS DO PROJETO
+        const PROJECT_VERSION = "2.1 Beta"; // Versão atual
+        const DEVELOPMENT_PERCENTAGE = 85; // Porcentagem de desenvolvimento (Exemplo)
+
         // Função para renderizar atualizações
         function renderUpdates() {
             const container = document.getElementById('updatesContainer');
+            const updatesCount = updates.length;
+            
+            // 1. Atualiza o painel de status
+            document.getElementById('versionDisplay').innerText = PROJECT_VERSION;
+            document.getElementById('countDisplay').innerText = updatesCount;
+            document.getElementById('progressDisplay').innerText = `${DEVELOPMENT_PERCENTAGE}%`;
+            document.getElementById('progressFill').style.width = `${DEVELOPMENT_PERCENTAGE}%`;
+
+            // 2. Renderiza a lista de atualizações
             container.innerHTML = updates.map((update, idx) => `
                 <div class="update-item">
                     <div class="update-date">${new Date(update.date).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' })}</div>

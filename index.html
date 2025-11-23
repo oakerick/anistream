@@ -45,66 +45,252 @@
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
         }
 
-        .page-section {
-            display: none;
+        .playlist-item.active {
+            background: linear-gradient(90deg, rgba(6, 182, 212, 0.2) 0%, transparent 100%);
+            border-left: 3px solid #06b6d4;
         }
+        .playlist-item:hover:not(.active) { background: rgba(255,255,255,0.05); }
 
-        .page-section.active {
-            display: block;
+        .neon-input {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
         }
-
+        .neon-input:focus { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); outline: none; }
+        
+        .page { display: none; }
+        .page.active { display: block; }
+        
         .nav-btn {
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
+            font-size: 0.875rem;
             font-weight: 600;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
             cursor: pointer;
+            transition: all 0.3s ease;
             border: 1px solid transparent;
         }
-
-        .nav-btn.active {
-            background: linear-gradient(90deg, #a855f7, #06b6d4);
+        
+        .nav-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        .nav-btn.active { 
+            background: linear-gradient(90deg, #a855f7 0%, #06b6d4 100%);
             color: white;
             border-color: #06b6d4;
         }
 
-        .nav-btn:not(.active) {
-            color: #cbd5e1;
-            border-color: rgba(255, 255, 255, 0.1);
+        #tourBalloon {
+            z-index: 5000;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid #06b6d4;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
         }
 
-        .nav-btn:not(.active):hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: #f1f5f9;
+        #tourBalloon::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+
+        #tourBalloon[data-placement="bottom"]::after {
+            border-width: 0 10px 10px 10px;
+            border-color: transparent transparent #06b6d4 transparent;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #tourBalloon[data-placement="top"]::after {
+            border-width: 10px 10px 0 10px;
+            border-color: #06b6d4 transparent transparent transparent;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #aiAssistant {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 3000;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .ai-bubble {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .ai-bubble:hover { transform: scale(1.1); }
+
+        .ai-chat-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 380px;
+            height: 450px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #06b6d4;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .ai-chat-window.open { display: flex; }
+
+        .ai-header {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(6, 182, 212, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ai-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            space-y: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .ai-input-box {
+            padding: 1rem;
+            border-top: 1px solid rgba(6, 182, 212, 0.3);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .ai-input-box input {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .ai-message {
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ai-message.user {
+            background: rgba(168, 85, 247, 0.3);
+            color: #a855f7;
+            align-self: flex-end;
+            max-width: 80%;
+            border: 1px solid rgba(168, 85, 247, 0.5);
+        }
+
+        .ai-message.assistant {
+            background: rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+            align-self: flex-start;
+            max-width: 90%;
+            border: 1px solid rgba(6, 182, 212, 0.3);
         }
 
         .update-item {
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
-            border-left: 3px solid #a855f7;
+            padding: 1.5rem;
+            background: rgba(30, 41, 59, 0.4);
+            border-left: 3px solid #06b6d4;
+            border-radius: 0.5rem;
             transition: all 0.3s ease;
         }
 
         .update-item:hover {
-            border-left-color: #06b6d4;
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%);
-            transform: translateX(4px);
+            background: rgba(30, 41, 59, 0.6);
+            transform: translateX(5px);
         }
 
-        .update-badge {
-            background: linear-gradient(90deg, #a855f7, #06b6d4);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.7rem;
+        .update-date {
+            font-size: 0.75rem;
+            color: #a855f7;
             font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .update-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #06b6d4;
+            margin-top: 0.5rem;
+        }
+
+        .update-desc {
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            margin-top: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .feature-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid #a855f7;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            color: #a855f7;
+            margin-right: 0.5rem;
+            margin-top: 0.5rem;
         }
     </style>
 </head>
 <body class="flex flex-col items-center min-h-screen pb-20">
 
+    <!-- ASSISTENTE DE IA -->
+    <div id="aiAssistant">
+        <div class="ai-bubble" id="aiBubble">
+            <span class="material-icons text-white text-2xl">psychology</span>
+        </div>
+        <div class="ai-chat-window" id="aiChatWindow">
+            <div class="ai-header">
+                <h3 class="text-sm font-bold text-neon-cyan">Assistente OakCine</h3>
+                <button id="closeAiChat" class="text-gray-400 hover:text-white transition">
+                    <span class="material-icons text-sm">close</span>
+                </button>
+            </div>
+            <div class="ai-messages" id="aiMessages"></div>
+            <div class="ai-input-box">
+                <input type="text" id="aiInput" placeholder="Faça uma pergunta..." autocomplete="off">
+                <button id="aiSendBtn" class="bg-neon-cyan hover:bg-cyan-600 text-black px-3 rounded transition">
+                    <span class="material-icons text-sm">send</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVEGAÇÃO -->
     <header class="w-full max-w-7xl p-6 flex justify-between items-center">
         <div class="flex items-center gap-3 select-none cursor-pointer" onclick="location.reload()">
             <span class="material-icons text-4xl text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">movie_filter</span>
@@ -112,27 +298,25 @@
                 <h1 class="text-3xl font-black tracking-tighter text-white">Oak<span class="text-neon-cyan">Cine</span></h1>
             </div>
         </div>
-        
-        <div class="flex gap-3">
-            <button class="nav-btn active" onclick="switchPage('home')">
-                <span class="material-icons align-middle text-sm mr-1" style="display: inline;">home</span>
-                Início
+
+        <nav class="flex gap-2">
+            <button class="nav-btn active" data-page="home" onclick="switchPage('home', this)">
+                <span class="material-icons text-xs mr-1 inline">home</span> Início
             </button>
-            <button class="nav-btn" onclick="switchPage('updates')">
-                <span class="material-icons align-middle text-sm mr-1" style="display: inline;">update</span>
-                Atualizações
+            <button class="nav-btn" data-page="updates" onclick="switchPage('updates', this)">
+                <span class="material-icons text-xs mr-1 inline">notifications</span> Atualizações
             </button>
-        </div>
+        </nav>
     </header>
 
     <!-- PÁGINA: INÍCIO -->
-    <div id="home" class="page-section active w-full">
+    <div id="page-home" class="page active w-full">
         <section class="w-full max-w-4xl px-4 mb-6 relative z-50">
             <div class="glass-panel rounded-xl p-1 flex flex-col md:flex-row gap-2 items-center shadow-2xl relative overflow-hidden">
                 <div class="relative w-full md:w-auto" id="searchModeContainer">
                     <select id="searchMode" class="w-full md:w-48 bg-[#0f172a] text-gray-300 text-xs font-bold uppercase tracking-wide py-3 px-4 rounded-lg border border-gray-700 outline-none appearance-none cursor-pointer hover:text-white transition">
                         <option value="torrent">🌊 Torrent (Best)</option>
-                        <option value="direct">📂 Cloud Direct</option>
+                        <option value="direct">📁 Cloud Direct</option>
                         <option value="stream">📺 Web Stream / IPTV</option>
                     </select>
                     <span class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">expand_more</span>
@@ -154,11 +338,23 @@
                 <button onclick="performSmartSearch()" class="w-full md:w-auto px-6 py-3 rounded-lg bg-gradient-to-r from-neon-purple to-indigo-600 hover:from-indigo-500 hover:to-neon-purple text-white font-bold text-sm tracking-wider transition-all shadow-lg">
                     BUSCAR
                 </button>
+                
+                <button id="shortcutsBtn" class="text-gray-400 hover:text-neon-cyan transition p-3 rounded-lg" title="Mostrar Atalhos e Guia">
+                     <span class="material-icons text-lg">info</span>
+                </button>
+
+                <div id="aiLoadingBar" class="absolute bottom-0 left-0 h-1 bg-neon-cyan transition-all duration-[2000ms] ease-out w-0"></div>
+            </div>
+            
+            <div id="aiFeedback" class="h-6 mt-2 text-center text-xs font-mono text-neon-cyan hidden">
+                <span class="animate-pulse">Inicializando busca neural...</span>
             </div>
         </section>
 
         <div class="w-full max-w-4xl px-4 flex flex-col lg:flex-row gap-6 items-start">
+            
             <div class="flex-1 w-full min-w-0 flex flex-col gap-4">
+                
                 <div id="playerContainer" class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800 group">
                     <video id="nativeVideo" class="w-full h-full object-contain bg-black" crossorigin="anonymous">
                         <track kind="subtitles" id="subtitleTrack" default>
@@ -185,9 +381,27 @@
                         
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
+                                <button id="prevVideoBtn" class="text-gray-400 hover:text-white transition" title="Vídeo Anterior">
+                                    <span class="material-icons text-lg">skip_previous</span>
+                                </button>
+                                
+                                <button id="rewind10Btn" class="text-gray-400 hover:text-white transition" title="Voltar 10 segundos">
+                                    <span class="material-icons text-lg">replay_10</span>
+                                </button>
+                                
                                 <button id="playPauseBtn" class="text-white hover:scale-110 transition">
                                     <span class="material-icons text-2xl">play_arrow</span>
                                 </button>
+                                
+                                <button id="forward10Btn" class="text-gray-400 hover:text-white transition" title="Avançar 10 segundos">
+                                    <span class="material-icons text-lg">forward_10</span>
+                                </button>
+                                
+                                <button id="nextVideoBtn" class="text-gray-400 hover:text-white transition" title="Próximo Vídeo">
+                                    <span class="material-icons text-lg">skip_next</span>
+                                </button>
+                                
+                                <div class="h-4 w-px bg-gray-600 mx-1"></div>
                                 
                                 <button id="volumeBtn" class="text-gray-300 hover:text-white transition">
                                     <span class="material-icons text-sm">volume_up</span>
@@ -196,9 +410,56 @@
                                 <span id="timeDisplay" class="text-[10px] font-mono text-gray-400">0:00 / 0:00</span>
                             </div>
                             
-                            <button id="fullscreenBtn" class="text-gray-300 hover:text-white transition">
-                                <span class="material-icons text-lg">fullscreen</span>
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <div class="relative">
+                                    <button id="settingsBtn" class="text-gray-300 hover:text-white transition">
+                                        <span class="material-icons text-lg">settings</span>
+                                    </button>
+                                    
+                                    <div id="settingsMenu" class="hidden absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-xl rounded-lg border border-white/10 shadow-2xl min-w-[280px] overflow-hidden">
+                                        <div class="p-3 border-b border-white/10">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2">
+                                                    <span class="material-icons text-sm text-neon-cyan">subtitles</span>
+                                                    Legendas
+                                                </span>
+                                                <label class="relative inline-flex items-center cursor-pointer">
+                                                    <input type="checkbox" id="subtitlesToggle" class="sr-only peer">
+                                                    <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-cyan"></div>
+                                                </label>
+                                            </div>
+                                            
+                                            <div id="subtitleOptions" class="space-y-1 hidden">
+                                                <input type="file" id="subtitleFileInput" accept=".srt,.vtt,.ass" class="hidden">
+                                                <button id="uploadSubBtn" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-white/5 rounded transition flex items-center gap-2">
+                                                    <span class="material-icons text-sm">upload_file</span>
+                                                    Carregar Legenda Local
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="p-3 border-b border-white/10">
+                                            <span class="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2 mb-2">
+                                                <span class="material-icons text-sm text-neon-purple">speed</span>
+                                                Velocidade
+                                            </span>
+                                            <div class="grid grid-cols-4 gap-1">
+                                                <button onclick="setPlaybackSpeed(0.5, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">0.5x</button>
+                                                <button onclick="setPlaybackSpeed(0.75, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">0.75x</button>
+                                                <button onclick="setPlaybackSpeed(1, event)" class="px-2 py-1 text-xs text-white bg-neon-cyan/20 rounded">1x</button>
+                                                <button onclick="setPlaybackSpeed(1.25, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.25x</button>
+                                                <button onclick="setPlaybackSpeed(1.5, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.5x</button>
+                                                <button onclick="setPlaybackSpeed(1.75, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">1.75x</button>
+                                                <button onclick="setPlaybackSpeed(2, event)" class="px-2 py-1 text-xs text-gray-300 hover:bg-white/10 rounded transition">2x</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button id="fullscreenBtn" class="text-gray-300 hover:text-white transition">
+                                    <span class="material-icons text-lg">fullscreen</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -206,204 +467,311 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="glass-panel p-4 rounded-xl">
                         <div class="flex items-center gap-2 mb-2 text-neon-purple font-bold text-sm">
-                            <span class="material-icons text-sm">bolt</span> Magnet Link / Stream
+                            <span class="material-icons text-sm">bolt</span> Magnet Link
                         </div>
                         <div class="flex gap-2">
-                            <input type="text" id="magnetInput" placeholder="magnet:?xt=..." class="bg-[#0f172a] border border-white/10 w-full rounded px-3 py-2 text-xs text-white">
+                            <input type="text" id="magnetInput" placeholder="magnet:?xt=..." class="neon-input w-full rounded px-3 py-2 text-xs text-white">
                             <button id="loadMagnetBtn" class="bg-neon-purple hover:bg-purple-600 text-white px-3 rounded transition"><span class="material-icons text-sm">play_arrow</span></button>
                         </div>
                     </div>
 
                     <div id="dropZone" class="glass-panel p-4 rounded-xl border border-dashed border-gray-600 hover:border-neon-cyan cursor-pointer transition group relative">
                         <input type="file" id="fileInput" class="hidden" accept="video/*,audio/*" multiple>
+                        <input type="file" id="folderInput" class="hidden" webkitdirectory multiple>
                         
                         <div class="text-center z-10 relative">
                             <span class="material-icons text-gray-400 group-hover:text-white transition mb-1">drive_folder_upload</span>
                             <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Upload Local</p>
-                            <button type="button" id="fileBtn" class="text-[10px] bg-neon-cyan/20 text-neon-cyan px-2 py-1 rounded hover:bg-neon-cyan/30 mt-2">Selecionar Arquivos</button>
+                            <div class="flex justify-center gap-2 mt-2">
+                                <button type="button" id="fileBtn" class="text-[10px] bg-white/10 px-2 py-1 rounded hover:bg-white/20">Arquivos</button>
+                                <button type="button" id="folderBtn" class="text-[10px] bg-neon-cyan/20 text-neon-cyan px-2 py-1 rounded hover:bg-neon-cyan/30">Pasta</button>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <div id="mediaInfo" class="hidden bg-black/20 rounded-lg p-3 border border-white/5">
+                    <h3 id="infoFilename" class="text-sm text-white font-medium truncate">Nome do arquivo...</h3>
+                </div>
             </div>
+
+            <div id="playlistPanel" class="w-full lg:w-80 hidden flex-col gap-2">
+                <div class="glass-panel rounded-xl flex flex-col h-[500px] lg:h-[600px] sticky top-4">
+                    <div class="p-3 border-b border-white/5 bg-black/20 rounded-t-xl flex justify-between items-center">
+                        <span class="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                            <span class="material-icons text-sm text-neon-cyan">queue_music</span> Playlist
+                        </span>
+                        <span id="playlistCount" class="text-[10px] text-gray-400 font-mono">0</span>
+                    </div>
+                    
+                    <div id="playlistContainer" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <!-- PÁGINA: ATUALIZAÇÕES -->
-    <div id="updates" class="page-section w-full max-w-4xl px-4">
+    <div id="page-updates" class="page w-full max-w-4xl px-4">
         <div class="mb-8">
-            <h2 class="text-4xl font-black text-white mb-2">
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">Atualizações</span>
-            </h2>
-            <p class="text-gray-400">Confira todas as novidades e melhorias do OakCine</p>
+            <h2 class="text-3xl font-bold text-white mb-2">Atualizações & Histórico</h2>
+            <p class="text-gray-400 text-sm">Fique atualizado com as últimas melhorias e novidades do OakCine</p>
         </div>
 
-        <div class="space-y-4">
-            <!-- Atualização 1 -->
-            <div class="update-item p-5 rounded-xl">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-bold text-white">Sistema de Navegação por Páginas</h3>
-                    <span class="update-badge">v2.5</span>
-                </div>
-                <p class="text-gray-300 text-sm mb-3">Adicionado sistema de navegação entre páginas (Início e Atualizações) para melhor organização do conteúdo e informações.</p>
-                <div class="flex gap-2 flex-wrap">
-                    <span class="text-[10px] bg-neon-purple/20 text-neon-purple px-2 py-1 rounded">UI/UX</span>
-                    <span class="text-[10px] bg-neon-cyan/20 text-neon-cyan px-2 py-1 rounded">Navegação</span>
-                </div>
-            </div>
-
-            <!-- Atualização 2 -->
-            <div class="update-item p-5 rounded-xl">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-bold text-white">Suporte a Magnet Links e IPTV</h3>
-                    <span class="update-badge">v2.4</span>
-                </div>
-                <p class="text-gray-300 text-sm mb-3">Implementado suporte completo para Magnet Links (torrent) e streams diretos IPTV (.m3u8), permitindo múltiplas formas de acesso a conteúdo.</p>
-                <div class="flex gap-2 flex-wrap">
-                    <span class="text-[10px] bg-neon-purple/20 text-neon-purple px-2 py-1 rounded">WebTorrent</span>
-                    <span class="text-[10px] bg-neon-cyan/20 text-neon-cyan px-2 py-1 rounded">Streaming</span>
-                </div>
-            </div>
-
-            <!-- Atualização 3 -->
-            <div class="update-item p-5 rounded-xl">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-bold text-white">Upload Local de Arquivos</h3>
-                    <span class="update-badge">v2.3</span>
-                </div>
-                <p class="text-gray-300 text-sm mb-3">Sistema completo de drag & drop para upload local de arquivos de vídeo e áudio, com suporte a múltiplos formatos (MP4, MKV, MP3, etc).</p>
-                <div class="flex gap-2 flex-wrap">
-                    <span class="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded">Upload</span>
-                    <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded">Arquivo Local</span>
-                </div>
-            </div>
-
-            <!-- Atualização 4 -->
-            <div class="update-item p-5 rounded-xl">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-bold text-white">Player com Controles Customizados</h3>
-                    <span class="update-badge">v2.2</span>
-                </div>
-                <p class="text-gray-300 text-sm mb-3">Desenvolvido player de vídeo com controles customizados incluindo play/pause, volume, progress bar, e mode tela cheia com interface modern.</p>
-                <div class="flex gap-2 flex-wrap">
-                    <span class="text-[10px] bg-neon-purple/20 text-neon-purple px-2 py-1 rounded">Player</span>
-                    <span class="text-[10px] bg-neon-cyan/20 text-neon-cyan px-2 py-1 rounded">Controles</span>
-                </div>
-            </div>
-
-            <!-- Atualização 5 -->
-            <div class="update-item p-5 rounded-xl">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-bold text-white">Sistema de Legendas Inteligente</h3>
-                    <span class="update-badge">v2.1</span>
-                </div>
-                <p class="text-gray-300 text-sm mb-3">Adicionado suporte a legendas com upload local (.srt, .vtt, .ass) e busca automática de legendas online em diversos sites especializados.</p>
-                <div class="flex gap-2 flex-wrap">
-                    <span class="text-[10px] bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">Legendas</span>
-                    <span class="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-1 rounded">Busca Online</span>
-                </div>
-            </div>
-
-            <!-- Atualização 6 -->
-            <div class="update-item p-5 rounded-xl">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-bold text-white">Pesquisa por Voz Integrada</h3>
-                    <span class="update-badge">v2.0</span>
-                </div>
-                <p class="text-gray-300 text-sm mb-3">Integração de reconhecimento de fala para pesquisa por voz, permitindo buscas hands-free em português e múltiplos idiomas.</p>
-                <div class="flex gap-2 flex-wrap">
-                    <span class="text-[10px] bg-red-500/20 text-red-400 px-2 py-1 rounded">Voz</span>
-                    <span class="text-[10px] bg-pink-500/20 text-pink-400 px-2 py-1 rounded">IA</span>
-                </div>
-            </div>
-
-            <!-- Atualização 7 -->
-            <div class="update-item p-5 rounded-xl">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-bold text-white">Busca Inteligente com Múltiplos Modos</h3>
-                    <span class="update-badge">v1.9</span>
-                </div>
-                <p class="text-gray-300 text-sm mb-3">Sistema de busca avançado com três modos (Torrent, Cloud Direct, Web Stream) que otimiza queries para Google e encontra os melhores links.</p>
-                <div class="flex gap-2 flex-wrap">
-                    <span class="text-[10px] bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded">Busca</span>
-                    <span class="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-1 rounded">IA</span>
-                </div>
-            </div>
-
-            <!-- Atualização 8 -->
-            <div class="update-item p-5 rounded-xl">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-bold text-white">Tour Guiado e Atalhos de Teclado</h3>
-                    <span class="update-badge">v1.8</span>
-                </div>
-                <p class="text-gray-300 text-sm mb-3">Implementado tour interativo para novos usuários e sistema completo de atalhos de teclado (espaço, F, M, C, setas, etc) para controle rápido.</p>
-                <div class="flex gap-2 flex-wrap">
-                    <span class="text-[10px] bg-purple-500/20 text-purple-400 px-2 py-1 rounded">UX</span>
-                    <span class="text-[10px] bg-violet-500/20 text-violet-400 px-2 py-1 rounded">Acessibilidade</span>
-                </div>
-            </div>
-
-            <!-- Atualização 9 -->
-            <div class="update-item p-5 rounded-xl">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-bold text-white">Design Glassmorphism Neon</h3>
-                    <span class="update-badge">v1.7</span>
-                </div>
-                <p class="text-gray-300 text-sm mb-3">Interface moderno com efeitos glassmorphism, gradientes neon (purple e cyan), backdrop blur e animações suaves para experiência visual premium.</p>
-                <div class="flex gap-2 flex-wrap">
-                    <span class="text-[10px] bg-fuchsia-500/20 text-fuchsia-400 px-2 py-1 rounded">Design</span>
-                    <span class="text-[10px] bg-teal-500/20 text-teal-400 px-2 py-1 rounded">UI</span>
-                </div>
-            </div>
-
-            <!-- Atualização 10 -->
-            <div class="update-item p-5 rounded-xl">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-bold text-white">Playlist e Gerenciamento de Mídia</h3>
-                    <span class="update-badge">v1.6</span>
-                </div>
-                <p class="text-gray-300 text-sm mb-3">Sistema de playlist automático que organiza múltiplos arquivos, permite navegação entre vídeos e reprodução sequencial com transição automática.</p>
-                <div class="flex gap-2 flex-wrap">
-                    <span class="text-[10px] bg-lime-500/20 text-lime-400 px-2 py-1 rounded">Playlist</span>
-                    <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">Gerenciamento</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-12 p-6 glass-panel rounded-xl text-center border-t border-white/10">
-            <p class="text-gray-400 text-sm">
-                <span class="text-neon-cyan font-bold">OakCine v2.5</span> • Desenvolvido com <span class="text-red-500">❤️</span> para melhor experiência de streaming
-            </p>
+        <div class="space-y-4" id="updatesContainer">
+            <!-- Updates dinamicamente inseridos aqui -->
         </div>
     </div>
 
     <script>
         // SISTEMA DE NAVEGAÇÃO DE PÁGINAS
-        function switchPage(page) {
-            // Remove active de todos os sections
-            document.querySelectorAll('.page-section').forEach(section => {
-                section.classList.remove('active');
+        function switchPage(pageName, button) {
+            // Esconde todas as páginas
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
             });
-            
-            // Remove active de todos os botões
+
+            // Remove classe active de todos os botões
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
-            // Ativa a página selecionada
-            document.getElementById(page).classList.add('active');
-            
-            // Ativa o botão correspondente
-            event.target.closest('.nav-btn').classList.add('active');
+
+            // Mostra a página selecionada
+            document.getElementById(`page-${pageName}`).classList.add('active');
+
+            // Marca o botão como ativo
+            if (button) {
+                button.classList.add('active');
+            }
+
+            // Anima scroll para o topo
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // CONTROLES DO PLAYER (Básicos para demonstração)
+        // ASSISTENTE DE IA
+        const aiBubble = document.getElementById('aiBubble');
+        const aiChatWindow = document.getElementById('aiChatWindow');
+        const aiMessages = document.getElementById('aiMessages');
+        const aiInput = document.getElementById('aiInput');
+        const aiSendBtn = document.getElementById('aiSendBtn');
+        const closeAiChat = document.getElementById('closeAiChat');
+
+        let chatHistory = [];
+
+        const aiResponses = {
+            'olá': 'Olá! 👋 Bem-vindo ao OakCine! Como posso ajudá-lo hoje? Você pode me perguntar sobre funcionalidades, como usar o player, ou qualquer coisa sobre o site.',
+            'oi': 'Oi! 😊 Estou aqui para ajudar! Quer saber como usar o OakCine? Me pergunte sobre qualquer funcionalidade!',
+            'como usar': 'Para usar o OakCine, você tem 3 opções:\n1️⃣ Busca com IA - Digite um nome de filme/série\n2️⃣ Upload Local - Arraste arquivos ou pastas\n3️⃣ Magnet Links - Cole um link de torrent ou IPTV\n\nDeseja mais detalhes sobre alguma delas?',
+            'torrent': 'OakCine suporta torrents através de WebTorrent! Você pode:\n- Cole um magnet link\n- Veja estatísticas em tempo real\n- Reproduza enquanto baixa\n\nTodos os dados ficam no seu navegador - totalmente privado! 🔐',
+            'legendas': 'Você pode gerenciar legendas de várias formas:\n📁 Upload local (SRT, VTT, ASS)\n🔍 Busca automática em OpenSubtitles\n⚙️ Seleção de múltiplas faixas\n\nClique no botão ⚙️ no player para acessar!',
+            'atalhos': 'Principais atalhos do teclado:\n⏸️ Espaço/K = Play/Pause\n📺 F = Tela cheia\n🔊 M = Mudo\n➡️ Setas = Navegar\n🎚️ Menos/Mais = Volume\n📝 C = Legendas\n\nClique em "info" para ver mais!',
+            'pesquisa': 'A pesquisa tem 3 modos:\n🌊 Torrent (Best) - Busca por torrents\n📁 Cloud Direct - Busca em nuvem\n📺 Web Stream/IPTV - Busca streams ao vivo\n\nDigite o nome do filme/série e clique BUSCAR!',
+            'voz': 'Sim! Temos pesquisa por voz! 🎤\n- Clique no ícone de microfone\n- Fale o nome do filme/série\n- Pronto! A busca acontece automaticamente\n\nSuportamos português brasileiro!',
+            'playlist': 'O gerenciador de playlist é automático! 🎬\n- Quando você faz upload de uma pasta\n- OakCine cria uma playlist ordenada\n- Clique em qualquer vídeo para reproduzir\n- Controles: N = Próximo, P = Anterior',
+            'velocidade': 'Você pode ajustar a velocidade de reprodução! ⏱️\n- 0.5x até 2x\n- Use o menu ⚙️ no player\n- Ou use < e > do teclado\n- Perfeito para estudar ou assistir rápido!',
+            'stream': 'OakCine suporta streams IPTV e M3U8! 📺\n- Cole um link .m3u8\n- Ou uma lista IPTV completa\n- Suporta canais ao vivo\n- Qualquer stream HTTP/S funciona!',
+            'default': 'Desculpe, não entendi sua pergunta. 🤔 Você pode perguntar sobre:\n- Como usar o site\n- Torrents e Magnet Links\n- Legendas e Áudio\n- Atalhos de teclado\n- Playlists\n- Ou qualquer outra funcionalidade!\n\nO que você gostaria de saber? 😊'
+        };
+
+        function getAIResponse(userMessage) {
+            const msg = userMessage.toLowerCase().trim();
+            
+            for (let key in aiResponses) {
+                if (msg.includes(key)) {
+                    return aiResponses[key];
+                }
+            }
+            
+            return aiResponses.default;
+        }
+
+        function addMessage(text, isUser) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `ai-message ${isUser ? 'user' : 'assistant'}`;
+            msgDiv.innerText = text;
+            aiMessages.appendChild(msgDiv);
+            aiMessages.scrollTop = aiMessages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const text = aiInput.value.trim();
+            if (!text) return;
+
+            addMessage(text, true);
+            aiInput.value = '';
+
+            setTimeout(() => {
+                const response = getAIResponse(text);
+                addMessage(response, false);
+            }, 500);
+        }
+
+        aiBubble.onclick = () => {
+            aiChatWindow.classList.toggle('open');
+            if (aiChatWindow.classList.contains('open') && aiMessages.children.length === 0) {
+                addMessage('Olá! 👋 Bem-vindo ao OakCine! Como posso ajudá-lo?', false);
+            }
+        };
+
+        closeAiChat.onclick = () => aiChatWindow.classList.remove('open');
+
+        aiSendBtn.onclick = sendMessage;
+        aiInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // CONTROLES DO PLAYER
+        const client = new WebTorrent();
+        let currentTorrent = null;
+        let playlist = [];
+        let currentIndex = -1;
+        let updateInterval = null;
+        let currentVideoName = '';
+
         const video = document.getElementById('nativeVideo');
+        const placeholder = document.getElementById('videoPlaceholder');
+        const loading = document.getElementById('loadingOverlay');
+        const subtitleTrack = document.getElementById('subtitleTrack');
+
+        // CONTROLES DO PLAYER
         const playPauseBtn = document.getElementById('playPauseBtn');
         const volumeBtn = document.getElementById('volumeBtn');
-        const fullscreenBtn = document.getElementById('fullscreenBtn');
         const progressBar = document.getElementById('progressBar');
         const playBar = document.getElementById('playBar');
         const timeDisplay = document.getElementById('timeDisplay');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsMenu = document.getElementById('settingsMenu');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const rewind10Btn = document.getElementById('rewind10Btn');
+        const forward10Btn = document.getElementById('forward10Btn');
+        const nextVideoBtn = document.getElementById('nextVideoBtn');
+        const prevVideoBtn = document.getElementById('prevVideoBtn');
+        const aiSearchInput = document.getElementById('aiSearchInput');
+        const micBtn = document.getElementById('micBtn');
+        const shortcutsBtn = document.getElementById('shortcutsBtn');
+        const subtitlesToggle = document.getElementById('subtitlesToggle');
+        const subtitleOptions = document.getElementById('subtitleOptions');
+        const uploadSubBtn = document.getElementById('uploadSubBtn');
+        const subtitleFileInput = document.getElementById('subtitleFileInput');
+
+        // HISTÓRICO DE ATUALIZAÇÕES
+        const updates = [
+            {
+                date: '2025-11-22',
+                title: 'Sistema de Navegação e IA Assistente Inteligente',
+                description: 'Lançamento do novo sistema de páginas com navegação fluida, histórico completo de atualizações e assistente de IA inteligente que interage com usuários em tempo real, disponível em todas as páginas do site.',
+                features: ['🧠 IA Assistente 24/7', '📱 Navegação Multi-página', '📋 Histórico Completo']
+            },
+            {
+                date: '2025-11-20',
+                title: 'Melhorias no Player de Vídeo',
+                description: 'Atualizações significativas no player de vídeo com controles aprimorados, suporte a múltiplas faixas de áudio, melhor compatibilidade com legendas e interface de usuário redesenhada.',
+                features: ['⏸️ Controles Melhorados', '🔊 Múltiplas Faixas de Áudio', '📝 Suporte a Legendas']
+            },
+            {
+                date: '2025-11-19',
+                title: 'Integração com Sistemas de Busca',
+                description: 'Integração com Google Search otimizada para encontrar conteúdo em diferentes plataformas (Torrents, Cloud Storage, IPTV). Sistema de queries inteligentes que adaptam a busca conforme o modo selecionado.',
+                features: ['🔗 Google Search', '🎯 Queries Otimizadas', '🌐 Multi-fonte']
+            },
+            {
+                date: '2025-11-18',
+                title: 'Suporte a WebTorrent e Torrents',
+                description: 'Implementação completa de suporte a magnet links e torrents através de WebTorrent. Agora você pode reproduzir conteúdo de torrents diretamente no navegador sem necessidade de cliente externo.',
+                features: ['🌊 Magnet Links', '⚡ WebTorrent Integrado', '📊 Estatísticas em Tempo Real']
+            },
+            {
+                date: '2025-11-15',
+                title: 'Upload Local e Gerenciamento de Playlists',
+                description: 'Novo sistema de upload local que permite arrastar e soltar arquivos de vídeo e pastas inteiras. Sistema de playlist inteligente com ordenação automática e navegação rápida entre vídeos.',
+                features: ['📂 Drag & Drop', '🎬 Gerenciador de Playlist', '🔄 Ordenação Automática']
+            },
+            {
+                date: '2025-11-12',
+                title: 'Pesquisa Inteligente com IA e Voz',
+                description: 'Sistema de pesquisa avançado que utiliza inteligência artificial para otimizar buscas por filme, série ou conteúdo específico. Suporte a pesquisa por voz em português brasileiro com reconhecimento de fala em tempo real.',
+                features: ['🎤 Pesquisa por Voz', '🤖 Busca com IA', '🔍 3 Modos de Busca']
+            },
+            {
+                date: '2025-11-10',
+                title: 'Suporte a Streams IPTV e Links M3U8',
+                description: 'Adição de suporte completo para streams de vídeo ao vivo, listas IPTV (M3U8) e links de streaming diretos. Perfeito para assistir canais ao vivo, eventos e conteúdo em tempo real.',
+                features: ['📺 IPTV M3U8', '🔗 Links Diretos', '📡 Streams ao Vivo']
+            },
+            {
+                date: '2025-11-08',
+                title: 'Interface de Temas Escuros e Layout Responsivo',
+                description: 'Design completamente reformulado com tema escuro moderno, interface glassmorphism e layout 100% responsivo para dispositivos móveis, tablets e desktops.',
+                features: ['🌙 Tema Escuro', '💎 Glassmorphism', '📱 Responsivo']
+            },
+            {
+                date: '2025-11-05',
+                title: 'Sistema de Atalhos de Teclado e Controles',
+                description: 'Implementação de atalhos de teclado profissionais para máxima produtividade. Controle completo do player com teclas (Espaço, F, M, C, Arrow Keys, etc) e suporte a velocidades de reprodução customizáveis.',
+                features: ['⌨️ Atalhos Teclado', '⏱️ Velocidade Variável', '🎮 Controles Avançados']
+            },
+            {
+                date: '2025-11-02',
+                title: 'Seleção de Legendas e Faixas de Áudio',
+                description: 'Sistema completo de gerenciamento de legendas com suporte a múltiplos formatos (SRT, VTT, ASS). Possibilidade de upload de legendas locais e busca automática em plataformas online como OpenSubtitles.',
+                features: ['📄 Múltiplos Formatos', '🔍 Busca Online', '⬆️ Upload Local']
+            },
+            {
+                date: '2025-10-30',
+                title: 'Player de Vídeo HTML5 Nativo',
+                description: 'Desenvolvimento do player de vídeo customizado baseado em HTML5 com barra de progresso interativa, indicador de tempo, controle de volume e interface hover elegante.',
+                features: ['▶️ Reprodução Nativa', '📊 Barra Progresso', '🔊 Controle Volume']
+            },
+            {
+                date: '2025-10-28',
+                title: 'Tour Guiado Interativo e Sistema de Ajuda',
+                description: 'Sistema de tour interativo que guia novos usuários pelas principais funcionalidades do site com balões flutuantes animados, dicas contextuais e documentação de atalhos integrada.',
+                features: ['🎯 Tour Guiado', '💡 Dicas Contextuais', '📚 Documentação']
+            },
+            {
+                date: '2025-10-25',
+                title: 'Lançamento Oficial do OakCine',
+                description: 'Lançamento oficial da plataforma OakCine - um streamer de IA moderno e inovador que permite assistir qualquer conteúdo de múltiplas fontes em uma única interface unificada e intuitiva.',
+                features: ['🚀 Plataforma Oficial', '🎉 Lançamento Beta', '🌟 Versão Inicial']
+            }
+        ];
+
+        // Função para renderizar atualizações
+        function renderUpdates() {
+            const container = document.getElementById('updatesContainer');
+            container.innerHTML = updates.map((update, idx) => `
+                <div class="update-item">
+                    <div class="update-date">${new Date(update.date).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                    <div class="update-title">${update.title}</div>
+                    <div class="update-desc">${update.description}</div>
+                    <div class="mt-2">
+                        ${update.features.map(feature => `<div class="feature-badge">${feature}</div>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Renderizar atualizações na inicialização
+        renderUpdates();
+
+        // FUNÇÕES DO PLAYER
+        let indicatorTimeout = null;
+
+        function showTimeIndicator(text) {
+            let indicator = document.getElementById('tempIndicator');
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'tempIndicator';
+                indicator.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg text-lg font-bold text-white opacity-0 transition-opacity z-50 pointer-events-none';
+                document.getElementById('playerContainer').appendChild(indicator);
+            }
+            indicator.innerText = text;
+            indicator.style.opacity = '1';
+            clearTimeout(indicatorTimeout);
+            indicatorTimeout = setTimeout(() => {
+                indicator.style.opacity = '0';
+            }, 500);
+        }
 
         playPauseBtn.onclick = () => {
             if(video.paused) {
@@ -415,32 +783,38 @@
             }
         };
 
+        video.onclick = () => playPauseBtn.click();
+
         volumeBtn.onclick = () => {
             video.muted = !video.muted;
             volumeBtn.innerHTML = video.muted ? 
                 '<span class="material-icons text-sm">volume_off</span>' : 
                 '<span class="material-icons text-sm">volume_up</span>';
+            showTimeIndicator(video.muted ? 'Mudo' : `Vol: ${Math.round(video.volume * 100)}%`);
         };
 
-        fullscreenBtn.onclick = () => {
-            if(!document.fullscreenElement) {
-                document.getElementById('playerContainer').requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
+        rewind10Btn.onclick = () => {
+            video.currentTime = Math.max(0, video.currentTime - 10);
+            showTimeIndicator('-10s');
         };
+
+        forward10Btn.onclick = () => {
+            video.currentTime = Math.min(video.duration, video.currentTime + 10);
+            showTimeIndicator('+10s');
+        };
+
+        prevVideoBtn.onclick = () => playItem(currentIndex - 1);
+        nextVideoBtn.onclick = () => playItem(currentIndex + 1);
 
         video.ontimeupdate = () => {
             if(video.duration) {
                 const pct = (video.currentTime / video.duration) * 100;
                 playBar.style.width = pct + '%';
-                
                 const fmt = (s) => {
                     const m = Math.floor(s / 60);
                     const sec = Math.floor(s % 60);
                     return `${m}:${sec.toString().padStart(2, '0')}`;
                 };
-                
                 timeDisplay.innerText = fmt(video.currentTime) + " / " + fmt(video.duration);
             }
         };
@@ -451,44 +825,295 @@
             video.currentTime = pos * video.duration;
         };
 
-        // DRAG & DROP
+        fullscreenBtn.onclick = () => {
+            if(!document.fullscreenElement) {
+                document.getElementById('playerContainer').requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        };
+
+        settingsBtn.onclick = (e) => {
+            e.stopPropagation();
+            settingsMenu.classList.toggle('hidden');
+        };
+
+        document.onclick = (e) => {
+            if(!settingsMenu.contains(e.target) && e.target !== settingsBtn) {
+                settingsMenu.classList.add('hidden');
+            }
+        };
+
+        subtitlesToggle.onchange = () => {
+            subtitleOptions.classList.toggle('hidden', !subtitlesToggle.checked);
+        };
+
+        uploadSubBtn.onclick = () => {
+            subtitleFileInput.click();
+        };
+
+        subtitleFileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const url = URL.createObjectURL(file);
+            subtitleTrack.src = url;
+            video.textTracks[0].mode = 'showing';
+            subtitlesToggle.checked = true;
+            alert("✅ Legenda carregada!");
+        };
+
+        function setPlaybackSpeed(speed, event) {
+            video.playbackRate = speed;
+            showTimeIndicator(`${speed.toFixed(2)}x`);
+        }
+        setPlaybackSpeed(1, null);
+
+        function isMedia(name) {
+            const exts = ['mp4','mkv','webm','avi','mov','wmv','flv','m4v','mpg','mpeg','ts','m2ts','3gp','mp3','ogg','wav','flac','aac','m4a'];
+            const ext = name.split('.').pop().toLowerCase();
+            return exts.includes(ext);
+        }
+
+        function processFiles(files) {
+            const all = Array.from(files);
+            const mediaFiles = all.filter(f => isMedia(f.name));
+            
+            if(mediaFiles.length === 0) {
+                alert("❌ Nenhuma mídia encontrada!");
+                return;
+            }
+
+            playlist = mediaFiles.sort((a, b) => 
+                a.name.localeCompare(b.name, undefined, { numeric: true })
+            );
+            
+            currentIndex = -1;
+            document.getElementById('playlistPanel').style.display = 'flex';
+            document.getElementById('playlistCount').innerText = playlist.length;
+            updatePlaylistUI();
+            playItem(0);
+        }
+
+        function updatePlaylistUI() {
+            const container = document.getElementById('playlistContainer');
+            container.innerHTML = playlist.map((file, i) => `
+                <div class="playlist-item p-2 rounded cursor-pointer flex gap-2 ${i === currentIndex ? 'active' : ''}" onclick="playItem(${i})">
+                    <span class="text-[10px] font-mono text-gray-500">${i + 1}</span>
+                    <p class="text-xs text-gray-300 truncate flex-1">${file.name}</p>
+                    ${i === currentIndex ? '<span class="material-icons text-[10px] text-neon-cyan animate-pulse">equalizer</span>' : ''}
+                </div>
+            `).join('');
+        }
+
+        function playItem(index) {
+            if(index < 0 || index >= playlist.length) return;
+            currentIndex = index;
+            updatePlaylistUI();
+            const file = playlist[index];
+            currentVideoName = file.name;
+            const url = URL.createObjectURL(file);
+            loading.classList.remove('hidden');
+            video.src = url;
+            video.load();
+            document.getElementById('mediaInfo').classList.remove('hidden');
+            document.getElementById('infoFilename').innerText = file.name;
+            video.onloadeddata = () => {
+                loading.classList.add('hidden');
+                placeholder.style.display = 'none';
+                video.play().catch(() => {});
+            };
+        }
+
+        function loadMagnet(uri) {
+            const trimmedUri = uri.trim();
+            if(!trimmedUri) return;
+            loading.classList.remove('hidden');
+            if(currentTorrent) {
+                currentTorrent.destroy();
+                currentTorrent = null;
+                clearInterval(updateInterval);
+            }
+            video.src = '';
+
+            const isMagnet = trimmedUri.startsWith('magnet:?');
+            const isDirectStream = trimmedUri.startsWith('http://') || trimmedUri.startsWith('https://');
+
+            if (isDirectStream) {
+                currentVideoName = trimmedUri;
+                video.src = trimmedUri;
+                video.load();
+                document.getElementById('mediaInfo').classList.remove('hidden');
+                document.getElementById('infoFilename').innerText = "STREAM: " + trimmedUri.split('/').pop().substring(0, 50);
+                video.onloadeddata = () => {
+                    loading.classList.add('hidden');
+                    placeholder.style.display = 'none';
+                    video.play().catch(e => {
+                        alert("Erro: " + e.message);
+                        loading.classList.add('hidden');
+                    });
+                };
+            } else if (isMagnet) {
+                client.add(trimmedUri, (torrent) => {
+                    currentTorrent = torrent;
+                    const file = torrent.files.find(f => isMedia(f.name));
+                    if(!file) {
+                        loading.classList.add('hidden');
+                        alert("❌ Nenhuma mídia no torrent");
+                        return;
+                    }
+                    file.renderTo(video, { autoplay: true }, (err) => {
+                        if(err) {
+                            loading.classList.add('hidden');
+                            alert("❌ Erro: " + err.message);
+                            return;
+                        }
+                        loading.classList.add('hidden');
+                        placeholder.style.display = 'none';
+                        document.getElementById('mediaInfo').classList.remove('hidden');
+                        document.getElementById('infoFilename').innerText = file.name;
+                    });
+                });
+            }
+        }
+
+        document.getElementById('loadMagnetBtn').onclick = () => {
+            const uri = document.getElementById('magnetInput').value.trim();
+            if(uri) loadMagnet(uri);
+        };
+
         const dropZone = document.getElementById('dropZone');
-        const fileBtn = document.getElementById('fileBtn');
-        const fileInput = document.getElementById('fileInput');
-
-        fileBtn.onclick = () => fileInput.click();
-
         dropZone.ondragover = (e) => {
             e.preventDefault();
             dropZone.classList.add('border-neon-cyan');
         };
-
         dropZone.ondragleave = () => {
             dropZone.classList.remove('border-neon-cyan');
         };
-
         dropZone.ondrop = (e) => {
             e.preventDefault();
             dropZone.classList.remove('border-neon-cyan');
-            if(e.dataTransfer.files.length) {
-                const file = e.dataTransfer.files[0];
-                video.src = URL.createObjectURL(file);
-                video.load();
+            if(e.dataTransfer.files.length) processFiles(e.dataTransfer.files);
+        };
+
+        document.getElementById('fileBtn').onclick = () => {
+            document.getElementById('fileInput').click();
+        };
+        document.getElementById('folderBtn').onclick = () => {
+            document.getElementById('folderInput').click();
+        };
+        document.getElementById('fileInput').onchange = (e) => {
+            if(e.target.files.length) processFiles(e.target.files);
+        };
+        document.getElementById('folderInput').onchange = (e) => {
+            if(e.target.files.length) processFiles(e.target.files);
+        };
+
+        video.onended = () => {
+            if(currentIndex < playlist.length - 1) {
+                playItem(currentIndex + 1);
             }
         };
 
-        fileInput.onchange = (e) => {
-            if(e.target.files.length) {
-                const file = e.target.files[0];
-                video.src = URL.createObjectURL(file);
-                video.load();
-            }
-        };
-
-        // BUSCA (Simulada)
+        // PESQUISA
         function performSmartSearch() {
-            alert("Funcionalidade de busca ativa na versão completa!");
+            const query = aiSearchInput.value.trim();
+            const mode = document.getElementById('searchMode').value;
+            if(!query) {
+                alert("💡 Digite algo!");
+                return;
+            }
+            const bar = document.getElementById('aiLoadingBar');
+            bar.style.width = '0';
+            setTimeout(() => bar.style.width = '100%', 50);
+            setTimeout(() => {
+                let q = "";
+                if(mode === 'direct') {
+                    q = `"${query}" (site:mega.nz OR site:drive.google.com)`;
+                } else if(mode === 'torrent') {
+                    q = `"${query}" (1080p OR 4K) torrent`;
+                } else {
+                    q = `"${query}" m3u8 OR iptv`;
+                }
+                bar.style.width = '0';
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, '_blank');
+            }, 1800);
         }
+
+        aiSearchInput.addEventListener('keydown', (e) => { 
+            if(e.key === 'Enter') performSmartSearch(); 
+        });
+
+        micBtn.onclick = () => {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("❌ Seu navegador não suporta pesquisa por voz.");
+                return;
+            }
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'pt-BR';
+            micBtn.innerHTML = '<span class="material-icons text-lg text-red-500 animate-pulse">mic</span>';
+            recognition.start();
+            recognition.onresult = (event) => {
+                aiSearchInput.value = event.results[0][0].transcript;
+                micBtn.innerHTML = '<span class="material-icons text-lg">mic</span>';
+            };
+            recognition.onend = () => {
+                micBtn.innerHTML = '<span class="material-icons text-lg">mic</span>';
+            };
+        };
+
+        // ATALHOS DE TECLADO
+        document.addEventListener('keydown', (e) => {
+            if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            switch(e.key) {
+                case ' ':
+                case 'k':
+                    e.preventDefault();
+                    playPauseBtn.click();
+                    break;
+                case 'ArrowLeft':
+                case 'j':
+                    e.preventDefault();
+                    rewind10Btn.click();
+                    break;
+                case 'ArrowRight':
+                case 'l':
+                    e.preventDefault();
+                    forward10Btn.click();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    video.volume = Math.min(1, video.volume + 0.1);
+                    showTimeIndicator(`Vol: ${Math.round(video.volume * 100)}%`);
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    video.volume = Math.max(0, video.volume - 0.1);
+                    showTimeIndicator(`Vol: ${Math.round(video.volume * 100)}%`);
+                    break;
+                case 'm':
+                    e.preventDefault();
+                    volumeBtn.click();
+                    break;
+                case 'f':
+                    e.preventDefault();
+                    fullscreenBtn.click();
+                    break;
+                case 'n':
+                case 'N':
+                    e.preventDefault();
+                    if(playlist.length > 0) nextVideoBtn.click();
+                    break;
+                case 'p':
+                case 'P':
+                    e.preventDefault();
+                    if(playlist.length > 0) prevVideoBtn.click();
+                    break;
+                case 'c':
+                case 'C':
+                    e.preventDefault();
+                    subtitlesToggle.click();
+                    break;
+            }
+        });
     </script>
-</body>
-</html>

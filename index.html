@@ -289,22 +289,25 @@
         </div>
     </div>
 
-    <header class="w-full max-w-7xl p-6 flex flex-col items-center">
-        <div class="flex flex-col items-center gap-2 select-none cursor-pointer mb-4" onclick="location.reload()">
+    <header class="w-full max-w-7xl p-6 flex flex-col items-start mx-auto">
+        
+        <div class="flex items-center gap-2 select-none cursor-pointer mb-4" onclick="location.reload()">
             <span class="material-icons text-4xl text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">movie_filter</span>
             <div>
                 <h1 class="text-3xl font-black tracking-tighter text-white">Oak<span class="text-neon-cyan">Cine</span></h1>
             </div>
         </div>
 
-        <nav class="flex gap-2 mb-8">
-            <button class="nav-btn active" data-page="home" onclick="switchPage('home', this)">
-                <span class="material-icons text-xs mr-1 inline">home</span> Início
-            </button>
-            <button class="nav-btn" data-page="updates" onclick="switchPage('updates', this)">
-                <span class="material-icons text-xs mr-1 inline">notifications</span> Atualizações
-            </button>
-        </nav>
+        <div class="w-full max-w-4xl mx-auto">
+            <nav class="flex gap-2 mb-8 justify-center">
+                <button class="nav-btn active" data-page="home" onclick="switchPage('home', this)">
+                    <span class="material-icons text-xs mr-1 inline">home</span> Início
+                </button>
+                <button class="nav-btn" data-page="updates" onclick="switchPage('updates', this)">
+                    <span class="material-icons text-xs mr-1 inline">notifications</span> Atualizações
+                </button>
+            </nav>
+        </div>
     </header>
 
     <div id="page-home" class="page active w-full">

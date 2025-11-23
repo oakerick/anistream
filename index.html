@@ -268,7 +268,6 @@
 </head>
 <body class="flex flex-col items-center min-h-screen pb-20">
 
-    <!-- ASSISTENTE DE IA -->
     <div id="aiAssistant">
         <div class="ai-bubble" id="aiBubble">
             <span class="material-icons text-white text-2xl">psychology</span>
@@ -290,16 +289,18 @@
         </div>
     </div>
 
-    <!-- NAVEGAÇÃO -->
-    <header class="w-full max-w-7xl p-6 flex justify-between items-center">
+    <header class="w-full max-w-7xl p-6 flex justify-start items-center">
         <div class="flex items-center gap-3 select-none cursor-pointer" onclick="location.reload()">
             <span class="material-icons text-4xl text-transparent bg-clip-text bg-gradient-to-r from-neon-purple to-neon-cyan">movie_filter</span>
             <div>
                 <h1 class="text-3xl font-black tracking-tighter text-white">Oak<span class="text-neon-cyan">Cine</span></h1>
             </div>
         </div>
+        </header>
 
-        <nav class="flex gap-2">
+    <div id="page-home" class="page active w-full">
+        
+        <nav class="w-full max-w-4xl px-4 flex gap-2 mb-2 ml-10">
             <button class="nav-btn active" data-page="home" onclick="switchPage('home', this)">
                 <span class="material-icons text-xs mr-1 inline">home</span> Início
             </button>
@@ -307,10 +308,7 @@
                 <span class="material-icons text-xs mr-1 inline">notifications</span> Atualizações
             </button>
         </nav>
-    </header>
 
-    <!-- PÁGINA: INÍCIO -->
-    <div id="page-home" class="page active w-full">
         <section class="w-full max-w-4xl px-4 mb-6 relative z-50">
             <div class="glass-panel rounded-xl p-1 flex flex-col md:flex-row gap-2 items-center shadow-2xl relative overflow-hidden">
                 <div class="relative w-full md:w-auto" id="searchModeContainer">
@@ -364,7 +362,7 @@
                         <div class="p-5 rounded-full bg-white/5 mb-4 animate-pulse">
                             <span class="material-icons text-5xl text-gray-600">folder_open</span>
                         </div>
-                        <h2 class="text-xl font-bold text-gray-300">Aguardando Mídia</h2>
+                        <h2 class="text-xl font-bold text-gray-300">Aguardando Média</h2>
                         <p class="text-gray-500 text-xs mt-2">Arraste Arquivos ou Pastas aqui</p>
                     </div>
 
@@ -511,7 +509,6 @@
         </div>
     </div>
 
-    <!-- PÁGINA: ATUALIZAÇÕES -->
     <div id="page-updates" class="page w-full max-w-4xl px-4">
         <div class="mb-8">
             <h2 class="text-3xl font-bold text-white mb-2">Atualizações & Histórico</h2>
@@ -519,8 +516,7 @@
         </div>
 
         <div class="space-y-4" id="updatesContainer">
-            <!-- Updates dinamicamente inseridos aqui -->
-        </div>
+            </div>
     </div>
 
     <script>
